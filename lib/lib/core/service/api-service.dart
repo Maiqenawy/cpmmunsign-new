@@ -296,7 +296,7 @@ class Service {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<String>.from(data["Signs"]);
+    return List<String>.from(data["Signs"] ?? []);
     } else {
       throw Exception("Translation failed");
     }
