@@ -3,7 +3,7 @@ import 'package:cominsign/lib/core/service/api-service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
+import 'package:cominsign/widgets/video_item.dart';
 
 
 class Communication extends StatefulWidget {
@@ -234,8 +234,14 @@ class _CommunicationState extends State<Communication> {
                       leading:
                           const Icon(Icons.sign_language),
 
-                      title: Text(signs[index]),
+                      final fullUrl = "https://cominisign.runasp.net${signs[index]}";
 
+return Card(
+  child: Padding(
+    padding: const EdgeInsets.all(10),
+    child: VideoItem(url: fullUrl),
+  ),
+);
                     ),
 
                   );
