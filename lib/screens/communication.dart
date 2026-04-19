@@ -3,7 +3,7 @@ import 'package:cominsign/lib/core/service/api-service.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:cominsign/widgets/video_item.dart';
+import 'package:cominsign/widgets/sequence_player.dart';
 
 
 class Communication extends StatefulWidget {
