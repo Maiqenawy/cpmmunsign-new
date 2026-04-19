@@ -35,7 +35,7 @@ dependencies:
   geolocator: ^10.0.0
   firebase_core: ^2.30.0
   firebase_messaging: ^14.7.0
- 
+  video_player: ^2.8.1
 
   # Deep Link
   app_links: ^6.3.2
