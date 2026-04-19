@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class Service {
-  static const String baseUrl = "https://cominisign.runasp.net/api";
+  static const String baseUrl = "http://cominisign.runasp.net/api";
 
   static String token = "";
 
@@ -58,8 +58,8 @@ class Service {
   } on SocketException {
     return Future.error("No internet connection");
   } catch (e) {
-    return Future.error("Something went wrong");
-  }
+  print("ERROR: $e");
+  return Future.error(e.toString());
 }
   // ================= LOGIN =================
   static Future login({
