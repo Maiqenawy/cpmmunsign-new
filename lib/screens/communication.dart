@@ -132,7 +132,17 @@ class _CommunicationState extends State<Communication> {
                 ),
               ),
             ),
-
+ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SignRealtime(),
+      ),
+    );
+  },
+  child: const Text("Real-Time Sign"),
+),
             const SizedBox(height: 15),
 
             ElevatedButton(
