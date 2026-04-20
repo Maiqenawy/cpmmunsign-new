@@ -36,8 +36,7 @@ dependencies:
   firebase_core: ^2.30.0
   firebase_messaging: ^14.7.0
   video_player: ^2.8.1
- assets:
-    - assets/mediapipe.html
+ 
   # Deep Link
   app_links: ^6.3.2
   audioplayers: ^6.6.0
@@ -53,6 +52,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/mediapipe.html
     - images/download.png
     - images/download (1).png
     - images/download (2).png
