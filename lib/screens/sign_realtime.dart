@@ -37,7 +37,7 @@ class _SignRealtimeState extends State<SignRealtime> {
       ..loadFlutterAsset("assets/mediapipe.html");
   }
 
-  
+  List<String> predictions = [];
      bool isSending = false;
 
 void onNewFrame(List<double> keypoints) async {
@@ -53,17 +53,30 @@ void onNewFrame(List<double> keypoints) async {
     try {
       final word = await Service.sendFrames(frameBuffer);
 
-      if (word != lastWord) {
+      // 🔥 نخزن النتائج
+      predictions.add(word);
+
+      if (predictions.length > 5) {
+        predictions.removeAt(0);
+      }
+
+      // 🔥 لو الكلمة ثابتة 5 مرات
+      bool isStable = predictions.every((w) => w == word);
+
+      if (isStable && word != lastWord) {
         setState(() {
           sentence += " $word";
           lastWord = word;
         });
+
+        predictions.clear(); // reset بعد الإضافة
       }
+
     } catch (e) {
       print(e);
     }
 
-    await Future.delayed(const Duration(milliseconds: 800)); // 🔥 مهم
+    await Future.delayed(const Duration(milliseconds: 700)); // ⏱️ توازن السرعة
     isSending = false;
   }
 }
