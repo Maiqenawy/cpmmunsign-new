@@ -53,7 +53,7 @@ holistic.onResults(results => {
   }
 
   // 🔥 إرسال للفلاتر
-  window.flutter_inappwebview.callHandler("frame", keypoints);
+SignChannel.postMessage(JSON.stringify(keypoints));
 });
 
 const camera = new Camera(video, {
