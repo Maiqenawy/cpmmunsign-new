@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+
+<body>
+<video id="video" autoplay playsinline></video>
+
+<script>
+const video = document.getElementById("video");
+
+const holistic = new Holistic({
+  locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+  }
+});
+
+holistic.setOptions({
+  modelComplexity: 1,
+  smoothLandmarks: true,
+});
+
+holistic.onResults(results => {
+  let keypoints = [];
+
+  // pose (132)
+  if (results.poseLandmarks) {
+    results.poseLandmarks.forEach(lm => {
+      keypoints.push(lm.x, lm.y, lm.z, lm.visibility);
+    });
+  } else {
+    for (let i = 0; i < 132; i++) keypoints.push(0);
+  }
+
+  // left hand (63)
+  if (results.leftHandLandmarks) {
+    results.leftHandLandmarks.forEach(lm => {
+      keypoints.push(lm.x, lm.y, lm.z);
+    });
+  } else {
+    for (let i = 0; i < 63; i++) keypoints.push(0);
+  }
+
+  // right hand (63)
+  if (results.rightHandLandmarks) {
+    results.rightHandLandmarks.forEach(lm => {
+      keypoints.push(lm.x, lm.y, lm.z);
+    });
+  } else {
+    for (let i = 0; i < 63; i++) keypoints.push(0);
+  }
+
+  // 🔥 إرسال للفلاتر
+  window.flutter_inappwebview.callHandler("frame", keypoints);
+});
+
+const camera = new Camera(video, {
+  onFrame: async () => {
+    await holistic.send({ image: video });
+  },
+  width: 640,
+  height: 480
+});
+
+camera.start();
+</script>
+
+</body>
+</html>
