@@ -301,7 +301,23 @@ class Service {
       throw Exception("Translation failed");
     }
   }
+// ================= NEW (REAL-TIME) =================
+static Future<String> sendFrames(List<List<double>> frames) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/sign-to-text"),
+    headers: headers,
+    body: jsonEncode({
+      "frames": frames
+    }),
+  );
 
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data["text"];
+  } else {
+    throw Exception("Prediction failed");
+  }
+}
   // ================= SIGN TO TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
