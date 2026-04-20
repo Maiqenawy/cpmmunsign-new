@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../core/service/api_service.dart';
+import 'package:cominsign/lib/core/service/api-service.dart';
 
 class SignRealtime extends StatefulWidget {
   const SignRealtime({super.key});
@@ -15,7 +15,6 @@ class _SignRealtimeState extends State<SignRealtime> {
   late final WebViewController controller;
 
   List<List<double>> frameBuffer = [];
-
   String sentence = "";
   String lastWord = "";
 
@@ -26,7 +25,7 @@ class _SignRealtimeState extends State<SignRealtime> {
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
-        "frame",
+        "SignChannel",
         onMessageReceived: (message) {
           List<dynamic> data = jsonDecode(message.message);
           List<double> keypoints =
@@ -65,7 +64,7 @@ class _SignRealtimeState extends State<SignRealtime> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign → Text (Real-Time)")),
+      appBar: AppBar(title: const Text("Real-Time Sign")),
 
       body: Column(
         children: [
@@ -76,7 +75,7 @@ class _SignRealtimeState extends State<SignRealtime> {
           ),
 
           Expanded(
-            child: Container(
+            child: Padding(
               padding: const EdgeInsets.all(20),
               child: Text(
                 sentence,
