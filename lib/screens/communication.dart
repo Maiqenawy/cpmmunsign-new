@@ -140,7 +140,15 @@ ElevatedButton(
         builder: (_) => const SignRealtime(),
       ),
     );
+  },ElevatedButton(
+  onPressed: () {
+    setState(() {
+      sentence = "";
+      lastWord = "";
+    });
   },
+  child: Text("Clear"),
+)
   child: const Text("Real-Time Sign"),
 ),
             const SizedBox(height: 15),
