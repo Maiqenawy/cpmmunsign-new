@@ -37,29 +37,36 @@ class _SignRealtimeState extends State<SignRealtime> {
       ..loadFlutterAsset("assets/mediapipe.html");
   }
 
-  void onNewFrame(List<double> keypoints) async {
-    frameBuffer.add(keypoints);
+  
+     bool isSending = false;
 
-    if (frameBuffer.length > 30) {
-      frameBuffer.removeAt(0);
-    }
+void onNewFrame(List<double> keypoints) async {
+  frameBuffer.add(keypoints);
 
-    if (frameBuffer.length == 30) {
-      try {
-        final word = await Service.sendFrames(frameBuffer);
-
-        if (word != lastWord) {
-          setState(() {
-            sentence += " $word";
-            lastWord = word;
-          });
-        }
-
-      } catch (e) {
-        print(e);
-      }
-    }
+  if (frameBuffer.length > 30) {
+    frameBuffer.removeAt(0);
   }
+
+  if (frameBuffer.length == 30 && !isSending) {
+    isSending = true;
+
+    try {
+      final word = await Service.sendFrames(frameBuffer);
+
+      if (word != lastWord) {
+        setState(() {
+          sentence += " $word";
+          lastWord = word;
+        });
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 800)); // 🔥 مهم
+    isSending = false;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
