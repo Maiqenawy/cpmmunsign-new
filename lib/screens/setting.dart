@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:cominsign_new/core/app_lang.dart';
 import 'package:cominsign_new/core/user_session.dart';
-import 'package:flutter/material.dart';
+import 'package:cominsign_new/core/service/api-service.dart';
+
 import '../widgets/gradient_background.dart';
 import 'contacts_page.dart';
 import 'login_screen.dart';
@@ -23,72 +26,160 @@ class SettingsScreen extends StatefulWidget {
   });
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<SettingsScreen> createState() =>
+      _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState
+    extends State<SettingsScreen> {
   late String selectedLanguage;
 
   @override
   void initState() {
     super.initState();
 
-    selectedLanguage = widget.selectedLanguage;
+    selectedLanguage =
+        widget.selectedLanguage == 'العربية'
+            ? 'ar'
+            : 'en';
 
-    // ✅ FIX: safe navigation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!UserSession.isLoggedIn) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    });
+    if (!UserSession.isLoggedIn) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => const LoginScreen(),
+              ),
+            );
+          });
+    }
   }
 
-String t(String key) => AppLang.t(key);
+  String t(String key) => AppLang.t(key);
 
-  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  bool get _isDark =>
+      Theme.of(context).brightness ==
+      Brightness.dark;
 
-  Color get textColor => _isDark ? Colors.white : Colors.black;
+  Color get textColor =>
+      _isDark ? Colors.white : Colors.black;
 
   Color get iconBg => _isDark
-      ? const Color.fromRGBO(255, 255, 255, 0.20)
-      : const Color.fromRGBO(0, 0, 0, 0.08);
+      ? Colors.white.withOpacity(0.15)
+      : Colors.black.withOpacity(0.06);
+
+  Color get cardColor => _isDark
+      ? Colors.white.withOpacity(0.08)
+      : Colors.white.withOpacity(0.75);
 
   Color get dividerColor => _isDark
-      ? const Color.fromRGBO(255, 255, 255, 0.30)
-      : const Color.fromRGBO(0, 0, 0, 0.30);
+      ? Colors.white.withOpacity(0.25)
+      : Colors.black.withOpacity(0.15);
+
+  Future<void> resetApp() async {
+    final prefs =
+        await SharedPreferences.getInstance();
+
+    await prefs.clear();
+    await UserSession.logout();
+
+    Service.token = "";
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginScreen(),
+      ),
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final width =
+        MediaQuery.of(context).size.width;
+
+    final isTablet = width >= 700;
+    final padding =
+        isTablet ? width * 0.14 : 24.0;
+
     return ValueListenableBuilder<Locale>(
       valueListenable: AppLang.notifier,
       builder: (_, __, ___) {
         return Scaffold(
           body: GradientBackground(
             child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 30),
-                    _buildUserProfile(),
-                    const SizedBox(height: 30),
-                    _buildDivider(),
-                    const SizedBox(height: 30),
-                    _buildPreferencesTitle(),
-                    const SizedBox(height: 20),
-                    _buildLanguageOption(),
-                    const SizedBox(height: 20),
-                    _buildDarkModeOption(),
-                    const SizedBox(height: 20),
-                    _buildContactsOption(),
-                    const SizedBox(height: 30),
-                    _buildLogoutButton(),
-                  ],
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: padding,
+                    vertical: 24,
+                  ),
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(
+                          maxWidth: 520,
+                        ),
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+
+                        const SizedBox(
+                          height: 28,
+                        ),
+
+                        _buildUserProfile(),
+
+                        const SizedBox(
+                          height: 28,
+                        ),
+
+                        _buildDivider(),
+
+                        const SizedBox(
+                          height: 28,
+                        ),
+
+                        _buildPreferencesTitle(),
+
+                        const SizedBox(
+                          height: 18,
+                        ),
+
+                        _buildLanguageOption(),
+
+                        const SizedBox(
+                          height: 16,
+                        ),
+
+                        _buildDarkModeOption(),
+
+                        const SizedBox(
+                          height: 16,
+                        ),
+
+                        _buildContactsOption(),
+
+                        const SizedBox(
+                          height: 32,
+                        ),
+
+                        _buildResetButton(),
+
+                        const SizedBox(
+                          height: 18,
+                        ),
+
+                        _buildLogoutButton(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -101,8 +192,12 @@ String t(String key) => AppLang.t(key);
   Widget _buildHeader() {
     return Row(
       children: [
-        Icon(Icons.settings, color: textColor, size: 32),
-        const SizedBox(width: 12),
+        Icon(
+          Icons.settings,
+          color: textColor,
+          size: 30,
+        ),
+        const SizedBox(width: 10),
         Text(
           t('settings'),
           style: TextStyle(
@@ -119,31 +214,42 @@ String t(String key) => AppLang.t(key);
     return Row(
       children: [
         CircleAvatar(
-          radius: 35,
+          radius: 34,
           backgroundColor: Colors.grey[300],
-          backgroundImage: const AssetImage('images/SETTING.png'),
+          backgroundImage:
+              const AssetImage(
+                'images/SETTING.png',
+              ),
         ),
-        const SizedBox(width: 16),
-        Text(
-          t('user'),
-          style: TextStyle(
-            color: textColor,
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
+        const SizedBox(width: 14),
+        Expanded(
+          child: Text(
+            t('user'),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 22,
+              fontWeight:
+                  FontWeight.w600,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDivider() => Container(height: 1, color: dividerColor);
+  Widget _buildDivider() {
+    return Container(
+      height: 1,
+      color: dividerColor,
+    );
+  }
 
   Widget _buildPreferencesTitle() {
     return Text(
       t('preferences'),
       style: TextStyle(
         color: textColor,
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -153,10 +259,16 @@ String t(String key) => AppLang.t(key);
     return _buildRow(
       Icons.language,
       t('language'),
-      GestureDetector(
-        onTap: _showLanguageDialog,
-        child: Text(selectedLanguage, style: TextStyle(color: textColor)),
+      Text(
+        selectedLanguage == 'ar'
+            ? 'العربية'
+            : 'English',
+        style: TextStyle(
+          color: textColor,
+          fontSize: 16,
+        ),
       ),
+      onTap: _showLanguageDialog,
     );
   }
 
@@ -165,8 +277,10 @@ String t(String key) => AppLang.t(key);
       Icons.dark_mode,
       t('dark_mode'),
       Switch(
-        value: _isDark,
-        onChanged: widget.onThemeChanged,
+        value: widget.isDarkMode,
+        onChanged: (value) {
+          widget.onThemeChanged(value);
+        },
       ),
     );
   }
@@ -175,61 +289,142 @@ String t(String key) => AppLang.t(key);
     return _buildRow(
       Icons.contacts,
       "Emergency Contacts",
-      const Icon(Icons.arrow_forward_ios, size: 18),
+      Icon(
+        Icons.arrow_forward_ios,
+        color: textColor,
+        size: 18,
+      ),
       onTap: () {
-        if (!UserSession.isLoggedIn) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-          return;
-        }
-
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ContactsPage()),
+          MaterialPageRoute(
+            builder:
+                (_) => const ContactsPage(),
+          ),
         );
       },
     );
   }
 
-  Widget _buildLogoutButton() {
-    return Center(
+  Widget _buildResetButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor:
+                  Colors.orange,
+              shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(
+                          14,
+                        ),
+                  ),
+            ),
+        onPressed: resetApp,
+        child: const Text(
+          "Reset App (Dev)",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight:
+                FontWeight.bold,
+          ),
         ),
-        onPressed: () async {
-          await UserSession.logout();
-
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (r) => false,
-          );
-        },
-        child: const Text("Logout"),
       ),
     );
   }
 
-  Widget _buildRow(IconData icon, String title, Widget trailing,
-      {VoidCallback? onTap}) {
+  Widget _buildLogoutButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor:
+                  Colors.red,
+              shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(
+                          14,
+                        ),
+                  ),
+            ),
+        onPressed: () async {
+          await UserSession.logout();
+
+          if (!mounted) return;
+
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) =>
+                      const LoginScreen(),
+            ),
+            (route) => false,
+          );
+        },
+        child: const Text(
+          "Logout",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight:
+                FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(
+    IconData icon,
+    String title,
+    Widget trailing, {
+    VoidCallback? onTap,
+  }) {
     return InkWell(
+      borderRadius:
+          BorderRadius.circular(14),
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius:
+              BorderRadius.circular(14),
+        ),
         child: Row(
           children: [
             CircleAvatar(
+              radius: 20,
               backgroundColor: iconBg,
-              child: Icon(icon, color: textColor),
+              child: Icon(
+                icon,
+                color: textColor,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
-              child: Text(title,
-                  style: TextStyle(color: textColor, fontSize: 18)),
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 17,
+                  fontWeight:
+                      FontWeight.w500,
+                ),
+              ),
             ),
             trailing,
           ],
@@ -241,34 +436,51 @@ String t(String key) => AppLang.t(key);
   void _showLanguageDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(t('language')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text("English"),
-              onTap: () async {
-                await AppLang.load("English");
-                if (!mounted) return;
-                setState(() => selectedLanguage = "English");
-                widget.onLanguageChanged("English");
-                Navigator.pop(context);
-              },
+      builder:
+          (_) => AlertDialog(
+            title: Text(
+              t('language'),
             ),
-            ListTile(
-              title: const Text("العربية"),
-              onTap: () async {
-                await AppLang.load("العربية");
-                if (!mounted) return;
-                setState(() => selectedLanguage = "العربية");
-                widget.onLanguageChanged("العربية");
-                Navigator.pop(context);
-              },
+            content: Column(
+              mainAxisSize:
+                  MainAxisSize.min,
+              children: [
+                _languageItem(
+                  "English",
+                  "en",
+                ),
+                _languageItem(
+                  "العربية",
+                  "ar",
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+    );
+  }
+
+  Widget _languageItem(
+    String label,
+    String langCode,
+  ) {
+    return ListTile(
+      title: Text(label),
+      onTap: () async {
+        await AppLang.load(langCode);
+
+        if (!mounted) return;
+
+        setState(() {
+          selectedLanguage =
+              langCode;
+        });
+
+        widget.onLanguageChanged(
+          langCode,
+        );
+
+        Navigator.pop(context);
+      },
     );
   }
 }

@@ -4,13 +4,17 @@ import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/forget_pass.dart';
 import 'package:cominsign_new/screens/home.dart';
 import 'package:cominsign_new/screens/signUp.dart';
+import 'package:cominsign_new/widgets/app_text_field.dart';
 import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
 
-  const LoginScreen({super.key, this.isDarkMode = false});
+  const LoginScreen({
+    super.key,
+    this.isDarkMode = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -18,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -31,7 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _showGuestWarningDialog(BuildContext context) {
+  // ================= GUEST =================
+  void _showGuestWarningDialog() {
     bool isChecked = false;
 
     showDialog(
@@ -39,18 +45,23 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (dialogContext, setState) {
+          builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text(
-                'Warning Message',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              title: Row(
+                children: const [
+                  Text(
+                    "Warning Message",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.info, color: Colors.blue),
+                ],
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'By continuing as a guest, you will only have access to the "Communicate" feature.\n'
-                    'Other features will be disabled.',
+                    "By continuing as a guest, you will only have access to the Communicate feature.",
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -58,10 +69,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       Checkbox(
                         value: isChecked,
                         onChanged: (val) {
-                          setState(() => isChecked = val ?? false);
+                          setDialogState(() {
+                            isChecked = val ?? false;
+                          });
                         },
                       ),
-                      const Expanded(child: Text('I agree on the above')),
+                      const Expanded(
+                        child: Text("I agree"),
+                      ),
                     ],
                   ),
                 ],
@@ -69,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
+                  child: const Text("Cancel"),
                 ),
                 ElevatedButton(
                   onPressed: isChecked
@@ -80,11 +95,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const HomeScreen()),
+                              builder: (_) => const HomeScreen(),
+                            ),
                           );
                         }
                       : null,
-                  child: const Text('Next'),
+                  child: const Text("Next"),
                 ),
               ],
             );
@@ -94,14 +110,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ================= LOGIN =================
   Future<void> _login() async {
     if (isLoading) return;
-    if (!_formKey.currentState!.validate()) return;
+
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Enter email and password"),
+        ),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
 
     try {
-      var data = await Service.login(
+      final data = await Service.login(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -113,143 +139,152 @@ class _LoginScreenState extends State<LoginScreen> {
 
       UserSession.isGuest = false;
 
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (_) => const HomeScreen(),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid email or password")),
+        const SnackBar(
+          content: Text("Invalid email or password"),
+        ),
       );
     }
 
-    setState(() => isLoading = false);
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = widget.isDarkMode;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
+    final width = MediaQuery.of(context).size.width;
+    final isTablet = width > 700;
+    final maxWidth = isTablet ? 500.0 : double.infinity;
+    final padding = isTablet ? 40.0 : 24.0;
 
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(padding),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 20),
 
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: InkWell(
-                      onTap: () => _showGuestWarningDialog(context),
-                      child: Text(
-                        AppLang.t('Guest'),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 60),
-
-                  Center(
-                    child: Text(
-                      'COMMUNISIGN',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? Colors.white.withOpacity(0.85)
-                            : const Color(0xFF2C3E50),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 60),
-
-                  Text(AppLang.t('email'),
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-
-                  const SizedBox(height: 8),
-
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      hintText: AppLang.t('enter your email'),
-                      filled: true,
-                      fillColor: isDark ? Colors.grey[800] : Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppLang.t('email required');
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(AppLang.t('password'),
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-
-                  const SizedBox(height: 8),
-
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: isDark ? Colors.grey[800] : Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility),
-                        onPressed: () {
-                          setState(() =>
-                              _obscurePassword = !_obscurePassword);
-                        },
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  SizedBox(
-                    height: 55,
-                    child: GestureDetector(
-                      onTap: _login,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2ABC4E), Color(0xFF135624)],
+                      // Guest
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: InkWell(
+                          onTap: _showGuestWarningDialog,
+                          child: const Text(
+                            "Guest",
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
                           ),
                         ),
-                        child: Center(
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      // Title
+                      Center(
+                        child: Text(
+                          "COMMUNISIGN",
+                          style: TextStyle(
+                            fontSize: isTablet ? 38 : 30,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      // Email
+                      Text(
+                        AppLang.t('email'),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      AppTextField(
+                        controller: _emailController,
+                        hint: AppLang.t('enter your email'),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Password
+                      Text(
+                        AppLang.t('password'),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      AppTextField(
+                        controller: _passwordController,
+                        hint: "••••••••",
+                        obscure: _obscurePassword,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: textColor,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // Login
+                      SizedBox(
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                           child: isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white,
                                 )
-                              : Text(
-                                  AppLang.t('login'),
-                                  style: const TextStyle(
+                              : const Text(
+                                  "Login",
+                                  style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
@@ -257,42 +292,72 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                         ),
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 12),
+                      const SizedBox(height: 10),
 
-                  TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ForgetPass()),
-                    ),
-                    child: Text(AppLang.t('forgot password')),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Center(child: Text(AppLang.t('new user'))),
-
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const SignUpScreen()),
-                      ),
-                      child: const Text(
-                        'Sign up',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                      // Forgot Password
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgetPass(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            AppLang.t('forgot password'),
+                            style: TextStyle(color: textColor),
+                          ),
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 24),
+
+                      // Footer
+                      Center(
+                        child: Text(
+                          "https://www.communisign.com",
+                          style: TextStyle(
+                            color: textColor.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Center(
+                        child: Text(
+                          AppLang.t('new user'),
+                          style: TextStyle(color: textColor),
+                        ),
+                      ),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SignUpScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

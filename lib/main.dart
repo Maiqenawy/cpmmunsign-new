@@ -1,4 +1,3 @@
-import 'package:cominsign_new/core/app_lang.dart';
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/Level_screen.dart';
 import 'package:cominsign_new/screens/chat_with_us.dart';
@@ -22,13 +21,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await UserSession.loadSession();
+  await UserSession.loadToken();
 
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
+  final language = prefs.getString('language') ?? 'en';
 
-  await AppLang.loadSaved();
-
-  runApp(MyApp(isDarkMode: isDark, language: 'en'));
+  runApp(MyApp(isDarkMode: isDark, language: language));
 }
 
 class MyApp extends StatefulWidget {
@@ -60,7 +59,6 @@ class _MyAppState extends State<MyApp> {
     isDarkMode = widget.isDarkMode;
     selectedLanguage = widget.language;
 
-    /// Deep Link setup
     _appLinks = AppLinks();
 
     _appLinks.uriLinkStream.listen((uri) {
@@ -69,12 +67,14 @@ class _MyAppState extends State<MyApp> {
       final email = uri.queryParameters['email'];
       final token = uri.queryParameters['token'];
 
-      if (uri.host == "reset-password") {
+      if (uri.host == "reset-password" &&
+          email != null &&
+          token != null) {
         navigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ResetPasswordScreen(
-              email: email ?? "",
-              token: token ?? "",
+              email: email,
+              token: token,
             ),
           ),
         );
@@ -87,11 +87,48 @@ class _MyAppState extends State<MyApp> {
     await prefs.setBool('dark_mode', value);
     setState(() => isDarkMode = value);
   }
-    Future<void> updateLanguage(String langCode) async {
-     final prefs = await SharedPreferences.getInstance();
-       await prefs.setString('language', langCode);
-      setState(() => selectedLanguage = langCode);
-}
+
+  Future<void> updateLanguage(String langCode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', langCode);
+    setState(() => selectedLanguage = langCode);
+  }
+
+  // ================= LIGHT THEME =================
+  ThemeData lightTheme() {
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Colors.transparent,
+      colorScheme: const ColorScheme.light(
+        surface: Colors.white,
+        onSurface: Colors.black,
+        primary: Colors.blue,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+      ),
+    );
+  }
+
+  // ================= DARK THEME =================
+  ThemeData darkTheme() {
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: Colors.transparent,
+      colorScheme: const ColorScheme.dark(
+        surface: Color(0xFF121212),
+        onSurface: Colors.white,
+        primary: Colors.blue,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.white,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,24 +146,8 @@ class _MyAppState extends State<MyApp> {
         );
       },
 
-      theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.transparent,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-      ),
-
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.transparent,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-      ),
-
+      theme: lightTheme(),
+      darkTheme: darkTheme(),
       themeMode:
           isDarkMode ? ThemeMode.dark : ThemeMode.light,
 

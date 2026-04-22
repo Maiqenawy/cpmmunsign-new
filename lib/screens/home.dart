@@ -19,6 +19,14 @@ class _HomeScreenState extends State<HomeScreen>
   late final AnimationController _waveController;
   late final Animation<double> _wave;
 
+  double _clamp(double value, double min, double max) {
+    return value < min
+        ? min
+        : value > max
+            ? max
+            : value;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -55,36 +63,42 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
 
-    final double welcomeHeight = screenHeight * 0.18;
+    final double screenWidth = size.width;
+    final double screenHeight = size.height;
+
+    final double welcomeHeight =
+        _clamp(screenHeight * 0.16, 120, 160);
     final double welcomeWidth = screenWidth * 0.85;
-    final double menuButtonHeight = screenHeight * 0.10;
+
+    final double menuButtonHeight =
+        _clamp(screenHeight * 0.09, 60, 85);
 
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
           child: Column(
             children: [
-              // ================= Header =================
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 10, horizontal: 16),
                 child: Row(
                   children: [
                     const Spacer(),
                     Text(
                       AppLang.t('COMMUNSIGN'),
                       style: const TextStyle(
-                        fontSize: 32,
+                        fontSize: 34,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF2C3E50),
                       ),
                     ),
                     const Spacer(),
                     GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/setting'),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/setting');
+                      },
                       child: const Icon(
                         Icons.settings,
                         size: 36,
@@ -97,7 +111,6 @@ class _HomeScreenState extends State<HomeScreen>
 
               const SizedBox(height: 20),
 
-              // ================= Welcome =================
               Transform.translate(
                 offset: const Offset(-12, 0),
                 child: Stack(
@@ -109,7 +122,10 @@ class _HomeScreenState extends State<HomeScreen>
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(28),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFD0EDEA), Color(0xFFA8D6D0)],
+                          colors: [
+                            Color(0xFFD0EDEA),
+                            Color(0xFFA8D6D0)
+                          ],
                         ),
                       ),
                       child: Row(
@@ -118,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Text(
                             AppLang.t('welcome'),
                             style: const TextStyle(
-                              fontSize: 24,
+                              fontSize: 26,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -126,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 8),
                           Image.asset(
                             'images/download (2).png',
-                            height: welcomeHeight * 0.22,
+                            height: welcomeHeight * 0.25,
                           ),
                         ],
                       ),
@@ -145,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                         child: Image.asset(
                           'images/download (1).png',
-                          height: welcomeHeight * 1.2,
+                          height: welcomeHeight * 1.3,
                         ),
                       ),
                     ),
@@ -153,20 +169,24 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // ================= Buttons =================
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.07),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.07),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceEvenly,
                     children: [
                       MenuButton(
                         imagePath: 'images/download (3).png',
                         text: AppLang.t('chat with us'),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF2AA88F), Color(0xFF114238)],
+                          colors: [
+                            Color(0xFF2AA88F),
+                            Color(0xFF114238)
+                          ],
                         ),
                         height: menuButtonHeight,
                         onTap: () {
@@ -179,13 +199,14 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                       ),
 
-                      const SizedBox(height: 10),
-
                       MenuButton(
                         imagePath: 'images/download (4).png',
                         text: AppLang.t('learning'),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF687B95), Color(0xFFAFD0FB)],
+                          colors: [
+                            Color(0xFF687B95),
+                            Color(0xFFAFD0FB)
+                          ],
                         ),
                         height: menuButtonHeight,
                         onTap: () {
@@ -202,13 +223,14 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                       ),
 
-                      const SizedBox(height: 10),
-
                       MenuButton(
                         imagePath: 'images/download (5).png',
                         text: AppLang.t('communication'),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFC2EAE2), Color(0xFF6E8480)],
+                          colors: [
+                            Color(0xFFC2EAE2),
+                            Color(0xFF6E8480)
+                          ],
                         ),
                         height: menuButtonHeight,
                         onTap: () {
@@ -221,13 +243,14 @@ class _HomeScreenState extends State<HomeScreen>
                         },
                       ),
 
-                      const SizedBox(height: 10),
-
                       MenuButton(
                         imagePath: 'images/download (6).png',
                         text: AppLang.t('emergency'),
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFFF0000), Color(0xFF990000)],
+                          colors: [
+                            Color(0xFFFF0000),
+                            Color(0xFF990000)
+                          ],
                         ),
                         height: menuButtonHeight,
                         onTap: () {
@@ -278,7 +301,7 @@ class MenuButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: height,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(16),
@@ -286,7 +309,7 @@ class MenuButton extends StatelessWidget {
         child: Row(
           children: [
             Image.asset(imagePath, width: 36, height: 36),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             Expanded(
               child: Text(
                 text,
@@ -305,7 +328,7 @@ class MenuButton extends StatelessWidget {
   }
 }
 
-// ================= Toast =================
+// ================= TOP TOAST =================
 class TopLoginToast {
   static OverlayEntry? _entry;
   static Timer? _timer;
@@ -318,14 +341,14 @@ class TopLoginToast {
     _timer?.cancel();
     _entry?.remove();
 
-    final overlay = Overlay.of(context);
-    if (overlay == null) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
 
     _entry = OverlayEntry(
       builder: (ctx) {
-        final top = MediaQuery.of(ctx).padding.top;
+        final topPadding = MediaQuery.of(ctx).padding.top;
+
         return Positioned(
-          top: top + 10,
+          top: topPadding + 10,
           left: 10,
           right: 10,
           child: Material(
@@ -363,7 +386,7 @@ class TopLoginToast {
 
     overlay.insert(_entry!);
 
-    _timer = Timer(const Duration(seconds: 3), () {
+    _timer = Timer(const Duration(seconds: 4), () {
       _entry?.remove();
       _entry = null;
     });
