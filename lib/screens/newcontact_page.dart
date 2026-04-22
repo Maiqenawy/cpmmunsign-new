@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cominsign/lib/core/service/api-service.dart';
+import 'package:cominsign/lib/core/user_session.dart';
 import '../widgets/gradient_background.dart';
 
 class NewContactPage extends StatefulWidget {
@@ -31,15 +32,25 @@ class _NewContactPageState extends State<NewContactPage> {
     }
   }
 
+  // ================= SEARCH =================
   Future<void> search() async {
     if (email.text.isEmpty) return;
+
+    // 🔥 منع إضافة نفسك
+    if (email.text.trim().toLowerCase() ==
+        UserSession.email.toLowerCase()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You can't add yourself"),
+        ),
+      );
+      return;
+    }
 
     setState(() => isLoading = true);
 
     try {
-      final data =
-          await  Service.searchUser(email.text, token);
-
+      final data = await Service.searchUser(email.text, token);
       setState(() => results = data);
     } catch (e) {
       print(e);
@@ -48,6 +59,7 @@ class _NewContactPageState extends State<NewContactPage> {
     setState(() => isLoading = false);
   }
 
+  // ================= SAVE =================
   Future<void> save() async {
     if (widget.contact == null && selectedUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,10 +72,10 @@ class _NewContactPageState extends State<NewContactPage> {
 
     try {
       if (widget.contact == null) {
-        await  Service.addContact(
+        await Service.addContact(
             selectedUserId!, relation.text, token);
       } else {
-        await  Service.updateContact(
+        await Service.updateContact(
             widget.contact["contactId"],
             relation.text,
             token);
