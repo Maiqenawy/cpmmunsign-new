@@ -275,33 +275,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // ================= LANGUAGE DIALOG =================
-  void _showLanguageDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(t('language')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _languageItem('English'),
-            _languageItem('العربية'),
-          ],
-        ),
+ void _showLanguageDialog() {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text(t('language')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _languageItem('English', 'en'),
+          _languageItem('العربية', 'ar'),
+        ],
       ),
-    );
-  }
+    ),
+  );
+} 
 
-  Widget _languageItem(String lang) {
-    return ListTile(
-      title: Text(lang),
-      onTap: () async {
-        await AppLang.load(lang);
+Widget _languageItem(String lang) {
+  return ListTile(
+    title: Text(lang),
+    onTap: () async {
+      await AppLang.load(lang); // 🔥 دي أهم نقطة
 
-        setState(() => selectedLanguage = lang);
-        widget.onLanguageChanged(lang);
+      setState(() => selectedLanguage = lang);
+      widget.onLanguageChanged(lang);
 
-        Navigator.pop(context);
-      },
-    );
-  }
+      Navigator.pop(context);
+    },
+  );
+}
 }
