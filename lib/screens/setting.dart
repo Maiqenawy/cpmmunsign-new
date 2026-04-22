@@ -291,17 +291,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   );
 } 
 
-Widget _languageItem(String lang) {
+Widget _languageItem(String label, String langCode) {
   return ListTile(
-    title: Text(lang),
+    title: Text(label),
     onTap: () async {
-      await AppLang.load(lang); // 🔥 دي أهم نقطة
+      await AppLang.load(label); // أو langCode لو غيرتي اللوجيك
 
-      setState(() => selectedLanguage = lang);
-      widget.onLanguageChanged(lang);
+      setState(() => selectedLanguage = label);
+      widget.onLanguageChanged(label);
 
       Navigator.pop(context);
     },
   );
-}
 }
