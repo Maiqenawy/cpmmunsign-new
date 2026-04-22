@@ -48,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     selectedLanguage = widget.selectedLanguage;
   }
 
-  String t(String key) => widget.t(key);
+String t(String key) => AppLang.t(key);
 
   Color get textColor => isDarkMode ? Colors.white : Colors.black;
 
