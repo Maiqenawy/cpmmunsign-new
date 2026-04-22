@@ -1,4 +1,5 @@
-import 'package:cominsign/lib/core/service/api-service.dart';
+
+         import 'package:cominsign/lib/core/service/api-service.dart';
 import 'package:cominsign/screens/reset_password.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
@@ -12,6 +13,8 @@ class ForgetPass extends StatefulWidget {
 
 class ForgetPassState extends State<ForgetPass> {
   final TextEditingController _emailController = TextEditingController();
+
+  bool isLoading = false;
 
   // ================= Send Email Function =================
   void _sendEmail() async {
@@ -37,34 +40,36 @@ class ForgetPassState extends State<ForgetPass> {
       return;
     }
 
-    // مؤقت لحين ربط API
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ResetPasswordScreen(
-          email: email,
-          token: "123456",
-        ),
-      ),
-    );
+    setState(() => isLoading = true);
 
     try {
+      // ✅ إرسال الكود
       await Service.forgotPassword(email);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Reset link sent to your email"),
+          content: Text("Code sent to your email"),
           backgroundColor: Colors.green,
+        ),
+      );
+
+      // ✅ نروح لصفحة الريسيت
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResetPasswordScreen(email: email),
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Failed to send email"),
+          content: Text("Failed to send code"),
           backgroundColor: Colors.red,
         ),
       );
     }
+
+    setState(() => isLoading = false);
   }
 
   // ================= Email Validation =================
@@ -91,41 +96,28 @@ class ForgetPassState extends State<ForgetPass> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
 
-              /// COMMUNISIGN
-              Container(
-                width: screenWidth * 0.6,
-                height: screenHeight * 0.05,
-                alignment: Alignment.center,
-                child: const Text(
-                  'COMMUNISIGN',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
-                  ),
+              const Text(
+                'COMMUNISIGN',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2C3E50),
                 ),
               ),
 
               SizedBox(height: screenHeight * 0.25),
 
-              /// Password Recovery
-              Container(
-                width: screenWidth * 0.75,
-                height: screenHeight * 0.06,
-                alignment: Alignment.center,
-                child: const Text(
-                  'Password Recovery',
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xff2A405D),
-                  ),
+              const Text(
+                'Password Recovery',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff2A405D),
                 ),
               ),
 
               SizedBox(height: screenHeight * 0.02),
 
-              /// Description
               const Text(
                 'Enter your email',
                 style: TextStyle(
@@ -136,7 +128,6 @@ class ForgetPassState extends State<ForgetPass> {
 
               SizedBox(height: screenHeight * 0.015),
 
-              /// Email Field
               TextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -157,39 +148,37 @@ class ForgetPassState extends State<ForgetPass> {
 
               SizedBox(height: screenHeight * 0.03),
 
-              /// Send Button
-              SizedBox(
-                width: screenWidth * 0.45,
-                child: GestureDetector(
-                  onTap: _sendEmail,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF2ABC4E),
-                          Color(0xFF135624),
-                          Color(0xFF135624)
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Send',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+              isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: screenWidth * 0.45,
+                      child: GestureDetector(
+                        onTap: _sendEmail,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF2ABC4E),
+                                Color(0xFF135624),
+                                Color(0xFF135624)
+                              ],
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Send',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-
             ],
           ),
         ),
