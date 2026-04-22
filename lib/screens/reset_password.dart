@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:cominsign/lib/core/service/api-service.dart';
+
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
 
-  const ResetPasswordScreen({
-    super.key,
-    required this.email,
-  });
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -16,14 +16,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
 
-  void resetPassword() async {
+  bool isLoading = false;
 
+  void resetPassword() async {
     if (passwordController.text != confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match")),
       );
       return;
     }
+
+    setState(() => isLoading = true);
 
     try {
       await Service.resetPassword(
@@ -41,6 +44,23 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Invalid code or failed")),
+      );
+    }
+
+    setState(() => isLoading = false);
+  }
+
+  // 🔥 RESEND CODE
+  void resendCode() async {
+    try {
+      await Service.forgotPassword(widget.email);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Code resent")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to resend")),
       );
     }
   }
@@ -62,6 +82,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               decoration: const InputDecoration(labelText: "Enter Code"),
             ),
 
+            const SizedBox(height: 10),
+
+            TextButton(
+              onPressed: resendCode,
+              child: const Text("Resend Code"),
+            ),
+
             const SizedBox(height: 20),
 
             TextField(
@@ -80,14 +107,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
             const SizedBox(height: 40),
 
-            ElevatedButton(
-              onPressed: resetPassword,
-              child: const Text("Reset Password"),
-            )
-
+            isLoading
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: resetPassword,
+                    child: const Text("Reset Password"),
+                  ),
           ],
         ),
       ),
     );
   }
-}
+}ر
