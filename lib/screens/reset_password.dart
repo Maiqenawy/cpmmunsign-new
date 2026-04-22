@@ -1,15 +1,9 @@
-import 'package:cominsign/lib/core/service/api-service.dart';
-import 'package:flutter/material.dart';
-
 class ResetPasswordScreen extends StatefulWidget {
-
   final String email;
-  final String token;
 
   const ResetPasswordScreen({
     super.key,
     required this.email,
-    required this.token,
   });
 
   @override
@@ -18,25 +12,23 @@ class ResetPasswordScreen extends StatefulWidget {
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmController = TextEditingController();
+  final codeController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmController = TextEditingController();
 
   void resetPassword() async {
 
     if (passwordController.text != confirmController.text) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match")),
       );
-
       return;
     }
 
     try {
-
       await Service.resetPassword(
         email: widget.email,
-        token: widget.token,
+        code: codeController.text,
         newPassword: passwordController.text,
       );
 
@@ -47,11 +39,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       Navigator.pop(context);
 
     } catch (e) {
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Reset failed")),
+        const SnackBar(content: Text("Invalid code or failed")),
       );
-
     }
   }
 
@@ -59,24 +49,25 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-
-      appBar: AppBar(
-        title: const Text("Reset Password"),
-      ),
+      appBar: AppBar(title: const Text("Reset Password")),
 
       body: Padding(
         padding: const EdgeInsets.all(24),
 
         child: Column(
-
           children: [
+
+            TextField(
+              controller: codeController,
+              decoration: const InputDecoration(labelText: "Enter Code"),
+            ),
+
+            const SizedBox(height: 20),
 
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "New Password",
-              ),
+              decoration: const InputDecoration(labelText: "New Password"),
             ),
 
             const SizedBox(height: 20),
@@ -84,9 +75,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             TextField(
               controller: confirmController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: "Confirm Password",
-              ),
+              decoration: const InputDecoration(labelText: "Confirm Password"),
             ),
 
             const SizedBox(height: 40),
