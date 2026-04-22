@@ -44,17 +44,20 @@ class Service {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    } else {
-      final data = jsonDecode(response.body);
+    }else {
+  final data = jsonDecode(response.body);
 
-      // لو السيرفر بيرجع errors
-      if (data is Map && data.containsKey("errors")) {
-        final errors = data["errors"];
-        return Future.error(errors.toString());
-      }
+  if (data is String) {
+    return Future.error(data); // 🔥 الحل
+  }
 
-      return Future.error(data["message"] ?? "Register failed");
-    }
+  if (data is Map && data.containsKey("errors")) {
+    final errors = data["errors"];
+    return Future.error(errors.toString());
+  }
+
+  return Future.error(data["message"] ?? "Register failed");
+}
   } on SocketException {
     return Future.error("No internet connection");
   } catch (e) {
