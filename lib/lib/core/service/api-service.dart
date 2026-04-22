@@ -94,44 +94,43 @@ class Service {
     }
   }
 
-  // ================= FORGOT PASSWORD =================
-  static Future forgotPassword(String email) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/forgot-password"),
-      headers: headers,
-      body: jsonEncode({"email": email}),
-    );
+ // FORGOT PASSWORD
+static Future forgotPassword(String email) async {
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/forgot-password"),
+    headers: headers,
+    body: jsonEncode({"email": email}),
+  );
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception("Failed to send email");
-    }
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception("Failed to send code");
   }
+}
 
-  // ================= RESET PASSWORD =================
-  static Future resetPassword({
-    required String email,
-    required String token,
-    required String newPassword,
-  }) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/reset-password"),
-      headers: headers,
-      body: jsonEncode({
-        "email": email,
-        "token": token,
-        "newPassword": newPassword,
-      }),
-    );
+// RESET PASSWORD
+static Future resetPassword({
+  required String email,
+  required String code,
+  required String newPassword,
+}) async {
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/reset-password"),
+    headers: headers,
+    body: jsonEncode({
+      "email": email,
+      "code": code,
+      "newPassword": newPassword,
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception("Reset failed");
-    }
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception("Reset failed");
   }
-
+}
   // ================= CONTACTS =================
   static Future<List> getContacts(String token) async {
     var res = await http.get(
