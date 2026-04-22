@@ -27,6 +27,7 @@ void main() async {
   final isDark = prefs.getBool('dark_mode') ?? false;
 
   const language = 'English';
+  await AppLang.load('English');
 
   runApp(MyApp(isDarkMode: isDark, language: language));
 }
