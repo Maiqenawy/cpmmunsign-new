@@ -41,7 +41,33 @@ class MyApp extends StatefulWidget {
   @override
   State<MyApp> createState() => _MyAppState();
 }
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: AppLang.notifier,
+      builder: (context, locale, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
 
+          locale: locale, // 🔥 هنا
+
+          builder: (context, child) {
+            return Directionality(
+              textDirection:
+                  locale.languageCode == 'ar'
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+              child: child!,
+            );
+          },
+
+          home: const HomeScreen(),
+        );
+      },
+    );
+  }
+}
 class _MyAppState extends State<MyApp> {
 
   late bool isDarkMode;
