@@ -19,7 +19,7 @@ class Service {
   }
 
   // ================= REGISTER =================
- static Future register({
+رstatic Future register({
   required String name,
   required String email,
   required String password,
@@ -44,25 +44,32 @@ class Service {
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    }else {
-  final data = jsonDecode(response.body);
+    } else {
+      dynamic data;
 
-  if (data is String) {
-    return Future.error(data); // 🔥 الحل
-  }
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {
+        // 🔥 لو مش JSON
+        return Future.error(response.body);
+      }
 
-  if (data is Map && data.containsKey("errors")) {
-    final errors = data["errors"];
-    return Future.error(errors.toString());
-  }
+      if (data is String) {
+        return Future.error(data);
+      }
 
-  return Future.error(data["message"] ?? "Register failed");
-}
+      if (data is Map && data.containsKey("errors")) {
+        return Future.error(data["errors"].toString());
+      }
+
+      return Future.error(data["message"] ?? "Register failed");
+    }
   } on SocketException {
     return Future.error("No internet connection");
   } catch (e) {
-  print("ERROR: $e");
-  return Future.error(e.toString());
+    print("ERROR: $e");
+    return Future.error("Something went wrong");
+  }
 }
   // ================= LOGIN =================
   static Future login({
