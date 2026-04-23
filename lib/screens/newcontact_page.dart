@@ -17,7 +17,7 @@ class _NewContactPageState extends State<NewContactPage> {
 
   List results = [];
   int? selectedUserId;
-
+String token = UserSession.token;
   bool isLoading = false;
 
   @override
