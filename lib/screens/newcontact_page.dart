@@ -49,7 +49,7 @@ String token = UserSession.token;
     setState(() => isLoading = true);
 
     try {
-      final data = await Service.searchUser(email.text.trim()); // ✅ بدون توكن
+      final data = await Service.searchUser(email.text.trim(), token);
 
       print("RESULT: $data"); // 🔥 Debug
 
