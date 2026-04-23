@@ -17,7 +17,6 @@ class _NewContactPageState extends State<NewContactPage> {
 
   List results = [];
   int? selectedUserId;
-  String token = UserSession.token;;
 
   bool isLoading = false;
 
@@ -50,10 +49,13 @@ class _NewContactPageState extends State<NewContactPage> {
     setState(() => isLoading = true);
 
     try {
-      final data = await Service.searchUser(email.text, token);
+      final data = await Service.searchUser(email.text.trim()); // ✅ بدون توكن
+
+      print("RESULT: $data"); // 🔥 Debug
+
       setState(() => results = data);
     } catch (e) {
-      print(e);
+      print("ERROR: $e");
     }
 
     setState(() => isLoading = false);
@@ -73,12 +75,16 @@ class _NewContactPageState extends State<NewContactPage> {
     try {
       if (widget.contact == null) {
         await Service.addContact(
-            selectedUserId!, relation.text, token);
+          selectedUserId!,
+          relation.text.trim(),
+          UserSession.token, // ✅ هنا التوكن مطلوب
+        );
       } else {
         await Service.updateContact(
-            widget.contact["contactId"],
-            relation.text,
-            token);
+          widget.contact["contactId"],
+          relation.text.trim(),
+          UserSession.token,
+        );
       }
 
       Navigator.pop(context);
@@ -155,6 +161,10 @@ class _NewContactPageState extends State<NewContactPage> {
                 ], cs),
 
                 const SizedBox(height: 15),
+
+                // 🔥 لو مفيش نتائج
+                if (results.isEmpty && !isLoading)
+                  const Text("No user found"),
 
                 // نتائج البحث
                 ...results.map((u) => _card([
