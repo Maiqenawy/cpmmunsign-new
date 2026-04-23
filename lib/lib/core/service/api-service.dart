@@ -169,14 +169,24 @@ static Future resetPassword({
     );
   }
 
-  static Future<List> searchUser(String email, String token) async {
-    var res = await http.get(
-      Uri.parse("$baseUrl/contact/search?email=$email"),
-      headers: headersWithAuth(),
-    );
+static Future searchUser(String email, String token) async {
+  var response = await http.get(
+    Uri.parse("$baseUrl/Contact/search?email=$email"),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token", // 🔥 أهم سطر
+    },
+  );
 
-    return jsonDecode(res.body);
+  print("STATUS: ${response.statusCode}");
+  print("BODY: ${response.body}");
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception("Search failed");
   }
+}
 
   // ================= SETTINGS =================
   static Future<Map> getSettings() async {
