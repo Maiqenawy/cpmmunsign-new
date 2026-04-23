@@ -19,7 +19,7 @@ class _NewContactPageState extends State<NewContactPage> {
   int? selectedUserId;
 String token = UserSession.token;
   bool isLoading = false;
-
+bool hasSearched = false;
   @override
   void initState() {
     super.initState();
@@ -46,7 +46,7 @@ String token = UserSession.token;
       return;
     }
 
-    setState(() => isLoading = true);
+    setState(() => isLoading = true; hasSearched = true; );
 
     try {
       final data = await Service.searchUser(email.text.trim(), token);
@@ -163,8 +163,8 @@ String token = UserSession.token;
                 const SizedBox(height: 15),
 
                 // 🔥 لو مفيش نتائج
-                if (results.isEmpty && !isLoading)
-                  const Text("No user found"),
+             if (results.isEmpty && !isLoading && hasSearched)
+  const Text("No user found"),
 
                 // نتائج البحث
                 ...results.map((u) => _card([
