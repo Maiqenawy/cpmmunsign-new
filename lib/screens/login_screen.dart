@@ -7,7 +7,7 @@ import 'package:cominsign/screens/home.dart';
 import 'package:cominsign/screens/forget_pass.dart';
 import 'package:cominsign/screens/signUp.dart';
 import 'package:cominsign/widgets/gradient_background.dart';
-
+import 'package:firebase_messaging/firebase_messaging.dart';
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
 
@@ -235,14 +235,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               password: _passwordController.text.trim(),
                             );
 
-                            await UserSession.saveToken(data["token"]);
-                            UserSession.isGuest = false;
+                          await UserSession.saveToken(data["token"]);
+UserSession.isGuest = false;
 
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()),
-                            );
+// 🔥 1. نجيب FCM Token
+String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+print("FCM TOKEN: $fcmToken");
+
+// 🔥 2. نبعته للسيرفر
+if (fcmToken != null) {
+  await Service.updateDeviceToken(fcmToken);
+}
+
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(builder: (_) => const HomeScreen()),
+);
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
