@@ -42,28 +42,32 @@ class Service {
     print("STATUS: ${response.statusCode}");
     print("BODY: ${response.body}");
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      dynamic data;
+   if (response.statusCode == 200) {
+  if (response.body.isEmpty) return {};
+  return jsonDecode(response.body);
+} else {
+  if (response.body.isEmpty) {
+    return Future.error("Server error");
+  }
 
-      try {
-        data = jsonDecode(response.body);
-      } catch (_) {
-        // 🔥 لو مش JSON
-        return Future.error(response.body);
-      }
+  dynamic data;
 
-      if (data is String) {
-        return Future.error(data);
-      }
+  try {
+    data = jsonDecode(response.body);
+  } catch (_) {
+    return Future.error(response.body);
+  }
 
-      if (data is Map && data.containsKey("errors")) {
-        return Future.error(data["errors"].toString());
-      }
+  if (data is String) {
+    return Future.error(data);
+  }
 
-      return Future.error(data["message"] ?? "Register failed");
-    }
+  if (data is Map && data.containsKey("errors")) {
+    return Future.error(data["errors"].toString());
+  }
+
+  return Future.error(data["message"] ?? "Register failed");
+}
   } on SocketException {
     return Future.error("No internet connection");
   } catch (e) {
@@ -174,9 +178,24 @@ static Future searchUser(String email, String token) async {
     Uri.parse("$baseUrl/Contact/search?email=$email"),
     headers: {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $token", // 🔥 أهم سطر
+      "Authorization": "Bearer $token",
     },
   );
+
+  print("STATUS: ${response.statusCode}");
+  print("BODY: ${response.body}");
+
+  // ✅ أهم سطرين
+  if (response.body.isEmpty) {
+    return [];
+  }
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    return [];
+  }
+}
 
   print("STATUS: ${response.statusCode}");
   print("BODY: ${response.body}");
