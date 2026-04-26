@@ -226,17 +226,23 @@ static Future searchUser(String email, String token) async {
 
   // ✅ FIXED sendSOS (NO duplicate location)
   static Future sendSOS({
-    required int pictogramId,
-    required String location,
-  }) async {
-    await http.post(
-      Uri.parse("$baseUrl/emergency/send-sos/$pictogramId"),
-      headers: headersWithAuth(),
-      body: jsonEncode({
-        "location": location,
-      }),
-    );
+  required int pictogramId,
+  required String location,
+}) async {
+  var response = await http.post(
+    Uri.parse("$baseUrl/Emergency/send-sos/$pictogramId"),
+    headers: headersWithAuth(),
+    body: jsonEncode({
+      "location": location,
+    }),
+  );
+
+  print("SOS RESPONSE: ${response.body}");
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to send SOS");
   }
+}
 
   // ================= FIREBASE TOKEN =================
   static Future updateDeviceToken(String fcmToken) async {
