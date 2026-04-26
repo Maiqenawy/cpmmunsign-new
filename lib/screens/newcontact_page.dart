@@ -1,68 +1,87 @@
+import 'package:cominsign_new/core/service/api-service.dart';
+import 'package:cominsign_new/core/user_session.dart';
 import 'package:flutter/material.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
-import 'package:cominsign/lib/core/user_session.dart';
 import '../widgets/gradient_background.dart';
 
 class NewContactPage extends StatefulWidget {
   final dynamic contact;
+
   const NewContactPage({super.key, this.contact});
 
   @override
-  State<NewContactPage> createState() => _NewContactPageState();
+  State<NewContactPage> createState() =>
+      _NewContactPageState();
 }
 
 class _NewContactPageState extends State<NewContactPage> {
-  TextEditingController email = TextEditingController();
-  TextEditingController relation = TextEditingController();
+  final TextEditingController email = TextEditingController();
+  final TextEditingController relation = TextEditingController();
 
   List results = [];
   int? selectedUserId;
-String token = UserSession.token;
+
+  String? token = UserSession.token;
+
   bool isLoading = false;
-bool hasSearched = false;
+  bool hasSearched = false;
+
   @override
   void initState() {
     super.initState();
 
     if (widget.contact != null) {
       relation.text = widget.contact["relation"] ?? "";
-      email.text = widget.contact["email"];
+      email.text = widget.contact["email"] ?? "";
       selectedUserId = widget.contact["contactUserId"];
     }
   }
 
+  @override
+  void dispose() {
+    email.dispose();
+    relation.dispose();
+    super.dispose();
+  }
+
   // ================= SEARCH =================
   Future<void> search() async {
-    if (email.text.isEmpty) return;
+    if (email.text.trim().isEmpty) return;
 
-    // 🔥 منع إضافة نفسك
     if (email.text.trim().toLowerCase() ==
-        UserSession.email.toLowerCase()) {
+        UserSession.email?.toLowerCase()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("You can't add yourself"),
-        ),
+        const SnackBar(content: Text("You can't add yourself")),
       );
       return;
     }
 
-    setState(() => isLoading = true; hasSearched = true; );
+    setState(() {
+      isLoading = true;
+      hasSearched = true;
+    });
 
     try {
-      final data = await Service.searchUser(email.text.trim(), token);
+      final data = await Service.searchUser(
+        email.text.trim(),
+        token!,
+      );
 
-      print("RESULT: $data"); // 🔥 Debug
-
-      setState(() => results = data);
+      setState(() {
+        results = data;
+      });
     } catch (e) {
-      print("ERROR: $e");
+      debugPrint("SEARCH ERROR: $e");
     }
 
-    setState(() => isLoading = false);
+    setState(() {
+      isLoading = false;
+    });
   }
 
   // ================= SAVE =================
   Future<void> save() async {
+    if (token == null) return;
+
     if (widget.contact == null && selectedUserId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Select user first")),
@@ -77,19 +96,19 @@ bool hasSearched = false;
         await Service.addContact(
           selectedUserId!,
           relation.text.trim(),
-          UserSession.token, // ✅ هنا التوكن مطلوب
+          token!,
         );
       } else {
         await Service.updateContact(
           widget.contact["contactId"],
           relation.text.trim(),
-          UserSession.token,
+          token!,
         );
       }
 
       Navigator.pop(context);
     } catch (e) {
-      print(e);
+      debugPrint("SAVE ERROR: $e");
     }
 
     setState(() => isLoading = false);
@@ -106,18 +125,15 @@ bool hasSearched = false;
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // 🔥 Header
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Text(
                         "Cancel",
-                        style: TextStyle(
-                          color: cs.primary,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: cs.primary),
                       ),
                     ),
                     Text(
@@ -145,7 +161,6 @@ bool hasSearched = false;
 
                 const SizedBox(height: 30),
 
-                // 🔍 Search Card
                 _card([
                   TextField(
                     controller: email,
@@ -162,19 +177,19 @@ bool hasSearched = false;
 
                 const SizedBox(height: 15),
 
-                // 🔥 لو مفيش نتائج
-             if (results.isEmpty && !isLoading && hasSearched)
-  const Text("No user found"),
+                if (results.isEmpty &&
+                    !isLoading &&
+                    hasSearched)
+                  const Text("No user found"),
 
-                // نتائج البحث
                 ...results.map((u) => _card([
                       ListTile(
-                        title: Text(u["name"]),
-                        subtitle: Text(u["email"]),
+                        title: Text(u["name"] ?? ""),
+                        subtitle: Text(u["email"] ?? ""),
                         onTap: () {
                           setState(() {
                             selectedUserId = u["id"];
-                            email.text = u["email"];
+                            email.text = u["email"] ?? "";
                             results.clear();
                           });
                         },
@@ -183,7 +198,6 @@ bool hasSearched = false;
 
                 const SizedBox(height: 15),
 
-                // Relation
                 _card([
                   TextField(
                     controller: relation,
@@ -196,7 +210,8 @@ bool hasSearched = false;
 
                 const SizedBox(height: 20),
 
-                if (isLoading) const CircularProgressIndicator(),
+                if (isLoading)
+                  const CircularProgressIndicator(),
               ],
             ),
           ),

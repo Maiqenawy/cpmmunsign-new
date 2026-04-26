@@ -1,10 +1,8 @@
+import 'package:cominsign_new/core/service/api-service.dart';
+import 'package:cominsign_new/core/user_session.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
-import 'package:cominsign/lib/core/user_session.dart';
-import 'login_screen.dart';
 import 'Level_screen.dart';
-
 
 class Learning extends StatefulWidget {
   const Learning({super.key});
@@ -22,18 +20,31 @@ class _LearningState extends State<Learning> {
   void initState() {
     super.initState();
 
-    // ✅ CHECK LOGIN
     if (!UserSession.isLoggedIn) {
       Future.microtask(() {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
+        _showLoginWarning();
       });
-      return;
     }
 
     loadData();
+  }
+
+  void _showLoginWarning() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Login Required"),
+        content: const Text(
+          "You are using the app as a guest.\nSome features may be limited.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future loadData() async {
@@ -48,85 +59,86 @@ class _LearningState extends State<Learning> {
   }
 
   bool isLocked(int levelId) {
-    return !userLevels.any(
-      (u) => u["levelId"] == levelId && u["isUnlocked"],
-    );
+    return !userLevels.any((u) => u["levelId"] == levelId && u["isUnlocked"]);
   }
 
   @override
   Widget build(BuildContext context) {
-
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(),
-      body: GradientBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
+      body: Stack(
+        children: [
+          // ⭐ FULL SCREEN BACKGROUND
+          Positioned.fill(
+            child: GradientBackground(child: const SizedBox.expand()),
+          ),
 
-                const Text(
-                  'COMMUNISIGN',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2C3E50),
+          // ⭐ CONTENT
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'COMMUNISIGN',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: levels.map((level) {
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: levels.map((level) {
+                        final locked = isLocked(level["levelId"]);
 
-                      final locked = isLocked(level["levelId"]);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: LevelCard(
-                          levelName: level["name"],
-                          coins: level["requiredCoins"],
-                          isLocked: locked,
-                          gradientColors: const [
-                            Color(0xFF80CBC4),
-                            Color(0xFF4DB6AC),
-                          ],
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => LevelScreen(
-                                  levelId: level["levelId"],
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: LevelCard(
+                            levelName: level["name"],
+                            coins: level["requiredCoins"],
+                            isLocked: locked,
+                            gradientColors: const [
+                              Color(0xFF80CBC4),
+                              Color(0xFF4DB6AC),
+                            ],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      LevelScreen(levelId: level["levelId"]),
                                 ),
-                              ),
-                            ).then((_) => loadData());
-                          },
-                        ),
-                      );
-                    }).toList(),
+                              ).then((_) => loadData());
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 30),
-              ],
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 ///////////////////////////////////////////////////////
-/// ⭐ LEVEL CARD (FIXED - NO ERROR)
+/// ⭐ LEVEL CARD
 ///////////////////////////////////////////////////////
 
 class LevelCard extends StatelessWidget {
@@ -153,9 +165,7 @@ class LevelCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isLocked
-                ? [Colors.grey, Colors.grey]
-                : gradientColors,
+            colors: isLocked ? [Colors.grey, Colors.grey] : gradientColors,
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
@@ -163,7 +173,7 @@ class LevelCard extends StatelessWidget {
               color: Colors.black26,
               blurRadius: 6,
               offset: Offset(0, 3),
-            )
+            ),
           ],
         ),
         child: Row(
@@ -177,14 +187,12 @@ class LevelCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             Row(
               children: [
                 if (isLocked)
                   const Icon(Icons.lock, color: Colors.white)
                 else ...[
-                  const Icon(Icons.monetization_on,
-                      color: Colors.yellow),
+                  const Icon(Icons.monetization_on, color: Colors.yellow),
                   const SizedBox(width: 5),
                   Text(
                     '$coins',

@@ -5,8 +5,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
-<body>
-<video id="video" autoplay playsinline></video>
+<body style="margin:0; overflow:hidden;">
+<video id="video" autoplay playsinline style="display:none;"></video>
 
 <script>
 const video = document.getElementById("video");
@@ -20,42 +20,49 @@ const holistic = new Holistic({
 holistic.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
+  enableSegmentation: false,
+  refineFaceLandmarks: false
 });
 
-holistic.onResults(results => {
+// ================= FIXED FRAME HANDLER =================
+holistic.onResults((results) => {
+
   let keypoints = [];
 
-  // pose (132)
+  // ================= POSE (33 landmarks × 4 = 132) =================
   if (results.poseLandmarks) {
     results.poseLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z, lm.visibility);
     });
   } else {
-    for (let i = 0; i < 132; i++) keypoints.push(0);
+    keypoints.push(...Array(132).fill(0));
   }
 
-  // left hand (63)
+  // ================= LEFT HAND (21 × 3 = 63) =================
   if (results.leftHandLandmarks) {
     results.leftHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
   } else {
-    for (let i = 0; i < 63; i++) keypoints.push(0);
+    keypoints.push(...Array(63).fill(0));
   }
 
-  // right hand (63)
+  // ================= RIGHT HAND (21 × 3 = 63) =================
   if (results.rightHandLandmarks) {
     results.rightHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
   } else {
-    for (let i = 0; i < 63; i++) keypoints.push(0);
+    keypoints.push(...Array(63).fill(0));
   }
 
-  // 🔥 إرسال للفلاتر
-SignChannel.postMessage(JSON.stringify(keypoints));
+  // ================= THROTTLE (IMPORTANT) =================
+  if (window.flutterReady) {
+    SignChannel.postMessage(JSON.stringify(keypoints));
+  }
 });
 
+// ================= CAMERA =================
 const camera = new Camera(video, {
   onFrame: async () => {
     await holistic.send({ image: video });
@@ -65,6 +72,11 @@ const camera = new Camera(video, {
 });
 
 camera.start();
+
+// 🔥 prevent overload to Flutter
+setTimeout(() => {
+  window.flutterReady = true;
+}, 500);
 </script>
 
 </body>

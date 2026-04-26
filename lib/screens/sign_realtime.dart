@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
 
 class SignRealtime extends StatefulWidget {
   const SignRealtime({super.key});
@@ -11,12 +11,14 @@ class SignRealtime extends StatefulWidget {
 }
 
 class _SignRealtimeState extends State<SignRealtime> {
-
   late final WebViewController controller;
 
   List<List<double>> frameBuffer = [];
   String sentence = "";
   String lastWord = "";
+
+  List<String> predictions = [];
+  bool isSending = false;
 
   @override
   void initState() {
@@ -27,9 +29,12 @@ class _SignRealtimeState extends State<SignRealtime> {
       ..addJavaScriptChannel(
         "SignChannel",
         onMessageReceived: (message) {
-          List<dynamic> data = jsonDecode(message.message);
-          List<double> keypoints =
-              data.map((e) => e.toDouble()).toList();
+          final List<dynamic> data = jsonDecode(message.message);
+
+          // ✅ FIX: proper conversion to List<double>
+          final List<double> keypoints = List<double>.from(
+            data.map((e) => (e as num).toDouble()),
+          );
 
           onNewFrame(keypoints);
         },
@@ -37,49 +42,58 @@ class _SignRealtimeState extends State<SignRealtime> {
       ..loadFlutterAsset("assets/mediapipe.html");
   }
 
-  List<String> predictions = [];
-     bool isSending = false;
+  void onNewFrame(List<double> keypoints) async {
+    frameBuffer.add(keypoints);
 
-void onNewFrame(List<double> keypoints) async {
-  frameBuffer.add(keypoints);
-
-  if (frameBuffer.length > 30) {
-    frameBuffer.removeAt(0);
-  }
-
-  if (frameBuffer.length == 30 && !isSending) {
-    isSending = true;
-
-    try {
-      final word = await Service.sendFrames(frameBuffer);
-
-      // 🔥 نخزن النتائج
-      predictions.add(word);
-
-      if (predictions.length > 5) {
-        predictions.removeAt(0);
-      }
-
-      // 🔥 لو الكلمة ثابتة 5 مرات
-      bool isStable = predictions.every((w) => w == word);
-
-      if (isStable && word != lastWord) {
-        setState(() {
-          sentence += " $word";
-          lastWord = word;
-        });
-
-        predictions.clear(); // reset بعد الإضافة
-      }
-
-    } catch (e) {
-      print(e);
+    if (frameBuffer.length > 30) {
+      frameBuffer.removeAt(0);
     }
 
-    await Future.delayed(const Duration(milliseconds: 700)); // ⏱️ توازن السرعة
-    isSending = false;
+    if (frameBuffer.length == 30 && !isSending) {
+      isSending = true;
+
+      try {
+        final word = await Service.sendFrames(frameBuffer);
+
+        // 🔥 store predictions (sliding window)
+        predictions.add(word);
+
+        if (predictions.length > 7) {
+          predictions.removeAt(0);
+        }
+
+        // ===============================
+        // ✅ IMPROVED STABILITY LOGIC
+        // majority voting instead of strict equality
+        // ===============================
+        final Map<String, int> freq = {};
+
+        for (var w in predictions) {
+          freq[w] = (freq[w] ?? 0) + 1;
+        }
+
+        String bestWord = freq.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key;
+
+        bool isStable = freq[bestWord]! >= 4; // threshold (adjustable)
+
+        if (isStable && bestWord != lastWord) {
+          setState(() {
+            sentence += " $bestWord";
+            lastWord = bestWord;
+          });
+
+          predictions.clear();
+        }
+      } catch (e) {
+        print("ERROR: $e");
+      }
+
+      await Future.delayed(const Duration(milliseconds: 500));
+      isSending = false;
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +102,6 @@ void onNewFrame(List<double> keypoints) async {
 
       body: Column(
         children: [
-
           Expanded(
             flex: 2,
             child: WebViewWidget(controller: controller),

@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 
-
 class LevelCompleteScreen extends StatefulWidget {
   final int level;
   final int coinsEarned;
 
   const LevelCompleteScreen({
-    Key? key,
+    super.key,
     this.level = 1,
     required this.coinsEarned,
-  }) : super(key: key);
+  });
 
   @override
   State<LevelCompleteScreen> createState() => _LevelCompleteScreenState();
@@ -31,11 +30,14 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
       vsync: this,
     )..repeat();
 
-    /// 🔊 تشغيل الصوت مرة واحدة مع الأنيميشن
     player.setReleaseMode(ReleaseMode.stop);
 
     Future.delayed(const Duration(milliseconds: 300), () {
-      player.play(AssetSource('sounds/freesound_community-success-1-6297.mp3'));
+      player.play(
+        AssetSource(
+          'sounds/freesound_community-success-1-6297.mp3',
+        ),
+      );
     });
   }
 
@@ -49,8 +51,9 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -64,6 +67,7 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
         ),
         child: SafeArea(
           child: Stack(
+            alignment: Alignment.center,
             children: [
               /// 🎉 Confetti
               ...List.generate(20, (index) {
@@ -75,28 +79,25 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
 
               /// 📱 المحتوى
               Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
-
                   const Text(
                     'COMMUNISIGN',
                     style: TextStyle(
                       color: Color(0xFF2C5F7C),
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
                     ),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 40),
 
-                  /// 🏅 الدائرة (الليفل)
+                  /// 🖼️ الصورة بدل الدائرة
                   Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
+                    width: 180,
+                    height: 180,
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.amber,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
@@ -105,68 +106,57 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: Text(
-                        '${widget.level}',
-                        style: const TextStyle(
-                          fontSize: 60,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'images/download (10).png',
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  /// 💰 الكوينز
                   Text(
                     'You earned ${widget.coinsEarned} coins!',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 22,
+                      color: Color(0xFF2C5F7C),
                       fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'Yay! Level up!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
                       color: Color(0xFF2C5F7C),
                     ),
                   ),
 
                   const SizedBox(height: 40),
 
-                  const Text(
-                    'Yay! Level up!',
-                    style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C5F7C),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  /// 🔘 زرار Continue
-                  Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C5F7C),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 60,
-                          vertical: 18,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        elevation: 5,
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2C5F7C),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 60,
+                        vertical: 16,
                       ),
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -180,22 +170,22 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
   }
 }
 
-/// 🎉 الكونفيتي
+/// 🎉 Confetti
 class FloatingConfetti extends StatelessWidget {
   final AnimationController controller;
   final int index;
 
   const FloatingConfetti({
-    Key? key,
+    super.key,
     required this.controller,
     required this.index,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final random = math.Random(index);
     final startX = random.nextDouble();
-    final size = 20 + random.nextDouble() * 30;
+
     final colors = [
       Colors.pink,
       Colors.blue,
@@ -203,7 +193,6 @@ class FloatingConfetti extends StatelessWidget {
       Colors.green,
       Colors.orange
     ];
-    final color = colors[index % colors.length];
 
     return AnimatedBuilder(
       animation: controller,
@@ -213,16 +202,15 @@ class FloatingConfetti extends StatelessWidget {
         final screenHeight = MediaQuery.of(context).size.height;
 
         return Positioned(
-          left: startX * screenWidth +
-              math.sin(progress * math.pi * 2) * 30,
+          left: startX * screenWidth,
           top: progress * screenHeight,
           child: Transform.rotate(
             angle: progress * math.pi * 4,
             child: Container(
-              width: size,
-              height: size * 0.4,
+              width: 20,
+              height: 8,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.8),
+                color: colors[index % colors.length].withOpacity(0.8),
                 borderRadius: BorderRadius.circular(5),
               ),
             ),

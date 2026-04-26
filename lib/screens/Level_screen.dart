@@ -1,5 +1,5 @@
+import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:flutter/material.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
 import 'complete_level.dart';
 import '../widgets/gradient_background.dart';
 
@@ -13,7 +13,6 @@ class LevelScreen extends StatefulWidget {
 }
 
 class _LevelScreenState extends State<LevelScreen> {
-
   List words = [];
   bool loading = true;
   int coins = 0;
@@ -34,8 +33,7 @@ class _LevelScreenState extends State<LevelScreen> {
   }
 
   Future onWordTap(Map word) async {
-
-    if(word["isLearned"] == true) return;
+    if (word["isLearned"] == true) return;
 
     final res = await Service.updateProgress(
       word["learningWordId"],
@@ -46,11 +44,9 @@ class _LevelScreenState extends State<LevelScreen> {
       coins = res["coins"];
     });
 
-    final check =
-        await Service.checkLevelCompletion(widget.levelId);
+    final check = await Service.checkLevelCompletion(widget.levelId);
 
-    if(check["completed"]){
-
+    if (check["completed"]) {
       await Service.unlockNextLevel(widget.levelId);
 
       Navigator.push(
@@ -67,21 +63,21 @@ class _LevelScreenState extends State<LevelScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-    if(loading){
+    if (loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     final learnedCount =
-        words.where((w)=>w["isLearned"]==true).length;
+        words.where((w) => w["isLearned"] == true).length;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true, // 🔥 مهم
+      backgroundColor: Colors.transparent,
 
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -94,89 +90,77 @@ class _LevelScreenState extends State<LevelScreen> {
         ),
       ),
 
-      body: Column(
-        children: [
+      body: GradientBackground(
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
 
-          /// 💰 coins
-          Padding(
-            padding: const EdgeInsets.only(right:16,top:8),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Column(
-                children:[
-                  Image.asset('images/download (8).png',
-                      width:40,height:40),
-                  Text('$coins',
+            /// 💰 coins
+            Padding(
+              padding: const EdgeInsets.only(right: 16, top: 8),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Column(
+                  children: [
+                    Image.asset('images/download (8).png',
+                        width: 40, height: 40),
+                    Text(
+                      '$coins',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2C5F7C),
-                      )),
-                ],
-              ),
-            ),
-          ),
-
-          /// 🤖 avatar
-          SizedBox(
-            height: 220,
-            child: Image.asset(
-              'images/download (9).png',
-              height: 220,
-            ),
-          ),
-
-          const SizedBox(height:6),
-
-          /// progress
-          Text(
-            'Progress: $learnedCount / ${words.length}',
-            style: const TextStyle(
-                fontSize:14,color: Color(0xFF2C5F7C)),
-          ),
-
-          const SizedBox(height:6),
-
-          Expanded(
-            child: GradientBackground(
-              child: Column(
-                children: [
-
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: GridView.count(
-                        physics:
-                        const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 15,
-                        crossAxisSpacing: 15,
-                        childAspectRatio: 2,
-
-                        children: words.map((w){
-
-                          return PhraseCard(
-                            text: w["text"],
-                            isLearned: w["isLearned"],
-                            onTap: ()=>onWordTap(w),
-                          );
-
-                        }).toList(),
                       ),
                     ),
-                  ),
-
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+
+            /// 🤖 avatar
+            SizedBox(
+              height: 220,
+              child: Image.asset('images/download (9).png'),
+            ),
+
+            const SizedBox(height: 6),
+
+            /// progress
+            Text(
+              'Progress: $learnedCount / ${words.length}',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF2C5F7C),
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 15,
+                  crossAxisSpacing: 15,
+                  childAspectRatio: 2,
+                  children: words.map((w) {
+                    return PhraseCard(
+                      text: w["text"],
+                      isLearned: w["isLearned"],
+                      onTap: () => onWordTap(w),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class PhraseCard extends StatelessWidget {
-
   final String text;
   final bool isLearned;
   final VoidCallback onTap;
@@ -190,23 +174,24 @@ class PhraseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
-      onTap:onTap,
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: isLearned ? Colors.green : Colors.white,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
-          child: Text(text,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize:15,
-                color: isLearned
-                    ? Colors.white
-                    : const Color(0xFF2C5F7C),
-              )),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: isLearned
+                  ? Colors.white
+                  : const Color(0xFF2C5F7C),
+            ),
+          ),
         ),
       ),
     );

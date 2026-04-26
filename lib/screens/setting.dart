@@ -1,7 +1,8 @@
+
+import 'package:cominsign_new/core/app_lang.dart';
+import 'package:cominsign_new/core/user_session.dart';
 import 'package:flutter/material.dart';
-import 'package:cominsign/core/app_lang.dart';
 import '../widgets/gradient_background.dart';
-import 'package:cominsign/lib/core/user_session.dart';
 import 'contacts_page.dart';
 import 'login_screen.dart';
 
@@ -26,73 +27,66 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late bool isDarkMode;
   late String selectedLanguage;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ PROTECT PAGE
-    if (!UserSession.isLoggedIn) {
-      Future.microtask(() {
+    selectedLanguage = widget.selectedLanguage;
+
+    // ✅ FIX: safe navigation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!UserSession.isLoggedIn) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
-      });
-      return;
-    }
-
-    isDarkMode = widget.isDarkMode;
-    selectedLanguage = widget.selectedLanguage;
+      }
+    });
   }
 
 String t(String key) => AppLang.t(key);
 
-  Color get textColor => isDarkMode ? Colors.white : Colors.black;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
-  Color get iconBg => isDarkMode
+  Color get textColor => _isDark ? Colors.white : Colors.black;
+
+  Color get iconBg => _isDark
       ? const Color.fromRGBO(255, 255, 255, 0.20)
       : const Color.fromRGBO(0, 0, 0, 0.08);
 
-  Color get dividerColor => isDarkMode
+  Color get dividerColor => _isDark
       ? const Color.fromRGBO(255, 255, 255, 0.30)
       : const Color.fromRGBO(0, 0, 0, 0.30);
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<int>(
+    return ValueListenableBuilder<Locale>(
       valueListenable: AppLang.notifier,
       builder: (_, __, ___) {
         return Scaffold(
           body: GradientBackground(
             child: SafeArea(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                     _buildUserProfile(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                     _buildDivider(),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 30),
                     _buildPreferencesTitle(),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     _buildLanguageOption(),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
                     _buildDarkModeOption(),
-                    const SizedBox(height: 30),
-
-                    // ✅ CONTACTS
+                    const SizedBox(height: 20),
                     _buildContactsOption(),
-
-                    const SizedBox(height: 40),
-
-                    // ✅ LOGOUT
+                    const SizedBox(height: 30),
                     _buildLogoutButton(),
                   ],
                 ),
@@ -104,7 +98,6 @@ String t(String key) => AppLang.t(key);
     );
   }
 
-  // ================= HEADER =================
   Widget _buildHeader() {
     return Row(
       children: [
@@ -114,7 +107,7 @@ String t(String key) => AppLang.t(key);
           t('settings'),
           style: TextStyle(
             color: textColor,
-            fontSize: 32,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -122,22 +115,20 @@ String t(String key) => AppLang.t(key);
     );
   }
 
-  // ================= PROFILE =================
   Widget _buildUserProfile() {
     return Row(
       children: [
         CircleAvatar(
-          radius: 40,
+          radius: 35,
           backgroundColor: Colors.grey[300],
           backgroundImage: const AssetImage('images/SETTING.png'),
-          child: const Icon(Icons.person, size: 40),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 16),
         Text(
           t('user'),
           style: TextStyle(
             color: textColor,
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -145,59 +136,46 @@ String t(String key) => AppLang.t(key);
     );
   }
 
-  // ================= DIVIDER =================
-  Widget _buildDivider() {
-    return Container(height: 1, color: dividerColor);
-  }
+  Widget _buildDivider() => Container(height: 1, color: dividerColor);
 
-  // ================= TITLE =================
   Widget _buildPreferencesTitle() {
     return Text(
       t('preferences'),
       style: TextStyle(
         color: textColor,
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: FontWeight.bold,
       ),
     );
   }
 
-  // ================= LANGUAGE =================
   Widget _buildLanguageOption() {
-    return _buildSettingRow(
-      icon: Icons.language,
-      title: t('language'),
-      trailing: GestureDetector(
+    return _buildRow(
+      Icons.language,
+      t('language'),
+      GestureDetector(
         onTap: _showLanguageDialog,
-        child: Text(
-          selectedLanguage,
-          style: TextStyle(color: textColor, fontSize: 18),
-        ),
+        child: Text(selectedLanguage, style: TextStyle(color: textColor)),
       ),
     );
   }
 
-  // ================= DARK MODE =================
   Widget _buildDarkModeOption() {
-    return _buildSettingRow(
-      icon: Icons.dark_mode,
-      title: t('dark_mode'),
-      trailing: Switch(
-        value: isDarkMode,
-        onChanged: (value) {
-          setState(() => isDarkMode = value);
-          widget.onThemeChanged(value);
-        },
+    return _buildRow(
+      Icons.dark_mode,
+      t('dark_mode'),
+      Switch(
+        value: _isDark,
+        onChanged: widget.onThemeChanged,
       ),
     );
   }
 
-  // ================= CONTACTS =================
   Widget _buildContactsOption() {
-    return _buildSettingRow(
-      icon: Icons.contacts,
-      title: "Emergency Contacts",
-      trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+    return _buildRow(
+      Icons.contacts,
+      "Emergency Contacts",
+      const Icon(Icons.arrow_forward_ios, size: 18),
       onTap: () {
         if (!UserSession.isLoggedIn) {
           Navigator.push(
@@ -215,16 +193,12 @@ String t(String key) => AppLang.t(key);
     );
   }
 
-  // ================= LOGOUT =================
   Widget _buildLogoutButton() {
     return Center(
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.red,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
         onPressed: () async {
           await UserSession.logout();
@@ -232,75 +206,69 @@ String t(String key) => AppLang.t(key);
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
+            (r) => false,
           );
         },
-        child: const Text(
-          "Logout",
-          style: TextStyle(fontSize: 18, color: Colors.white),
+        child: const Text("Logout"),
+      ),
+    );
+  }
+
+  Widget _buildRow(IconData icon, String title, Widget trailing,
+      {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: iconBg,
+              child: Icon(icon, color: textColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(title,
+                  style: TextStyle(color: textColor, fontSize: 18)),
+            ),
+            trailing,
+          ],
         ),
       ),
     );
   }
 
-  // ================= ROW =================
-  Widget _buildSettingRow({
-    required IconData icon,
-    required String title,
-    required Widget trailing,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: iconBg,
-            child: Icon(icon, color: textColor),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 20,
-              ),
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(t('language')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("English"),
+              onTap: () async {
+                await AppLang.load("English");
+                if (!mounted) return;
+                setState(() => selectedLanguage = "English");
+                widget.onLanguageChanged("English");
+                Navigator.pop(context);
+              },
             ),
-          ),
-          trailing,
-        ],
+            ListTile(
+              title: const Text("العربية"),
+              onTap: () async {
+                await AppLang.load("العربية");
+                if (!mounted) return;
+                setState(() => selectedLanguage = "العربية");
+                widget.onLanguageChanged("العربية");
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
-
-  // ================= LANGUAGE DIALOG =================
- void _showLanguageDialog() {
-  showDialog(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: Text(t('language')),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _languageItem('English', 'en'),
-          _languageItem('العربية', 'ar'),
-        ],
-      ),
-    ),
-  );
-} 
-
-Widget _languageItem(String label, String langCode) {
-  return ListTile(
-    title: Text(label),
-    onTap: () async {
-      await AppLang.load(label); // أو langCode لو غيرتي اللوجيك
-
-      setState(() => selectedLanguage = label);
-      widget.onLanguageChanged(label);
-
-      Navigator.pop(context);
-    },
-  );
 }

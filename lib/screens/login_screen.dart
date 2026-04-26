@@ -1,12 +1,11 @@
-
-import 'package:cominsign/lib/core/service/api-service.dart';
-import 'package:cominsign/lib/core/user_session.dart';
+import 'package:cominsign_new/core/app_lang.dart';
+import 'package:cominsign_new/core/service/api-service.dart';
+import 'package:cominsign_new/core/user_session.dart';
+import 'package:cominsign_new/screens/forget_pass.dart';
+import 'package:cominsign_new/screens/home.dart';
+import 'package:cominsign_new/screens/signUp.dart';
+import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
-import 'package:cominsign/core/app_lang.dart';
-import 'package:cominsign/screens/home.dart';
-import 'package:cominsign/screens/forget_pass.dart';
-import 'package:cominsign/screens/signUp.dart';
-import 'package:cominsign/widgets/gradient_background.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -21,7 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -40,25 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
         return StatefulBuilder(
           builder: (dialogContext, setState) {
             return AlertDialog(
-              titlePadding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              actionsPadding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              title: Row(
-                children: const [
-                  Text(
-                    'Warning Message',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 10),
-                  Icon(Icons.info, color: Colors.blue),
-                ],
+              title: const Text(
+                'Warning Message',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
                     'By continuing as a guest, you will only have access to the "Communicate" feature.\n'
-                    'The "Learn" module (which tracks your progress) and the Emergency SOS feature will be disabled!',
+                    'Other features will be disabled.',
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -69,9 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           setState(() => isChecked = val ?? false);
                         },
                       ),
-                      const Expanded(
-                        child: Text('I agree on the above'),
-                      ),
+                      const Expanded(child: Text('I agree on the above')),
                     ],
                   ),
                 ],
@@ -86,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? () {
                           Navigator.pop(dialogContext);
                           UserSession.isGuest = true;
+
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -101,6 +92,38 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
     );
+  }
+
+  Future<void> _login() async {
+    if (isLoading) return;
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      var data = await Service.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      await UserSession.saveSession(
+        tokenValue: data["token"],
+        emailValue: data["email"] ?? _emailController.text.trim(),
+      );
+
+      UserSession.isGuest = false;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid email or password")),
+      );
+    }
+
+    setState(() => isLoading = false);
   }
 
   @override
@@ -134,30 +157,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
 
-                  const Center(
+                  Center(
                     child: Text(
                       'COMMUNISIGN',
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                        letterSpacing: 1.5,
+                        color: isDark
+                            ? Colors.white.withOpacity(0.85)
+                            : const Color(0xFF2C3E50),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
 
-                  Text(
-                    AppLang.t('email'),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(AppLang.t('email'),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+
                   const SizedBox(height: 8),
+
                   TextFormField(
                     controller: _emailController,
                     decoration: InputDecoration(
@@ -173,24 +195,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return AppLang.t('email required');
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return AppLang.t('email_invalid');
-                      }
                       return null;
                     },
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  Text(
-                    AppLang.t('password'),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(AppLang.t('password'),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+
                   const SizedBox(height: 8),
+
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -202,56 +218,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderSide: BorderSide.none,
                       ),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                        ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () {
+                          setState(() =>
+                              _obscurePassword = !_obscurePassword);
+                        },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppLang.t('password required');
-                      }
-                      if (value.length < 6) {
-                        return AppLang.t('password short');
-                      }
-                      return null;
-                    },
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 30),
 
                   SizedBox(
                     height: 55,
                     child: GestureDetector(
-                      onTap: () async {
-                        if (_formKey.currentState!.validate()) {
-                          try {
-                            var data = await Service.login(
-                              email: _emailController.text.trim(),
-                              password: _passwordController.text.trim(),
-                            );
-
-                            await UserSession.saveToken(data["token"]);
-                            UserSession.isGuest = false;
-
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Invalid email or password"),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                      onTap: _login,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
@@ -260,14 +243,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         child: Center(
-                          child: Text(
-                            AppLang.t('login'),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : Text(
+                                  AppLang.t('login'),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -275,32 +262,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 12),
 
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ForgetPass()),
-                      ),
-                      child: Text(AppLang.t('forgot password')),
+                  TextButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const ForgetPass()),
                     ),
+                    child: Text(AppLang.t('forgot password')),
                   ),
 
-                  const SizedBox(height: 40),
-
-                  Center(
-                    child: Text(
-                      'https://www.communisign.com',
-                      style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.grey,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   Center(child: Text(AppLang.t('new user'))),
+
                   Center(
                     child: TextButton(
                       onPressed: () => Navigator.push(
@@ -308,10 +282,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(
                             builder: (_) => const SignUpScreen()),
                       ),
-                      child: Text(
-                        AppLang.t('sign up'),
-                        style: const TextStyle(
-                          fontSize: 20,
+                      child: const Text(
+                        'Sign up',
+                        style: TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.green,
                         ),
@@ -327,4 +301,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-       

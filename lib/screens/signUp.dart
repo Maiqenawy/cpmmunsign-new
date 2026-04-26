@@ -1,11 +1,9 @@
 import 'dart:developer';
-import 'package:cominsign/lib/core/user_session.dart';
+import 'package:cominsign_new/core/user_session.dart';
+import 'package:cominsign_new/screens/home.dart';
 import 'package:flutter/material.dart';
-// ignore: non_constant_identifier_names
-import 'package:cominsign/lib/core/user_session.dart';
-import 'package:cominsign/screens/home.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
-import '../widgets/gradient_background.dart'; 
+import '../widgets/gradient_background.dart';
+import 'package:cominsign_new/core/service/api-service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -76,7 +74,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           address: addressController.text.trim(),
         );
 
-        // المستخدم لم يعد Guest
         UserSession.isGuest = false;
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,14 +87,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } catch (e) {
-  log(e.toString()); // مهم جدًا
+        log(e.toString());
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(e.toString()),
-    ),
-  );
-}
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+          ),
+        );
+      }
     }
   }
 
@@ -135,14 +132,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 40),
 
                     /// NAME
-                    const Text(
-                      'Name',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
+                    const Text('Name',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50))),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: nameController,
@@ -159,14 +153,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
 
                     /// EMAIL
-                    const Text(
-                      'Email',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
+                    const Text('Email',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50))),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: emailController,
@@ -184,14 +175,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
 
                     /// ADDRESS
-                    const Text(
-                      'Address',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
+                    const Text('Address',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50))),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: addressController,
@@ -210,14 +198,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
 
                     /// PASSWORD
-                    const Text(
-                      'Password',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
+                    const Text('Password',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50))),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: passwordController,
@@ -226,11 +211,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hint: 'Enter your password',
                         isDark: isDark,
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            showPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
+                          icon: Icon(showPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off),
                           onPressed: () =>
                               setState(() => showPassword = !showPassword),
                         ),
@@ -247,14 +230,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
 
                     /// CONFIRM PASSWORD
-                    const Text(
-                      'Confirm Password',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
+                    const Text('Confirm Password',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50))),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: confirmPasswordController,
@@ -263,11 +243,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hint: 'Re-enter your password',
                         isDark: isDark,
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            showConfirmPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
+                          icon: Icon(showConfirmPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off),
                           onPressed: () => setState(() =>
                               showConfirmPassword = !showConfirmPassword),
                         ),
@@ -303,7 +281,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.white,
-                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    /// 🔥 NEW LOGIN LINK (SOFT UI)
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(context, '/login');
+                        },
+                        child: const Text(
+                          "Already have an account? Login",
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.black54,
                           ),
                         ),
                       ),

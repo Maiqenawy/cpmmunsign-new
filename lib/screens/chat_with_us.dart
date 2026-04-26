@@ -1,4 +1,4 @@
-import 'package:cominsign/widgets/gradient_background.dart';
+import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
 
 class ChatWithUs extends StatelessWidget {

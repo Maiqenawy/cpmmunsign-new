@@ -1,6 +1,6 @@
 
-         import 'package:cominsign/lib/core/service/api-service.dart';
-import 'package:cominsign/screens/reset_password.dart';
+import 'package:cominsign_new/core/service/api-service.dart';
+import 'package:cominsign_new/screens/reset_password.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 
@@ -57,7 +57,7 @@ class ForgetPassState extends State<ForgetPass> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ResetPasswordScreen(email: email),
+          builder: (_) => ResetPasswordScreen(email: email, token: '',),
         ),
       );
     } catch (e) {

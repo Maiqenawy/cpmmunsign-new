@@ -19,58 +19,49 @@ class Service {
   }
 
   // ================= REGISTER =================
-رstatic Future register({
-  required String name,
-  required String email,
-  required String password,
-  required String confirmPassword,
-  required String address,
-}) async {
-  try {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/register"),
-      headers: headers,
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "password": password,
-        "confirmPassword": confirmPassword,
-        "address": address,
-      }),
-    );
+  static Future register({
+    required String name,
+    required String email,
+    required String password,
+    required String confirmPassword,
+    required String address,
+  }) async {
+    try {
+      var response = await http.post(
+        Uri.parse("$baseUrl/Account/register"),
+        headers: headers,
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "password": password,
+          "confirmPassword": confirmPassword,
+          "address": address,
+        }),
+      );
 
-    print("STATUS: ${response.statusCode}");
-    print("BODY: ${response.body}");
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      dynamic data;
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final data = jsonDecode(response.body);
 
-      try {
-        data = jsonDecode(response.body);
-      } catch (_) {
-        // 🔥 لو مش JSON
-        return Future.error(response.body);
+        if (data is Map && data.containsKey("errors")) {
+          final errors = data["errors"];
+          return Future.error(errors.toString());
+        }
+
+        return Future.error(data["message"] ?? "Register failed");
       }
-
-      if (data is String) {
-        return Future.error(data);
-      }
-
-      if (data is Map && data.containsKey("errors")) {
-        return Future.error(data["errors"].toString());
-      }
-
-      return Future.error(data["message"] ?? "Register failed");
+    } on SocketException {
+      return Future.error("No internet connection");
+    } catch (e) {
+      print("ERROR: $e");
+      return Future.error(e.toString());
     }
-  } on SocketException {
-    return Future.error("No internet connection");
-  } catch (e) {
-    print("ERROR: $e");
-    return Future.error("Something went wrong");
-  }
-}
+  } // ✅ تم إغلاق register بشكل صحيح
+
   // ================= LOGIN =================
   static Future login({
     required String email,
@@ -224,7 +215,6 @@ static Future searchUser(String email, String token) async {
     return jsonDecode(res.body);
   }
 
-  // ✅ FIXED sendSOS (NO duplicate location)
   static Future sendSOS({
     required int pictogramId,
     required String location,
@@ -315,29 +305,31 @@ static Future searchUser(String email, String token) async {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-    return List<String>.from(data["Signs"] ?? []);
+      return List<String>.from(data["Signs"] ?? []);
     } else {
       throw Exception("Translation failed");
     }
   }
-// ================= NEW (REAL-TIME) =================
-static Future<String> sendFrames(List<List<double>> frames) async {
-  final response = await http.post(
-    Uri.parse("$baseUrl/ai/sign-to-text"),
-    headers: headers,
-    body: jsonEncode({
-      "frames": frames
-    }),
-  );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    return data["text"];
-  } else {
-    throw Exception("Prediction failed");
+  // ================= SIGN TO TEXT (REAL TIME) =================
+  static Future<String> sendFrames(List<List<double>> frames) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/sign-to-text"),
+      headers: headers,
+      body: jsonEncode({
+        "frames": frames
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["text"];
+    } else {
+      throw Exception("Prediction failed");
+    }
   }
-}
-  // ================= SIGN TO TEXT =================
+
+  // ================= SIGN IMAGE TO TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
       "POST",

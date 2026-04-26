@@ -1,24 +1,34 @@
+import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:flutter/material.dart';
-import 'package:cominsign/lib/core/service/api-service.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
+  final String token;
 
-  const ResetPasswordScreen({super.key, required this.email});
+  const ResetPasswordScreen({
+    super.key,
+    required this.email,
+    required this.token,
+  });
 
   @override
-  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  State<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final TextEditingController passwordController =
+      TextEditingController();
 
-  final codeController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmController = TextEditingController();
+  final TextEditingController confirmController =
+      TextEditingController();
+
+  final TextEditingController codeController =
+      TextEditingController();
 
   bool isLoading = false;
 
-  void resetPassword() async {
+  Future<void> resetPassword() async {
     if (passwordController.text != confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Passwords do not match")),
@@ -40,82 +50,86 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       );
 
       Navigator.pop(context);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid code or failed")),
+        const SnackBar(content: Text("Reset password failed")),
       );
     }
 
     setState(() => isLoading = false);
   }
 
-  // 🔥 RESEND CODE
-  void resendCode() async {
-    try {
-      await Service.forgotPassword(widget.email);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Code resent")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to resend")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Reset Password")),
+      extendBodyBehindAppBar: true,
 
-      body: Padding(
-        padding: const EdgeInsets.all(24),
+      appBar: AppBar(
+        title: const Text("Reset Password"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
 
-        child: Column(
-          children: [
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
 
-            TextField(
-              controller: codeController,
-              decoration: const InputDecoration(labelText: "Enter Code"),
-            ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFD0EDEA),
+              Color(0xFFA8D6D0),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
 
-            const SizedBox(height: 10),
-
-            TextButton(
-              onPressed: resendCode,
-              child: const Text("Resend Code"),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "New Password"),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: confirmController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Confirm Password"),
-            ),
-
-            const SizedBox(height: 40),
-
-            isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: resetPassword,
-                    child: const Text("Reset Password"),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                TextField(
+                  controller: codeController,
+                  decoration: const InputDecoration(
+                    labelText: "Verification Code",
                   ),
-          ],
+                ),
+
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: "New Password",
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                TextField(
+                  controller: confirmController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: "Confirm Password",
+                  ),
+                ),
+
+                const SizedBox(height: 40),
+
+                isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: resetPassword,
+                        child: const Text("Reset Password"),
+                      ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-}ر
+}

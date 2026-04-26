@@ -1,4 +1,4 @@
-name: cominsign
+name: cominsign_new
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -24,7 +24,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
- webview_flutter: ^4.0.7
+  webview_flutter: ^4.0.7
   camera: ^0.12.0
   http: ^0.13.6
   speech_to_text: ^7.3.0
@@ -53,7 +53,7 @@ flutter:
 
   assets:
     - assets/mediapipe.html
-     - assets/lang/en.json
+    - assets/lang/en.json
     - assets/lang/ar.json
     - images/download.png
     - images/download (1).png
@@ -69,7 +69,7 @@ flutter:
     - images/download (11).png
     - images/SETTING.png
     - images/love.png
-    - assetss/sounds/freesound_community-success-1-6297.mp3
+    - assets/sounds/freesound_community-success-1-6297.mp3
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

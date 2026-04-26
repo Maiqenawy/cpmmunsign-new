@@ -1,4 +1,5 @@
-import 'package:cominsign/screens/splash_logo.dart';
+
+import 'package:cominsign_new/screens/splash_logo.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 
