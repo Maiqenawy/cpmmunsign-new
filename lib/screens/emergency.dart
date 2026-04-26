@@ -40,11 +40,17 @@ class _EmergencyPageState extends State<EmergencyPage> {
     });
   }
 
-  Future<String> getLocation() async {
-    await Geolocator.requestPermission();
-    final pos = await Geolocator.getCurrentPosition();
-    return "${pos.latitude},${pos.longitude}";
+Future<String> getLocation() async {
+  LocationPermission permission = await Geolocator.requestPermission();
+
+  if (permission == LocationPermission.denied ||
+      permission == LocationPermission.deniedForever) {
+    throw Exception("Location permission denied");
   }
+
+  final pos = await Geolocator.getCurrentPosition();
+  return "${pos.latitude},${pos.longitude}";
+}
 
   Future<void> sendSOS(int id) async {
     try {
