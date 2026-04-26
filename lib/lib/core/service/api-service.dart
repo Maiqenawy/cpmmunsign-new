@@ -246,14 +246,16 @@ static Future searchUser(String email, String token) async {
 
   // ================= FIREBASE TOKEN =================
   static Future updateDeviceToken(String fcmToken) async {
-    await http.post(
-      Uri.parse("$baseUrl/account/update-device-token"),
-      headers: headersWithAuth(),
-      body: jsonEncode({
-        "fcmToken": fcmToken,
-      }),
-    );
-  }
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/update-device-token"),
+    headers: headersWithAuth(),
+    body: jsonEncode({
+      "fcmToken": fcmToken,
+    }),
+  );
+
+  print("UPDATE TOKEN RESPONSE: ${response.body}");
+}
 
   // ================= LEARNING =================
   static Future<List> getLevels() async {
