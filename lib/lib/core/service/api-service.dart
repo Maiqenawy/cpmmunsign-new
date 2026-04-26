@@ -255,8 +255,26 @@ static Future searchUser(String email, String token) async {
   );
 
   print("UPDATE TOKEN RESPONSE: ${response.body}");
-}
+} 
+  // ================= Chat =================
+static Future<String> chat(String message) async {
+  var response = await http.post(
+    Uri.parse("$baseUrl/Chat"),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "message": message,
+    }),
+  );
 
+  if (response.statusCode == 200) {
+    var data = jsonDecode(response.body);
+    return data["reply"];
+  } else {
+    throw Exception("Chat failed");
+  }
+}
   // ================= LEARNING =================
   static Future<List> getLevels() async {
     var res = await http.get(
