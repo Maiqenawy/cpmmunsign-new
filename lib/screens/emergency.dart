@@ -52,25 +52,24 @@ Future<String> getLocation() async {
   return "${pos.latitude},${pos.longitude}";
 }
 
-  Future<void> sendSOS(int id) async {
-    try {
-      String location = await getLocation();
+ Future<void> sendSOS(int id) async {
+  try {
+    String location = await getLocation();
 
-      await Service.sendSOS(
-        pictogramId: id,
-        location: location,
-      );
+    await Service.sendSOS(
+      pictogramId: id,
+      location: location,
+    );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("SOS Sent 🚨")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to send SOS")),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("SOS sent to your contacts 📩")),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
   }
-
+}
   IconData getIcon(String name) {
     switch (name) {
       case "hospital":
