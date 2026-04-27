@@ -136,77 +136,64 @@ static Future resetPassword({
   }
 }
   // ================= CONTACTS =================
-  static Future<List> getContacts(String token) async {
-    var res = await http.get(
-      Uri.parse("$baseUrl/contact"),
-      headers: headersWithAuth(),
-    );
-
-    return jsonDecode(res.body);
-  }
-
-  static Future addContact(int userId, String relation, String token) async {
-    await http.post(
-      Uri.parse("$baseUrl/contact"),
-      headers: headersWithAuth(),
-      body: jsonEncode({
-        "contactUserId": userId,
-        "relation": relation,
-      }),
-    );
-  }
-
-  static Future updateContact(int contactId, String relation, String token) async {
-    await http.put(
-      Uri.parse("$baseUrl/contact/$contactId"),
-      headers: headersWithAuth(),
-      body: jsonEncode({
-        "relation": relation,
-      }),
-    );
-  }
-
-  static Future deleteContact(int contactId, String token) async {
-    await http.delete(
-      Uri.parse("$baseUrl/contact/$contactId"),
-      headers: headersWithAuth(),
-    );
-  }
-
-static Future searchUser(String email, String token) async {
-  var response = await http.get(
-    Uri.parse("$baseUrl/Contact/search?email=$email"),
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer $token",
-    },
+  // ================= CONTACTS =================
+static Future<List> getContacts() async {
+  var res = await http.get(
+    Uri.parse("$baseUrl/contact"),
+    headers: headersWithAuth(),
   );
 
-  print("STATUS: ${response.statusCode}");
-  print("BODY: ${response.body}");
+  if (res.body.isEmpty) return [];
+  return jsonDecode(res.body);
+}
 
-  // ✅ أهم سطرين
-  if (response.body.isEmpty) {
-    return [];
-  }
+static Future addContact({
+  required String name,
+  required String email,
+  required String relation,
+}) async {
+  var res = await http.post(
+    Uri.parse("$baseUrl/contact"),
+    headers: headersWithAuth(),
+    body: jsonEncode({
+      "name": name,
+      "email": email,
+      "relation": relation,
+    }),
+  );
 
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    return [];
+  if (res.statusCode != 200) {
+    throw Exception("Failed to add contact");
   }
 }
 
-  print("STATUS: ${response.statusCode}");
-  print("BODY: ${response.body}");
+static Future updateContact({
+  required int contactId,
+  required String name,
+  required String email,
+  required String relation,
+}) async {
+  var res = await http.put(
+    Uri.parse("$baseUrl/contact/$contactId"),
+    headers: headersWithAuth(),
+    body: jsonEncode({
+      "name": name,
+      "email": email,
+      "relation": relation,
+    }),
+  );
 
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    throw Exception("Search failed");
+  if (res.statusCode != 200) {
+    throw Exception("Update failed");
   }
 }
 
+static Future deleteContact(int contactId) async {
+  await http.delete(
+    Uri.parse("$baseUrl/contact/$contactId"),
+    headers: headersWithAuth(),
+  );
+}
   // ================= SETTINGS =================
   static Future<Map> getSettings() async {
     var res = await http.get(
@@ -263,18 +250,7 @@ static Future searchUser(String email, String token) async {
   }
 }
 
-  // ================= FIREBASE TOKEN =================
-  static Future updateDeviceToken(String fcmToken) async {
-  var response = await http.post(
-    Uri.parse("$baseUrl/Account/update-device-token"),
-    headers: headersWithAuth(),
-    body: jsonEncode({
-      "fcmToken": fcmToken,
-    }),
-  );
-
-  print("UPDATE TOKEN RESPONSE: ${response.body}");
-} 
+  
   // ================= Chat =================
 static Future<String> chat(String message) async {
   var response = await http.post(
