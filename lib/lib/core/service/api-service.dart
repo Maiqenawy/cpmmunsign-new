@@ -281,11 +281,16 @@ static Future<String> chat(String message) async {
     Uri.parse("$baseUrl/Chat"),
     headers: {
       "Content-Type": "application/json",
+      "Authorization": "Bearer ${UserSession.token}", // 🔥 مهم جدًا
     },
     body: jsonEncode({
       "message": message,
     }),
   );
+
+  if (response.body.isEmpty) {
+    throw Exception("Empty response");
+  }
 
   if (response.statusCode == 200) {
     var data = jsonDecode(response.body);
