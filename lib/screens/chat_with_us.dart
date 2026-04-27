@@ -28,11 +28,24 @@ class _ChatWithUsState extends State<ChatWithUs> {
   late stt.SpeechToText _speech;
   bool isListening = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _speech = stt.SpeechToText();
+@override
+void initState() {
+  super.initState();
+
+  // 🔐 تحقق من تسجيل الدخول
+  if (!UserSession.isLoggedIn || UserSession.token.isEmpty) {
+    Future.microtask(() {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    });
+    return;
   }
+
+  // 🎤 تهيئة الـ Speech
+  _speech = stt.SpeechToText();
+}
 
   // ================= SEND =================
   void sendMessage() async {
