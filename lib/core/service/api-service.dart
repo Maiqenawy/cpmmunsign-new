@@ -200,11 +200,46 @@ class Service {
 
   // ================= FIREBASE TOKEN =================
   static Future updateDeviceToken(String fcmToken) async {
+<<<<<<< HEAD:lib/core/service/api-service.dart
     await http.post(
       Uri.parse("$baseUrl/Account/update-device-token"),
       headers: headersWithAuth(),
       body: jsonEncode({"fcmToken": fcmToken}),
     );
+=======
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/update-device-token"),
+    headers: headersWithAuth(),
+    body: jsonEncode({
+      "fcmToken": fcmToken,
+    }),
+  );
+
+  print("UPDATE TOKEN RESPONSE: ${response.body}");
+} 
+  // ================= Chat =================
+static Future<String> chat(String message) async {
+  var response = await http.post(
+    Uri.parse("$baseUrl/Chat"),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer ${UserSession.token}", // 🔥 مهم جدًا
+    },
+    body: jsonEncode({
+      "message": message,
+    }),
+  );
+
+  if (response.body.isEmpty) {
+    throw Exception("Empty response");
+  }
+
+  if (response.statusCode == 200) {
+    var data = jsonDecode(response.body);
+    return data["reply"];
+  } else {
+    throw Exception("Chat failed");
+>>>>>>> da2af4801ba66d0de71f7351a6201308c30adbfe:lib/lib/core/service/api-service.dart
   }
 
   // ================= CHAT =================
