@@ -10,62 +10,28 @@ class NewContactPage extends StatefulWidget {
   @override
   State<NewContactPage> createState() => _NewContactPageState();
 }
-
 class _NewContactPageState extends State<NewContactPage> {
+  TextEditingController name = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController relation = TextEditingController();
 
-  List results = [];
-  int? selectedUserId;
-String token = UserSession.token;
   bool isLoading = false;
-bool hasSearched = false;
+
   @override
   void initState() {
     super.initState();
 
     if (widget.contact != null) {
-      relation.text = widget.contact["relation"] ?? "";
+      name.text = widget.contact["name"];
       email.text = widget.contact["email"];
-      selectedUserId = widget.contact["contactUserId"];
+      relation.text = widget.contact["relation"] ?? "";
     }
   }
 
-  // ================= SEARCH =================
-  Future<void> search() async {
-    if (email.text.isEmpty) return;
-
-    // 🔥 منع إضافة نفسك
-    if (email.text.trim().toLowerCase() ==
-        UserSession.email.toLowerCase()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("You can't add yourself"),
-        ),
-      );
-      return;
-    }
-
-    setState(() => isLoading = true; hasSearched = true; );
-
-    try {
-      final data = await Service.searchUser(email.text.trim(), token);
-
-      print("RESULT: $data"); // 🔥 Debug
-
-      setState(() => results = data);
-    } catch (e) {
-      print("ERROR: $e");
-    }
-
-    setState(() => isLoading = false);
-  }
-
-  // ================= SAVE =================
   Future<void> save() async {
-    if (widget.contact == null && selectedUserId == null) {
+    if (name.text.isEmpty || email.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Select user first")),
+        const SnackBar(content: Text("Name & Email required")),
       );
       return;
     }
@@ -75,21 +41,24 @@ bool hasSearched = false;
     try {
       if (widget.contact == null) {
         await Service.addContact(
-          selectedUserId!,
-          relation.text.trim(),
-          UserSession.token, // ✅ هنا التوكن مطلوب
+          name: name.text.trim(),
+          email: email.text.trim(),
+          relation: relation.text.trim(),
         );
       } else {
         await Service.updateContact(
-          widget.contact["contactId"],
-          relation.text.trim(),
-          UserSession.token,
+          contactId: widget.contact["contactId"],
+          name: name.text.trim(),
+          email: email.text.trim(),
+          relation: relation.text.trim(),
         );
       }
 
       Navigator.pop(context);
     } catch (e) {
-      print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error saving contact")),
+      );
     }
 
     setState(() => isLoading = false);
@@ -102,100 +71,45 @@ bool hasSearched = false;
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
-          child: SingleChildScrollView(
+          child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // 🔥 Header
+                // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(
-                          color: cs.primary,
-                          fontSize: 16,
-                        ),
-                      ),
+                      child: Text("Cancel", style: TextStyle(color: cs.primary)),
                     ),
                     Text(
-                      widget.contact == null
-                          ? "New Contact"
-                          : "Edit Contact",
+                      widget.contact == null ? "New Contact" : "Edit Contact",
                       style: TextStyle(
-                        color: cs.onSurface,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
                       ),
                     ),
                     GestureDetector(
                       onTap: save,
-                      child: Text(
-                        "Done",
-                        style: TextStyle(
-                          color: cs.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text("Done",
+                          style: TextStyle(
+                              color: cs.primary,
+                              fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 30),
 
-                // 🔍 Search Card
-                _card([
-                  TextField(
-                    controller: email,
-                    decoration: InputDecoration(
-                      hintText: "Search by email",
-                      border: InputBorder.none,
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.search),
-                        onPressed: search,
-                      ),
-                    ),
-                  ),
-                ], cs),
-
+                _field(name, "Name"),
                 const SizedBox(height: 15),
-
-                // 🔥 لو مفيش نتائج
-             if (results.isEmpty && !isLoading && hasSearched)
-  const Text("No user found"),
-
-                // نتائج البحث
-                ...results.map((u) => _card([
-                      ListTile(
-                        title: Text(u["name"]),
-                        subtitle: Text(u["email"]),
-                        onTap: () {
-                          setState(() {
-                            selectedUserId = u["id"];
-                            email.text = u["email"];
-                            results.clear();
-                          });
-                        },
-                      )
-                    ], cs)),
-
+                _field(email, "Email"),
                 const SizedBox(height: 15),
-
-                // Relation
-                _card([
-                  TextField(
-                    controller: relation,
-                    decoration: const InputDecoration(
-                      hintText: "Relation",
-                      border: InputBorder.none,
-                    ),
-                  )
-                ], cs),
+                _field(relation, "Relation"),
 
                 const SizedBox(height: 20),
-
                 if (isLoading) const CircularProgressIndicator(),
               ],
             ),
@@ -205,14 +119,16 @@ bool hasSearched = false;
     );
   }
 
-  Widget _card(List<Widget> children, ColorScheme cs) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cs.surface.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(14),
+  Widget _field(TextEditingController c, String hint) {
+    return TextField(
+      controller: c,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
       ),
-      child: Column(children: children),
     );
   }
 }
