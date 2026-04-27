@@ -21,7 +21,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await UserSession.loadSession();
-  await UserSession.loadToken();
 
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
@@ -94,7 +93,6 @@ class _MyAppState extends State<MyApp> {
     setState(() => selectedLanguage = langCode);
   }
 
-  // ================= LIGHT THEME =================
   ThemeData lightTheme() {
     return ThemeData(
       brightness: Brightness.light,
@@ -104,15 +102,9 @@ class _MyAppState extends State<MyApp> {
         onSurface: Colors.black,
         primary: Colors.blue,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-      ),
     );
   }
 
-  // ================= DARK THEME =================
   ThemeData darkTheme() {
     return ThemeData(
       brightness: Brightness.dark,
@@ -122,17 +114,12 @@ class _MyAppState extends State<MyApp> {
         onSurface: Colors.white,
         primary: Colors.blue,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.white,
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = selectedLanguage == 'ar';
+    final isArabic = selectedLanguage == 'ar' || selectedLanguage == 'العربية';
 
     return MaterialApp(
       navigatorKey: navigatorKey,
@@ -148,8 +135,7 @@ class _MyAppState extends State<MyApp> {
 
       theme: lightTheme(),
       darkTheme: darkTheme(),
-      themeMode:
-          isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
       initialRoute: '/',
 

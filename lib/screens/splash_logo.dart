@@ -9,7 +9,8 @@ class SplashLogoScreen extends StatefulWidget {
   State<SplashLogoScreen> createState() => _SplashLogoScreenState();
 }
 
-class _SplashLogoScreenState extends State<SplashLogoScreen> with SingleTickerProviderStateMixin {
+class _SplashLogoScreenState extends State<SplashLogoScreen>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<Offset> _animation;
 
@@ -17,26 +18,30 @@ class _SplashLogoScreenState extends State<SplashLogoScreen> with SingleTickerPr
   void initState() {
     super.initState();
 
-    // الانتقال التلقائي بعد ثانيتين
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HelloScreen()),
-      );
-    });
-
-    // إعداد الحركة للنص
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
 
     _animation = Tween<Offset>(
-      begin: const Offset(0, 1), // البداية من أسفل
-      end: Offset.zero,           // النهاية في المركز
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+      begin: const Offset(0, 0.6),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
 
-    _controller.forward(); // بدء الحركة
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const HelloScreen(),
+        ),
+      );
+    });
   }
 
   @override
@@ -47,21 +52,47 @@ class _SplashLogoScreenState extends State<SplashLogoScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-       
       body: GradientBackground(
-         
-        child: Center(
-          child: SlideTransition(
-            position: _animation,
-            child: const Text(
-              "COMMUNSIGN",
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                fontStyle: FontStyle.italic,
-               color: Color(0xff2A405D),
-              ),
+        child: SafeArea(
+          child: Center(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SlideTransition(
+                      position: _animation,
+                      child: Text(
+                        "COMMUNSIGN",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: size.width * 0.10,
+                          fontWeight: FontWeight.bold,
+                          fontStyle: FontStyle.italic,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xff2A405D),
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: size.height * 0.02),
+
+                    SizedBox(
+                      width: size.width * 0.06,
+                      height: size.width * 0.06,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),

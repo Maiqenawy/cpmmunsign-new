@@ -26,86 +26,53 @@ class SettingsScreen extends StatefulWidget {
   });
 
   @override
-  State<SettingsScreen> createState() =>
-      _SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState
-    extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   late String selectedLanguage;
+
+  // ✅ اسم المستخدم
+  String get userName =>
+      UserSession.email?.split('@').first ?? "User";
 
   @override
   void initState() {
     super.initState();
 
     selectedLanguage =
-        widget.selectedLanguage == 'العربية'
-            ? 'ar'
-            : 'en';
+        widget.selectedLanguage == 'العربية' ? 'ar' : 'en';
 
     if (!UserSession.isLoggedIn) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => const LoginScreen(),
-              ),
-            );
-          });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      });
     }
   }
 
   String t(String key) => AppLang.t(key);
 
-  bool get _isDark =>
-      Theme.of(context).brightness ==
-      Brightness.dark;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
-  Color get textColor =>
-      _isDark ? Colors.white : Colors.black;
+  Color get textColor => _isDark ? Colors.white : Colors.black;
 
-  Color get iconBg => _isDark
-      ? Colors.white.withOpacity(0.15)
-      : Colors.black.withOpacity(0.06);
+  Color get iconBg =>
+      _isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.06);
 
-  Color get cardColor => _isDark
-      ? Colors.white.withOpacity(0.08)
-      : Colors.white.withOpacity(0.75);
+  Color get cardColor =>
+      _isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.75);
 
-  Color get dividerColor => _isDark
-      ? Colors.white.withOpacity(0.25)
-      : Colors.black.withOpacity(0.15);
-
-  Future<void> resetApp() async {
-    final prefs =
-        await SharedPreferences.getInstance();
-
-    await prefs.clear();
-    await UserSession.logout();
-
-    Service.token = "";
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-      ),
-      (route) => false,
-    );
-  }
+  Color get dividerColor =>
+      _isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.15);
 
   @override
   Widget build(BuildContext context) {
-    final width =
-        MediaQuery.of(context).size.width;
-
+    final width = MediaQuery.of(context).size.width;
     final isTablet = width >= 700;
-    final padding =
-        isTablet ? width * 0.14 : 24.0;
+    final padding = isTablet ? width * 0.14 : 24.0;
 
     return ValueListenableBuilder<Locale>(
       valueListenable: AppLang.notifier,
@@ -120,62 +87,24 @@ class _SettingsScreenState
                     vertical: 24,
                   ),
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(
-                          maxWidth: 520,
-                        ),
+                    constraints: const BoxConstraints(maxWidth: 520),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
-
-                        const SizedBox(
-                          height: 28,
-                        ),
-
+                        const SizedBox(height: 28),
                         _buildUserProfile(),
-
-                        const SizedBox(
-                          height: 28,
-                        ),
-
+                        const SizedBox(height: 28),
                         _buildDivider(),
-
-                        const SizedBox(
-                          height: 28,
-                        ),
-
+                        const SizedBox(height: 28),
                         _buildPreferencesTitle(),
-
-                        const SizedBox(
-                          height: 18,
-                        ),
-
+                        const SizedBox(height: 18),
                         _buildLanguageOption(),
-
-                        const SizedBox(
-                          height: 16,
-                        ),
-
+                        const SizedBox(height: 16),
                         _buildDarkModeOption(),
-
-                        const SizedBox(
-                          height: 16,
-                        ),
-
+                        const SizedBox(height: 16),
                         _buildContactsOption(),
-
-                        const SizedBox(
-                          height: 32,
-                        ),
-
-                        _buildResetButton(),
-
-                        const SizedBox(
-                          height: 18,
-                        ),
-
+                        const SizedBox(height: 18),
                         _buildLogoutButton(),
                       ],
                     ),
@@ -192,11 +121,7 @@ class _SettingsScreenState
   Widget _buildHeader() {
     return Row(
       children: [
-        Icon(
-          Icons.settings,
-          color: textColor,
-          size: 30,
-        ),
+        Icon(Icons.settings, color: textColor, size: 30),
         const SizedBox(width: 10),
         Text(
           t('settings'),
@@ -210,26 +135,23 @@ class _SettingsScreenState
     );
   }
 
+  // ✅ هنا التعديل الأساسي
   Widget _buildUserProfile() {
     return Row(
       children: [
         CircleAvatar(
           radius: 34,
           backgroundColor: Colors.grey[300],
-          backgroundImage:
-              const AssetImage(
-                'images/SETTING.png',
-              ),
+          backgroundImage: const AssetImage('images/SETTING.png'),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Text(
-            t('user'),
+            userName, // 🔥 اسم المستخدم بدل static
             style: TextStyle(
               color: textColor,
               fontSize: 22,
-              fontWeight:
-                  FontWeight.w600,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -238,10 +160,7 @@ class _SettingsScreenState
   }
 
   Widget _buildDivider() {
-    return Container(
-      height: 1,
-      color: dividerColor,
-    );
+    return Container(height: 1, color: dividerColor);
   }
 
   Widget _buildPreferencesTitle() {
@@ -260,13 +179,8 @@ class _SettingsScreenState
       Icons.language,
       t('language'),
       Text(
-        selectedLanguage == 'ar'
-            ? 'العربية'
-            : 'English',
-        style: TextStyle(
-          color: textColor,
-          fontSize: 16,
-        ),
+        selectedLanguage == 'ar' ? 'العربية' : 'English',
+        style: TextStyle(color: textColor),
       ),
       onTap: _showLanguageDialog,
     );
@@ -278,9 +192,7 @@ class _SettingsScreenState
       t('dark_mode'),
       Switch(
         value: widget.isDarkMode,
-        onChanged: (value) {
-          widget.onThemeChanged(value);
-        },
+        onChanged: widget.onThemeChanged,
       ),
     );
   }
@@ -289,51 +201,13 @@ class _SettingsScreenState
     return _buildRow(
       Icons.contacts,
       "Emergency Contacts",
-      Icon(
-        Icons.arrow_forward_ios,
-        color: textColor,
-        size: 18,
-      ),
+      Icon(Icons.arrow_forward_ios, color: textColor, size: 18),
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder:
-                (_) => const ContactsPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const ContactsPage()),
         );
       },
-    );
-  }
-
-  Widget _buildResetButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        style:
-            ElevatedButton.styleFrom(
-              backgroundColor:
-                  Colors.orange,
-              shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                          14,
-                        ),
-                  ),
-            ),
-        onPressed: resetApp,
-        child: const Text(
-          "Reset App (Dev)",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 
@@ -342,18 +216,12 @@ class _SettingsScreenState
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        style:
-            ElevatedButton.styleFrom(
-              backgroundColor:
-                  Colors.red,
-              shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                          14,
-                        ),
-                  ),
-            ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
         onPressed: () async {
           await UserSession.logout();
 
@@ -361,11 +229,7 @@ class _SettingsScreenState
 
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder:
-                  (_) =>
-                      const LoginScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
             (route) => false,
           );
         },
@@ -374,8 +238,7 @@ class _SettingsScreenState
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,
-            fontWeight:
-                FontWeight.bold,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -389,30 +252,20 @@ class _SettingsScreenState
     VoidCallback? onTap,
   }) {
     return InkWell(
-      borderRadius:
-          BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius:
-              BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 20,
               backgroundColor: iconBg,
-              child: Icon(
-                icon,
-                color: textColor,
-                size: 20,
-              ),
+              child: Icon(icon, color: textColor, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -421,8 +274,7 @@ class _SettingsScreenState
                 style: TextStyle(
                   color: textColor,
                   fontSize: 17,
-                  fontWeight:
-                      FontWeight.w500,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -436,33 +288,20 @@ class _SettingsScreenState
   void _showLanguageDialog() {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: Text(
-              t('language'),
-            ),
-            content: Column(
-              mainAxisSize:
-                  MainAxisSize.min,
-              children: [
-                _languageItem(
-                  "English",
-                  "en",
-                ),
-                _languageItem(
-                  "العربية",
-                  "ar",
-                ),
-              ],
-            ),
-          ),
+      builder: (_) => AlertDialog(
+        title: Text(t('language')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _languageItem("English", "en"),
+            _languageItem("العربية", "ar"),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _languageItem(
-    String label,
-    String langCode,
-  ) {
+  Widget _languageItem(String label, String langCode) {
     return ListTile(
       title: Text(label),
       onTap: () async {
@@ -470,14 +309,9 @@ class _SettingsScreenState
 
         if (!mounted) return;
 
-        setState(() {
-          selectedLanguage =
-              langCode;
-        });
+        setState(() => selectedLanguage = langCode);
 
-        widget.onLanguageChanged(
-          langCode,
-        );
+        widget.onLanguageChanged(langCode);
 
         Navigator.pop(context);
       },
