@@ -7,6 +7,7 @@ import 'package:cominsign_new/screens/signUp.dart';
 import 'package:cominsign_new/widgets/app_text_field.dart';
 import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -36,34 +37,26 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool get isDark =>
+      Theme.of(context).brightness == Brightness.dark;
+
   // ================= GUEST =================
-  void _showGuestWarningDialog() {
+  void _showGuestWarningDialog(BuildContext context) {
     bool isChecked = false;
 
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: Row(
-                children: const [
-                  Text(
-                    "Warning Message",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(Icons.info, color: Colors.blue),
-                ],
-              ),
+              title: const Text("Warning"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    "By continuing as a guest, you will only have access to the Communicate feature.",
+                    "Guest mode has limited access.",
                   ),
-                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Checkbox(
@@ -74,24 +67,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
                         },
                       ),
-                      const Expanded(
-                        child: Text("I agree"),
-                      ),
+                      const Text("I agree"),
                     ],
                   ),
                 ],
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
+                  onPressed: () => Navigator.pop(context),
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
                   onPressed: isChecked
                       ? () {
-                          Navigator.pop(dialogContext);
                           UserSession.isGuest = true;
-
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -100,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         }
                       : null,
-                  child: const Text("Next"),
+                  child: const Text("Continue"),
                 ),
               ],
             );
@@ -114,15 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (isLoading) return;
 
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Enter email and password"),
-        ),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
 
@@ -139,56 +120,60 @@ class _LoginScreenState extends State<LoginScreen> {
 
       UserSession.isGuest = false;
 
+      String? fcmToken =
+          await FirebaseMessaging.instance.getToken();
+
+      if (fcmToken != null) {
+        await Service.updateDeviceToken(fcmToken);
+      }
+
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Invalid email or password"),
-        ),
+        const SnackBar(content: Text("Login failed")),
       );
     }
 
-    if (mounted) {
-      setState(() => isLoading = false);
-    }
+    setState(() => isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final textColor = Theme.of(context).colorScheme.onSurface;
+    final textColor =
+        Theme.of(context).colorScheme.onSurface;
 
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
-    final maxWidth = isTablet ? 500.0 : double.infinity;
-    final padding = isTablet ? 40.0 : 24.0;
 
     return Scaffold(
       body: GradientBackground(
         child: SafeArea(
           child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(padding),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isTablet ? 40 : 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 500 : double.infinity,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 20),
 
-                      // Guest
+                      // ================= GUEST =================
                       Align(
                         alignment: Alignment.topRight,
                         child: InkWell(
-                          onTap: _showGuestWarningDialog,
+                          onTap: () =>
+                              _showGuestWarningDialog(context),
                           child: const Text(
                             "Guest",
                             style: TextStyle(
@@ -200,50 +185,41 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 60),
 
-                      // Title
-                      Center(
+                      const Center(
                         child: Text(
                           "COMMUNISIGN",
                           style: TextStyle(
-                            fontSize: isTablet ? 38 : 30,
+                            fontSize: 34,
                             fontWeight: FontWeight.bold,
-                            color: textColor,
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 50),
 
-                      // Email
-                      Text(
-                        AppLang.t('email'),
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      // ================= EMAIL =================
+                      Text("Email",
+                          style: TextStyle(
+                              color: textColor,
+                              fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
 
                       AppTextField(
                         controller: _emailController,
-                        hint: AppLang.t('enter your email'),
-                        keyboardType: TextInputType.emailAddress,
+                        hint: "Enter email",
+                        keyboardType:
+                            TextInputType.emailAddress,
                       ),
 
                       const SizedBox(height: 20),
 
-                      // Password
-                      Text(
-                        AppLang.t('password'),
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      // ================= PASSWORD =================
+                      Text("Password",
+                          style: TextStyle(
+                              color: textColor,
+                              fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
 
                       AppTextField(
@@ -255,11 +231,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: textColor,
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscurePassword = !_obscurePassword;
+                              _obscurePassword =
+                                  !_obscurePassword;
                             });
                           },
                         ),
@@ -267,16 +243,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      // Login
+                      // ================= LOGIN BUTTON =================
                       SizedBox(
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : _login,
+                          onPressed:
+                              isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
                           ),
                           child: isLoading
                               ? const CircularProgressIndicator(
@@ -285,17 +259,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text(
                                   "Login",
                                   style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                                      fontSize: 18,
+                                      color: Colors.white),
                                 ),
                         ),
                       ),
 
                       const SizedBox(height: 10),
 
-                      // Forgot Password
                       Align(
                         alignment: Alignment.centerLeft,
                         child: TextButton(
@@ -303,37 +274,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ForgetPass(),
+                                builder: (_) =>
+                                    const ForgetPass(),
                               ),
                             );
                           },
-                          child: Text(
-                            AppLang.t('forgot password'),
-                            style: TextStyle(color: textColor),
-                          ),
+                          child: Text("Forgot Password",
+                              style:
+                                  TextStyle(color: textColor)),
                         ),
                       ),
 
-                      const SizedBox(height: 24),
-
-                      // Footer
-                      Center(
-                        child: Text(
-                          "https://www.communisign.com",
-                          style: TextStyle(
-                            color: textColor.withOpacity(0.6),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      Center(
-                        child: Text(
-                          AppLang.t('new user'),
-                          style: TextStyle(color: textColor),
-                        ),
-                      ),
+                      const SizedBox(height: 20),
 
                       Center(
                         child: TextButton(
@@ -341,16 +293,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const SignUpScreen(),
+                                builder: (_) =>
+                                    const SignUpScreen(),
                               ),
                             );
                           },
                           child: const Text(
                             "Sign Up",
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
                               color: Colors.green,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
