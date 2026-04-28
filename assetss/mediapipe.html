@@ -11,6 +11,16 @@
 <script>
 const video = document.getElementById("video");
 
+// 🔥 أفضل 40 landmark
+const FACE_INDEXES = [
+  33,133,160,159,158,157,173,246,
+  362,263,387,386,385,384,398,466,
+  1,2,98,327,
+  61,146,91,181,84,17,314,405,
+  321,375,291,78,95,88,178,87,
+  14,317,402,318
+];
+
 const holistic = new Holistic({
   locateFile: (file) => {
     return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -20,21 +30,13 @@ const holistic = new Holistic({
 holistic.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
+  refineFaceLandmarks: true
 });
 
 holistic.onResults(results => {
   let keypoints = [];
 
-  // pose (132)
-  if (results.poseLandmarks) {
-    results.poseLandmarks.forEach(lm => {
-      keypoints.push(lm.x, lm.y, lm.z, lm.visibility);
-    });
-  } else {
-    for (let i = 0; i < 132; i++) keypoints.push(0);
-  }
-
-  // left hand (63)
+  // ================= LEFT HAND (63) =================
   if (results.leftHandLandmarks) {
     results.leftHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
@@ -43,7 +45,7 @@ holistic.onResults(results => {
     for (let i = 0; i < 63; i++) keypoints.push(0);
   }
 
-  // right hand (63)
+  // ================= RIGHT HAND (63) =================
   if (results.rightHandLandmarks) {
     results.rightHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
@@ -52,8 +54,25 @@ holistic.onResults(results => {
     for (let i = 0; i < 63; i++) keypoints.push(0);
   }
 
+  // ================= FACE (40 landmarks = 120) =================
+  if (results.faceLandmarks) {
+    FACE_INDEXES.forEach(i => {
+      const lm = results.faceLandmarks[i];
+      if (lm) {
+        keypoints.push(lm.x, lm.y, lm.z);
+      } else {
+        keypoints.push(0, 0, 0);
+      }
+    });
+  } else {
+    for (let i = 0; i < 120; i++) keypoints.push(0);
+  }
+
+  // ✅ لازم يكون 246
+  console.log("Features length:", keypoints.length);
+
   // 🔥 إرسال للفلاتر
-SignChannel.postMessage(JSON.stringify(keypoints));
+  SignChannel.postMessage(JSON.stringify(keypoints));
 });
 
 const camera = new Camera(video, {
