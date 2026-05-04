@@ -27,19 +27,19 @@ class _ContactsPageState extends State<ContactsPage> {
     loadContacts();
   }
 
-  Future<void> loadContacts() async {
-    try {
-      final data = await Service.getContacts(token);
-      setState(() => contacts = data);
-    } catch (e) {
-      print(e);
-    }
+ Future<void> loadContacts() async {
+  try {
+    final data = await Service.getContacts();
+    setState(() => contacts = data);
+  } catch (e) {
+    print(e);
   }
+}
 
-  Future<void> deleteContact(int id) async {
-    await Service.deleteContact(id, token);
-    loadContacts();
-  }
+Future<void> deleteContact(int id) async {
+  await Service.deleteContact(id);
+  loadContacts();
+}
 
   @override
   Widget build(BuildContext context) {

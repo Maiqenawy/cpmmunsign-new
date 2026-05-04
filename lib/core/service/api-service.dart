@@ -109,70 +109,62 @@ class Service {
   }
 
   // ================= CONTACTS =================
-  static Future<List> getContacts(String token) async {
+  static Future<List> getContacts() async {
     var res = await http.get(
       Uri.parse("$baseUrl/contact"),
       headers: headersWithAuth(),
     );
 
+    if (res.body.isEmpty) return [];
     return jsonDecode(res.body);
   }
 
-  static Future addContact(
-    int userId,
-    String relation,
-    String s,
-  ) async {
-    await http.post(
+  static Future addContact({
+    required String name,
+    required String email,
+    required String relation,
+  }) async {
+    var res = await http.post(
       Uri.parse("$baseUrl/contact"),
       headers: headersWithAuth(),
       body: jsonEncode({
-        "contactUserId": userId,
+        "name": name,
+        "email": email,
         "relation": relation,
       }),
     );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to add contact");
+    }
   }
 
-  static Future updateContact(
-    int contactId,
-    String relation,
-    String s,
-  ) async {
-    await http.put(
+  static Future updateContact({
+    required int contactId,
+    required String name,
+    required String email,
+    required String relation,
+  }) async {
+    var res = await http.put(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
       body: jsonEncode({
+        "name": name,
+        "email": email,
         "relation": relation,
       }),
     );
+
+    if (res.statusCode != 200) {
+      throw Exception("Update failed");
+    }
   }
 
-  static Future deleteContact(
-    int contactId,
-    String token,
-  ) async {
+  static Future deleteContact(int contactId) async {
     await http.delete(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
     );
-  }
-
-  static Future searchUser(
-    String email,
-    String s,
-  ) async {
-    var response = await http.get(
-      Uri.parse("$baseUrl/Contact/search?email=$email"),
-      headers: headersWithAuth(),
-    );
-
-    if (response.body.isEmpty) return [];
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      return [];
-    }
   }
 
   // ================= SETTINGS =================
@@ -327,9 +319,7 @@ class Service {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/text-to-signs"),
       headers: headers,
-      body: jsonEncode({
-        "text": text,
-      }),
+      body: jsonEncode({"text": text}),
     );
 
     if (response.statusCode == 200) {
@@ -363,9 +353,7 @@ class Service {
   }
 
   // ================= AI: REALTIME FRAMES =================
-  static Future<String> sendFrames(
-    List<List<double>> frames,
-  ) async {
+  static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/sign-to-text"),
       headers: headers,
