@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:cominsign_new/core/app_lang.dart';
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/core/service/api-service.dart';
-
 import '../widgets/gradient_background.dart';
 import 'contacts_page.dart';
 import 'login_screen.dart';

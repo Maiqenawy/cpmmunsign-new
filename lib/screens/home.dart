@@ -298,7 +298,7 @@ class MenuButton extends StatelessWidget {
         child: Row(
           children: [
             Image.asset(imagePath, width: 36, height: 36),
-            const SizedBox(width: 18),
+            const SizedBox(width: 22),
             Expanded(
               child: Text(
                 text,

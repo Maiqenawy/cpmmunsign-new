@@ -28,7 +28,6 @@ dependencies:
   camera: ^0.12.0
   http: ^0.13.6
   speech_to_text: ^7.3.0
-  image_picker: ^1.0.7
   shared_preferences: ^2.2.2
   confetti: ^0.7.0
   cupertino_icons: ^1.0.8
@@ -36,9 +35,7 @@ dependencies:
   firebase_core: ^2.30.0
   firebase_messaging: ^14.7.0
   video_player: ^2.8.1
- speech_to_text: ^6.6.0
-image_picker: ^1.0.7
-google_mlkit_text_recognition: ^0.11.0
+  image_picker: ^1.0.7
   # Deep Link
   app_links: ^6.3.2
   audioplayers: ^6.6.0

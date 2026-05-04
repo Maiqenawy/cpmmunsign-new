@@ -35,9 +35,7 @@ class _LevelScreenState extends State<LevelScreen> {
   Future onWordTap(Map word) async {
     if (word["isLearned"] == true) return;
 
-    final res = await Service.updateProgress(
-      word["learningWordId"],
-    );
+    final res = await Service.updateProgress(word["learningWordId"]);
 
     setState(() {
       word["isLearned"] = true;
@@ -52,10 +50,8 @@ class _LevelScreenState extends State<LevelScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => LevelCompleteScreen(
-            level: widget.levelId,
-            coinsEarned: coins,
-          ),
+          builder: (_) =>
+              LevelCompleteScreen(level: widget.levelId, coinsEarned: coins),
         ),
       );
     }
@@ -64,13 +60,10 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final learnedCount =
-        words.where((w) => w["isLearned"] == true).length;
+    final learnedCount = words.where((w) => w["isLearned"] == true).length;
 
     return Scaffold(
       extendBodyBehindAppBar: true, // 🔥 مهم
@@ -102,8 +95,11 @@ class _LevelScreenState extends State<LevelScreen> {
                 alignment: Alignment.topRight,
                 child: Column(
                   children: [
-                    Image.asset('images/download (8).png',
-                        width: 40, height: 40),
+                    Image.asset(
+                      'images/download (8).png',
+                      width: 40,
+                      height: 40,
+                    ),
                     Text(
                       '$coins',
                       style: const TextStyle(
@@ -127,10 +123,7 @@ class _LevelScreenState extends State<LevelScreen> {
             /// progress
             Text(
               'Progress: $learnedCount / ${words.length}',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF2C5F7C),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF2C5F7C)),
             ),
 
             const SizedBox(height: 6),
@@ -187,9 +180,7 @@ class PhraseCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
-              color: isLearned
-                  ? Colors.white
-                  : const Color(0xFF2C5F7C),
+              color: isLearned ? Colors.white : const Color(0xFF2C5F7C),
             ),
           ),
         ),

@@ -19,24 +19,26 @@ class LevelCompleteScreen extends StatefulWidget {
 class _LevelCompleteScreenState extends State<LevelCompleteScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  final player = AudioPlayer();
+  final AudioPlayer player = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(seconds: 3),
       vsync: this,
+      duration: const Duration(seconds: 3),
     )..repeat();
 
-    player.setReleaseMode(ReleaseMode.stop);
+    _playSuccessSound();
+  }
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      player.play(
-        AssetSource('sounds/freesound_community-success-1-6297.mp3'),
-      );
-    });
+  Future<void> _playSuccessSound() async {
+    await player.play(
+      AssetSource(
+        'sounds/freesound_community-success-1-6297.mp3',
+      ),
+    );
   }
 
   @override
@@ -48,144 +50,160 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: isDark
                 ? const [
-                    Color(0xFF1A1A1A),
-                    Color(0xFF2C2C2C),
                     Color(0xFF111111),
+                    Color(0xFF222222),
+                    Color(0xFF000000),
                   ]
                 : const [
-                    Colors.white,
-                    Colors.blueAccent,
-                    Colors.cyanAccent,
+                    Color(0xFFE0F7FA),
+                    Color(0xFF80DEEA),
+                    Color(0xFF26C6DA),
                   ],
           ),
         ),
         child: SafeArea(
           child: Stack(
-            alignment: Alignment.center,
             children: [
+              /// 🎉 Confetti
               ...List.generate(
-                20,
+                25,
                 (index) => FloatingConfetti(
                   controller: _controller,
                   index: index,
                 ),
               ),
 
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
-
-                  Text(
-                    'COMMUNISIGN',
-                    style: TextStyle(
-                      color:
-                          isDark ? Colors.white : const Color(0xFF2C5F7C),
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 15,
-                          spreadRadius: 5,
+              /// ✅ Main Content
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "COMMUNISIGN",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF114B5F),
                         ),
-                      ],
-                      image: const DecorationImage(
-                        image: AssetImage('images/download (10).png'),
-                        fit: BoxFit.cover,
                       ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
+                      const SizedBox(height: 30),
 
-                  Text(
-                    'You earned ${widget.coinsEarned} coins!',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color:
-                          isDark ? Colors.white70 : const Color(0xFF2C5F7C),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  Text(
-                    'Yay! Level up!',
-                    style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isDark ? Colors.white : const Color(0xFF2C5F7C),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 1, end: 1),
-                      duration: const Duration(milliseconds: 300),
-                      builder: (context, value, child) {
-                        return Transform.scale(
-                          scale: value,
-                          child: child,
-                        );
-                      },
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isDark
-                              ? Colors.tealAccent.shade700
-                              : const Color(0xFF2C5F7C),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 70,
-                            vertical: 18,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
-                          ),
-                          elevation: 8,
-                        ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
+                      Container(
+                        width: 170,
+                        height: 170,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 15,
+                              spreadRadius: 4,
+                              color:
+                                  Colors.black.withOpacity(0.15),
+                            ),
+                          ],
+                          image: const DecorationImage(
+                            image: AssetImage(
+                              'assets/images/download10.png',
+                            ),
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 30),
+
+                      Text(
+                        "You earned ${widget.coinsEarned} coins!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF114B5F),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Text(
+                        "Yay! Level Up!",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF114B5F),
+                        ),
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      SizedBox(
+                        width: 230,
+                        height: 55,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isDark
+                                ? Colors.teal
+                                : const Color(0xFF114B5F),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(30),
+                            ),
+                            elevation: 8,
+                          ),
+                          child: const Text(
+                            "Continue",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+
+              /// 🔙 Back
+              Positioned(
+                top: 10,
+                left: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  color: isDark
+                      ? Colors.white
+                      : Colors.black,
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
               ),
             ],
           ),
@@ -208,14 +226,16 @@ class FloatingConfetti extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final random = math.Random(index);
+
     final startX = random.nextDouble();
 
     final colors = [
-      Colors.pink,
-      Colors.blue,
-      Colors.yellow,
+      Colors.red,
       Colors.green,
+      Colors.yellow,
       Colors.orange,
+      Colors.purple,
+      Colors.blue,
     ];
 
     final color = colors[index % colors.length];
@@ -223,22 +243,28 @@ class FloatingConfetti extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        final progress = (controller.value + index * 0.05) % 1.0;
-        final screenWidth = MediaQuery.of(context).size.width;
-        final screenHeight = MediaQuery.of(context).size.height;
+        final progress =
+            (controller.value + index * 0.04) % 1.0;
+
+        final screenWidth =
+            MediaQuery.of(context).size.width;
+
+        final screenHeight =
+            MediaQuery.of(context).size.height;
 
         return Positioned(
-          left:
-              startX * screenWidth + math.sin(progress * math.pi * 2) * 30,
+          left: startX * screenWidth +
+              math.sin(progress * math.pi * 2) * 30,
           top: progress * screenHeight,
           child: Transform.rotate(
             angle: progress * math.pi * 4,
             child: Container(
-              width: 20,
+              width: 18,
               height: 8,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(4),
+                color: color,
+                borderRadius:
+                    BorderRadius.circular(4),
               ),
             ),
           ),

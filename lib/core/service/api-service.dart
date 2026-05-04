@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:cominsign_new/core/user_session.dart';
 
 class Service {
   static const String baseUrl = "http://cominisign.runasp.net/api";
 
   static String token = "";
 
-  static Map<String, String> headers = {"Content-Type": "application/json"};
+  static Map<String, String> headers = {
+    "Content-Type": "application/json",
+  };
 
   static Map<String, String> headersWithAuth() {
     return {
@@ -45,11 +48,17 @@ class Service {
   }
 
   // ================= LOGIN =================
-  static Future login({required String email, required String password}) async {
+  static Future login({
+    required String email,
+    required String password,
+  }) async {
     var response = await http.post(
       Uri.parse("$baseUrl/Account/login"),
       headers: headers,
-      body: jsonEncode({"email": email, "password": password}),
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -109,30 +118,49 @@ class Service {
     return jsonDecode(res.body);
   }
 
-  static Future addContact(int userId, String relation, String s) async {
+  static Future addContact(
+    int userId,
+    String relation,
+    String s,
+  ) async {
     await http.post(
       Uri.parse("$baseUrl/contact"),
       headers: headersWithAuth(),
-      body: jsonEncode({"contactUserId": userId, "relation": relation}),
+      body: jsonEncode({
+        "contactUserId": userId,
+        "relation": relation,
+      }),
     );
   }
 
-  static Future updateContact(int contactId, String relation, String s) async {
+  static Future updateContact(
+    int contactId,
+    String relation,
+    String s,
+  ) async {
     await http.put(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
-      body: jsonEncode({"relation": relation}),
+      body: jsonEncode({
+        "relation": relation,
+      }),
     );
   }
 
-  static Future deleteContact(int contactId, String token) async {
+  static Future deleteContact(
+    int contactId,
+    String token,
+  ) async {
     await http.delete(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
     );
   }
 
-  static Future searchUser(String email, String s) async {
+  static Future searchUser(
+    String email,
+    String s,
+  ) async {
     var response = await http.get(
       Uri.parse("$baseUrl/Contact/search?email=$email"),
       headers: headersWithAuth(),
@@ -190,7 +218,9 @@ class Service {
     var response = await http.post(
       Uri.parse("$baseUrl/Emergency/send-sos/$pictogramId"),
       headers: headersWithAuth(),
-      body: jsonEncode({"location": location}),
+      body: jsonEncode({
+        "location": location,
+      }),
     );
 
     if (response.statusCode != 200) {
@@ -200,55 +230,33 @@ class Service {
 
   // ================= FIREBASE TOKEN =================
   static Future updateDeviceToken(String fcmToken) async {
-<<<<<<< HEAD:lib/core/service/api-service.dart
-    await http.post(
+    var response = await http.post(
       Uri.parse("$baseUrl/Account/update-device-token"),
       headers: headersWithAuth(),
-      body: jsonEncode({"fcmToken": fcmToken}),
+      body: jsonEncode({
+        "fcmToken": fcmToken,
+      }),
     );
-=======
-  var response = await http.post(
-    Uri.parse("$baseUrl/Account/update-device-token"),
-    headers: headersWithAuth(),
-    body: jsonEncode({
-      "fcmToken": fcmToken,
-    }),
-  );
 
-  print("UPDATE TOKEN RESPONSE: ${response.body}");
-} 
-  // ================= Chat =================
-static Future<String> chat(String message) async {
-  var response = await http.post(
-    Uri.parse("$baseUrl/Chat"),
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer ${UserSession.token}", // 🔥 مهم جدًا
-    },
-    body: jsonEncode({
-      "message": message,
-    }),
-  );
-
-  if (response.body.isEmpty) {
-    throw Exception("Empty response");
-  }
-
-  if (response.statusCode == 200) {
-    var data = jsonDecode(response.body);
-    return data["reply"];
-  } else {
-    throw Exception("Chat failed");
->>>>>>> da2af4801ba66d0de71f7351a6201308c30adbfe:lib/lib/core/service/api-service.dart
+    print("UPDATE TOKEN RESPONSE: ${response.body}");
   }
 
   // ================= CHAT =================
   static Future<String> chat(String message) async {
     var response = await http.post(
       Uri.parse("$baseUrl/Chat"),
-      headers: headers,
-      body: jsonEncode({"message": message}),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${UserSession.token}",
+      },
+      body: jsonEncode({
+        "message": message,
+      }),
     );
+
+    if (response.body.isEmpty) {
+      throw Exception("Empty response");
+    }
 
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
@@ -290,7 +298,9 @@ static Future<String> chat(String message) async {
     var res = await http.post(
       Uri.parse("$baseUrl/learning/progress"),
       headers: headersWithAuth(),
-      body: jsonEncode({"learningWordId": wordId}),
+      body: jsonEncode({
+        "learningWordId": wordId,
+      }),
     );
 
     return jsonDecode(res.body);
@@ -317,7 +327,9 @@ static Future<String> chat(String message) async {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/text-to-signs"),
       headers: headers,
-      body: jsonEncode({"text": text}),
+      body: jsonEncode({
+        "text": text,
+      }),
     );
 
     if (response.statusCode == 200) {
@@ -335,7 +347,9 @@ static Future<String> chat(String message) async {
       Uri.parse("$baseUrl/ai/sign-to-text"),
     );
 
-    request.files.add(await http.MultipartFile.fromPath("Frame", image.path));
+    request.files.add(
+      await http.MultipartFile.fromPath("Frame", image.path),
+    );
 
     var response = await request.send();
     var res = await http.Response.fromStream(response);
@@ -349,11 +363,15 @@ static Future<String> chat(String message) async {
   }
 
   // ================= AI: REALTIME FRAMES =================
-  static Future<String> sendFrames(List<List<double>> frames) async {
+  static Future<String> sendFrames(
+    List<List<double>> frames,
+  ) async {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/sign-to-text"),
       headers: headers,
-      body: jsonEncode({"frames": frames}),
+      body: jsonEncode({
+        "frames": frames,
+      }),
     );
 
     if (response.statusCode == 200) {

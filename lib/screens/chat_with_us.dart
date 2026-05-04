@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
+import 'package:cominsign_new/core/user_session.dart';
+import 'package:cominsign_new/screens/login_screen.dart';
 
 // 🎤 Voice
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -33,7 +35,7 @@ void initState() {
   super.initState();
 
   // 🔐 تحقق من تسجيل الدخول
-  if (!UserSession.isLoggedIn || UserSession.token.isEmpty) {
+ if (UserSession.token == null || UserSession.token!.isEmpty){
     Future.microtask(() {
       Navigator.pushReplacement(
         context,
