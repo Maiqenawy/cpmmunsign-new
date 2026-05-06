@@ -22,6 +22,7 @@ import 'package:app_links/app_links.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
     await UserSession.loadToken();
+  String? token = await UserSession.getToken();
 
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
@@ -29,7 +30,7 @@ void main() async {
   const language = 'English';
   await AppLang.loadSaved();
 
-  runApp(MyApp(isDarkMode: isDark, language: language));
+  runApp(MyApp(isDarkMode: isDark, language: language,  startScreen: token != null ? HomeScreen() : LoginScreen(),));
 }
 
 class MyApp extends StatefulWidget {
@@ -42,6 +43,9 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 class MyApp extends StatelessWidget {
+  final Widget startScreen;
+
+  const MyApp({super.key, required this.startScreen});
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
@@ -62,7 +66,7 @@ class MyApp extends StatelessWidget {
             );
           },
 
-          home: const HomeScreen(),
+          home: startScreen,
         );
       },
     );
