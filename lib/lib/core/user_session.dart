@@ -16,7 +16,11 @@ class UserSession {
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString("token");
   }
-
+static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token") ?? "";
+    return token;
+  }
   // تسجيل خروج
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
