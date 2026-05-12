@@ -6,7 +6,7 @@ import 'package:cominsign_new/screens/emergency.dart';
 import 'package:cominsign_new/screens/forget_pass.dart';
 import 'package:cominsign_new/screens/hello_screen.dart';
 import 'package:cominsign_new/screens/home.dart';
-import 'package:cominsign_new/screens/learning.dart';
+import 'package:cominsign_new/screens/learning.dart' hide LevelScreen;
 import 'package:cominsign_new/screens/login_screen.dart';
 import 'package:cominsign_new/screens/reset_password.dart';
 import 'package:cominsign_new/screens/setting.dart';

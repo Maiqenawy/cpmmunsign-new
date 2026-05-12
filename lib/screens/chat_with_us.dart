@@ -34,17 +34,6 @@ class _ChatWithUsState extends State<ChatWithUs> {
 void initState() {
   super.initState();
 
-  // 🔐 تحقق من تسجيل الدخول
- if (UserSession.token == null || UserSession.token!.isEmpty){
-    Future.microtask(() {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
-    });
-    return;
-  }
-
   // 🎤 تهيئة الـ Speech
   _speech = stt.SpeechToText();
 }

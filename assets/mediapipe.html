@@ -1,17 +1,28 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+  <meta charset="UTF-8" />
+
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
-<body style="margin:0; overflow:hidden;">
-<video id="video" autoplay playsinline style="display:none;"></video>
+<body style="margin:0; overflow:hidden; background:black;">
+
+<video
+  id="video"
+  autoplay
+  playsinline
+  style="width:100%; height:100%; object-fit:cover;"
+></video>
 
 <script>
+
 const video = document.getElementById("video");
 
-// 🔥 أفضل 40 landmark
+// ================= FACE INDEXES =================
 const FACE_INDEXES = [
   33,133,160,159,158,157,173,246,
   362,263,387,386,385,384,398,466,
@@ -21,6 +32,7 @@ const FACE_INDEXES = [
   14,317,402,318
 ];
 
+// ================= HOLISTIC =================
 const holistic = new Holistic({
   locateFile: (file) => {
     return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
@@ -30,68 +42,105 @@ const holistic = new Holistic({
 holistic.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
-  refineFaceLandmarks: true
+  refineFaceLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5,
 });
 
-// ================= FIXED FRAME HANDLER =================
+// ================= FRAME BUFFER =================
+let lastSent = 0;
+
+// ================= RESULTS =================
 holistic.onResults((results) => {
 
   let keypoints = [];
 
-  // ================= LEFT HAND (63) =================
+  // ================= LEFT HAND =================
   if (results.leftHandLandmarks) {
+
     results.leftHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
+
   } else {
+
     keypoints.push(...Array(63).fill(0));
   }
 
-  // ================= RIGHT HAND (63) =================
+  // ================= RIGHT HAND =================
   if (results.rightHandLandmarks) {
+
     results.rightHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
+
   } else {
+
     keypoints.push(...Array(63).fill(0));
   }
 
-  // ================= FACE (40 landmarks = 120) =================
+  // ================= FACE =================
   if (results.faceLandmarks) {
+
     FACE_INDEXES.forEach(i => {
+
       const lm = results.faceLandmarks[i];
+
       if (lm) {
         keypoints.push(lm.x, lm.y, lm.z);
       } else {
         keypoints.push(0, 0, 0);
       }
     });
+
   } else {
-    for (let i = 0; i < 120; i++) keypoints.push(0);
+
+    keypoints.push(...Array(120).fill(0));
   }
 
-  // ✅ لازم يكون 246
-  console.log("Features length:", keypoints.length);
+  // ================= VALIDATE =================
+  if (keypoints.length !== 246) {
+    console.log("INVALID FEATURES:", keypoints.length);
+    return;
+  }
 
-  // 🔥 إرسال للفلاتر
-  SignChannel.postMessage(JSON.stringify(keypoints));
+  // ================= THROTTLE =================
+  const now = Date.now();
+
+  // إرسال كل 100ms تقريبًا
+  if (now - lastSent < 100) return;
+
+  lastSent = now;
+
+  // ================= SEND TO FLUTTER =================
+  try {
+
+    SignChannel.postMessage(
+      JSON.stringify(keypoints)
+    );
+
+  } catch (e) {
+
+    console.log("Flutter channel error:", e);
+  }
 });
 
 // ================= CAMERA =================
 const camera = new Camera(video, {
+
   onFrame: async () => {
-    await holistic.send({ image: video });
+
+    await holistic.send({
+      image: video
+    });
   },
+
   width: 640,
-  height: 480
+  height: 480,
 });
 
 camera.start();
 
-// 🔥 prevent overload to Flutter
-setTimeout(() => {
-  window.flutterReady = true;
-}, 500);
 </script>
 
 </body>

@@ -47,14 +47,12 @@ class _CommunicationState extends State<Communication> {
     }
   }
 
-  // ================= SPEECH TO TEXT =================
+  // ================= SPEECH =================
   void startListening() async {
     bool available = await speech.initialize();
 
     if (available) {
-      setState(() {
-        isListening = true;
-      });
+      setState(() => isListening = true);
 
       speech.listen(
         onResult: (result) {
@@ -68,22 +66,17 @@ class _CommunicationState extends State<Communication> {
 
   void stopListening() {
     speech.stop();
-
-    setState(() {
-      isListening = false;
-    });
+    setState(() => isListening = false);
   }
 
-  // ================= CAMERA SIGN TO TEXT =================
+  // ================= SIGN TO TEXT IMAGE =================
   Future captureSign() async {
     final XFile? image =
         await picker.pickImage(source: ImageSource.camera);
 
     if (image == null) return;
 
-    setState(() {
-      loading = true;
-    });
+    setState(() => loading = true);
 
     final result = await Service.signToText(File(image.path));
 
@@ -93,18 +86,14 @@ class _CommunicationState extends State<Communication> {
     });
   }
 
-  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Communication"),
-      ),
+      appBar: AppBar(title: const Text("Communication")),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // TEXT INPUT
             TextField(
               controller: textController,
               decoration: InputDecoration(
@@ -115,11 +104,7 @@ class _CommunicationState extends State<Communication> {
                     isListening ? Icons.mic : Icons.mic_none,
                   ),
                   onPressed: () {
-                    if (isListening) {
-                      stopListening();
-                    } else {
-                      startListening();
-                    }
+                    isListening ? stopListening() : startListening();
                   },
                 ),
               ),
@@ -127,22 +112,27 @@ class _CommunicationState extends State<Communication> {
 
             const SizedBox(height: 10),
 
-            // 🔥 NAVIGATE TO REALTIME SCREEN
+            // ================= REAL TIME CAMERA =================
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const SignRealtime(),
                   ),
                 );
+
+                if (result != null) {
+                  setState(() {
+                    predictedText = result.toString();
+                  });
+                }
               },
               child: const Text("Real-Time Sign"),
             ),
 
             const SizedBox(height: 10),
 
-            // 🔥 CLEAR TEXT
             ElevatedButton(
               onPressed: () {
                 setState(() {
@@ -185,7 +175,6 @@ class _CommunicationState extends State<Communication> {
 
             const SizedBox(height: 20),
 
-            // 🔥 SEQUENCE PLAYER
             if (signs.isNotEmpty)
               Expanded(
                 child: SequencePlayer(videos: signs),

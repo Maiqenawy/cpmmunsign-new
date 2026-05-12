@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     final welcomeHeight = _clamp(screenHeight * 0.16, 120, 160);
     final welcomeWidth = screenWidth * 0.85;
-    final menuButtonHeight = _clamp(screenHeight * 0.09, 60, 85);
+    final menuButtonHeight = _clamp(screenHeight * 0.11, 70, 100);
 
     final textColor = isDark ? Colors.white : const Color(0xFF2C3E50);
     final iconColor = isDark ? Colors.white : Colors.blueGrey;
@@ -176,9 +176,12 @@ class _HomeScreenState extends State<HomeScreen>
               // ================= Buttons =================
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.07),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.07,
+                    vertical: 8,
+                  ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       MenuButton(
                         imagePath: 'images/download (3).png',
@@ -196,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         },
                       ),
+                      SizedBox(height: screenHeight * 0.018),
 
                       MenuButton(
                         imagePath: 'images/download (4).png',
@@ -217,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         },
                       ),
+                      SizedBox(height: screenHeight * 0.018),
 
                       MenuButton(
                         imagePath: 'images/download (5).png',
@@ -234,6 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         },
                       ),
+                      SizedBox(height: screenHeight * 0.018),
 
                       MenuButton(
                         imagePath: 'images/download (6).png',
@@ -290,6 +296,7 @@ class MenuButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: height,
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 22),
         decoration: BoxDecoration(
           gradient: gradient,
@@ -331,7 +338,6 @@ class TopLoginToast {
     _entry?.remove();
 
     final overlay = Overlay.of(context);
-    if (overlay == null) return;
 
     _entry = OverlayEntry(
       builder: (ctx) {
@@ -365,7 +371,7 @@ class TopLoginToast {
                       "Login",
                       style: TextStyle(color: Colors.white),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),

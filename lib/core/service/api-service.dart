@@ -353,20 +353,28 @@ class Service {
   }
 
   // ================= AI: REALTIME FRAMES =================
-  static Future<String> sendFrames(List<List<double>> frames) async {
+static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
-      Uri.parse("$baseUrl/ai/sign-to-text"),
+      Uri.parse(
+        "https://sign-language-api-production-2148.up.railway.app/predict",
+      ),
       headers: headers,
       body: jsonEncode({
-        "frames": frames,
+        "sequence": frames, // ✅ المهم هنا
       }),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data["text"];
+
+      // حسب شكل الـ API
+      return data.toString(); 
+      // أو لو بيرجع:
+      // return data["prediction"];
     } else {
-      throw Exception("Real-time prediction failed");
+      throw Exception(
+        "Real-time prediction failed: ${response.body}",
+      );
     }
   }
 }

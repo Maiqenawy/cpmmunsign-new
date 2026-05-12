@@ -79,9 +79,7 @@ class _LearningState extends State<Learning> {
 
   bool isLocked(int levelId) {
     return !userLevels.any(
-      (u) =>
-          u["levelId"] == levelId &&
-          (u["isUnlocked"] == true),
+      (u) => u["levelId"] == levelId && (u["isUnlocked"] == true),
     );
   }
 
@@ -89,9 +87,7 @@ class _LearningState extends State<Learning> {
   Widget build(BuildContext context) {
     if (loading) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -106,8 +102,19 @@ class _LearningState extends State<Learning> {
       );
     }
 
-    if (!UserSession.isLoggedIn) {
-      return Scaffold(
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: const Color(0xFF2C3E50),
+              displayColor: const Color(0xFF2C3E50),
+            ),
+      ),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+
         body: Stack(
           children: [
             Positioned.fill(
@@ -115,45 +122,23 @@ class _LearningState extends State<Learning> {
                 child: const SizedBox.expand(),
               ),
             ),
-            const Center(
-              child: Text(
-                "Please login first",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
 
-    return Scaffold(
-      appBar: AppBar(),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: GradientBackground(
-              child: const SizedBox.expand(),
-            ),
-          ),
-
-          SafeArea(
-            child: levels.isEmpty
-                ? const Center(
-                    child: Text(
-                      "No Levels Found",
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
+            SafeArea(
+              child: levels.isEmpty
+                  ? const Center(
+                      child: Text(
+                        "No Levels Found",
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       children: [
                         const SizedBox(height: 20),
 
                         const Text(
                           "COMMUNISIGN",
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -163,53 +148,40 @@ class _LearningState extends State<Learning> {
 
                         const SizedBox(height: 30),
 
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            children: levels.map((level) {
-                              final int levelId =
-                                  level["levelId"] ?? 0;
+                        ...levels.map((level) {
+                          final int levelId = level["levelId"] ?? 0;
+                          final bool locked = isLocked(levelId);
 
-                              final bool locked =
-                                  isLocked(levelId);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: LevelCard(
-                                  levelName:
-                                      level["name"] ?? "Level",
-                                  coins:
-                                      level["requiredCoins"] ?? 0,
-                                  isLocked: locked,
-                                  gradientColors: const [
-                                    Color(0xFF80CBC4),
-                                    Color(0xFF4DB6AC),
-                                  ],
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            LevelScreen(
-                                          levelId: levelId,
-                                        ),
-                                      ),
-                                    ).then((_) {
-                                      loadData();
-                                    });
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: LevelCard(
+                              levelName: level["name"] ?? "Level",
+                              coins: level["requiredCoins"] ?? 0,
+                              isLocked: locked,
+                              gradientColors: const [
+                                Color(0xFF80CBC4),
+                                Color(0xFF4DB6AC),
+                              ],
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => LevelScreen(
+                                      levelId: levelId,
+                                    ),
+                                  ),
+                                ).then((_) => loadData());
+                              },
+                            ),
+                          );
+                        }),
 
                         const SizedBox(height: 30),
                       ],
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -243,9 +215,7 @@ class LevelCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isLocked
-                ? [Colors.grey, Colors.grey]
-                : gradientColors,
+            colors: isLocked ? [Colors.grey, Colors.grey] : gradientColors,
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
@@ -257,8 +227,7 @@ class LevelCard extends StatelessWidget {
           ],
         ),
         child: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               levelName,
@@ -272,15 +241,9 @@ class LevelCard extends StatelessWidget {
             Row(
               children: [
                 if (isLocked)
-                  const Icon(
-                    Icons.lock,
-                    color: Colors.white,
-                  )
+                  const Icon(Icons.lock, color: Colors.white)
                 else ...[
-                  const Icon(
-                    Icons.monetization_on,
-                    color: Colors.yellow,
-                  ),
+                  const Icon(Icons.monetization_on, color: Colors.yellow),
                   const SizedBox(width: 5),
                   Text(
                     "$coins",

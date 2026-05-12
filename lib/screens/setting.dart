@@ -30,14 +30,12 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late String selectedLanguage;
 
-  // ✅ اسم المستخدم
   String get userName =>
       UserSession.email?.split('@').first ?? "User";
 
   @override
   void initState() {
     super.initState();
-
     selectedLanguage =
         widget.selectedLanguage == 'العربية' ? 'ar' : 'en';
 
@@ -57,14 +55,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Color get textColor => _isDark ? Colors.white : Colors.black;
 
+  Color get subtitleColor =>
+      _isDark ? Colors.white60 : Colors.black45;
+
   Color get iconBg =>
-      _isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.06);
+      _isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.05);
 
   Color get cardColor =>
-      _isDark ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.75);
+      _isDark ? Colors.white.withOpacity(0.07) : Colors.white.withOpacity(0.85);
 
   Color get dividerColor =>
-      _isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.15);
+      _isDark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.08);
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     horizontal: padding,
                     vertical: 24,
@@ -98,11 +100,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _buildPreferencesTitle(),
                         const SizedBox(height: 18),
                         _buildLanguageOption(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _buildDarkModeOption(),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _buildContactsOption(),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 32),
                         _buildLogoutButton(),
                       ],
                     ),
@@ -119,66 +121,140 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildHeader() {
     return Row(
       children: [
-        Icon(Icons.settings, color: textColor, size: 30),
-        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.settings_rounded, color: textColor, size: 26),
+        ),
+        const SizedBox(width: 12),
         Text(
           t('settings'),
           style: TextStyle(
             color: textColor,
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: FontWeight.bold,
+            letterSpacing: 0.3,
           ),
         ),
       ],
     );
   }
 
-  // ✅ هنا التعديل الأساسي
   Widget _buildUserProfile() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 34,
-          backgroundColor: Colors.grey[300],
-          backgroundImage: const AssetImage('images/SETTING.png'),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            userName, // 🔥 اسم المستخدم بدل static
-            style: TextStyle(
-              color: textColor,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar with subtle ring
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2AA88F), Color(0xFF114238)],
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 32,
+              backgroundColor: Colors.grey[300],
+              backgroundImage: const AssetImage('images/SETTING.png'),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  UserSession.email ?? '',
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDivider() {
-    return Container(height: 1, color: dividerColor);
+    return Row(
+      children: [
+        Expanded(child: Container(height: 1, color: dividerColor)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: dividerColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Expanded(child: Container(height: 1, color: dividerColor)),
+      ],
+    );
   }
 
   Widget _buildPreferencesTitle() {
     return Text(
       t('preferences'),
       style: TextStyle(
-        color: textColor,
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
+        color: subtitleColor,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.1,
       ),
     );
   }
 
   Widget _buildLanguageOption() {
     return _buildRow(
-      Icons.language,
+      Icons.language_rounded,
       t('language'),
-      Text(
-        selectedLanguage == 'ar' ? 'العربية' : 'English',
-        style: TextStyle(color: textColor),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: iconBg,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          selectedLanguage == 'ar' ? 'العربية' : 'English',
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
       onTap: _showLanguageDialog,
     );
@@ -186,20 +262,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildDarkModeOption() {
     return _buildRow(
-      Icons.dark_mode,
+      Icons.dark_mode_rounded,
       t('dark_mode'),
-      Switch(
+      Switch.adaptive(
         value: widget.isDarkMode,
         onChanged: widget.onThemeChanged,
+        activeColor: const Color(0xFF2AA88F),
       ),
     );
   }
 
   Widget _buildContactsOption() {
     return _buildRow(
-      Icons.contacts,
+      Icons.contacts_rounded,
       "Emergency Contacts",
-      Icon(Icons.arrow_forward_ios, color: textColor, size: 18),
+      Icon(Icons.chevron_right_rounded, color: subtitleColor, size: 22),
       onTap: () {
         Navigator.push(
           context,
@@ -213,32 +290,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return SizedBox(
       width: double.infinity,
       height: 52,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+        label: const Text(
+          "Logout",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.3,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.redAccent.shade700,
+          shadowColor: Colors.red.withOpacity(0.4),
+          elevation: 6,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         onPressed: () async {
           await UserSession.logout();
-
           if (!mounted) return;
-
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginScreen()),
             (route) => false,
           );
         },
-        child: const Text(
-          "Logout",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
     );
   }
@@ -249,35 +328,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget trailing, {
     VoidCallback? onTap,
   }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: iconBg,
-              child: Icon(icon, color: textColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        splashColor: Colors.white.withOpacity(0.08),
+        highlightColor: Colors.white.withOpacity(0.04),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: textColor, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-            trailing,
-          ],
+              trailing,
+            ],
+          ),
         ),
       ),
     );
@@ -287,6 +382,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(t('language')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -300,17 +396,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _languageItem(String label, String langCode) {
+    final isSelected = selectedLanguage == langCode;
     return ListTile(
-      title: Text(label),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_rounded, color: Color(0xFF2AA88F))
+          : null,
       onTap: () async {
         await AppLang.load(langCode);
-
         if (!mounted) return;
-
         setState(() => selectedLanguage = langCode);
-
         widget.onLanguageChanged(langCode);
-
         Navigator.pop(context);
       },
     );

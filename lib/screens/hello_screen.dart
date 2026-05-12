@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 import 'login_screen.dart';
@@ -62,6 +61,11 @@ class _HelloScreenState extends State<HelloScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Image.asset(
+                  'images/love.png',
+                  height: 32,
+                ),
+                const SizedBox(width: 10),
                 const Text(
                   "Made with love and AI",
                   style: TextStyle(
@@ -70,11 +74,6 @@ class _HelloScreenState extends State<HelloScreen>
                     fontStyle: FontStyle.italic,
                     color: Color(0xff2A405D),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Image.asset(
-                  'images/love.png', // ✨ اسم الصورة
-                  height: 32,
                 ),
               ],
             ),

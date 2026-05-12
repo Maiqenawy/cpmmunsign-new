@@ -50,8 +50,10 @@ class _LevelScreenState extends State<LevelScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              LevelCompleteScreen(level: widget.levelId, coinsEarned: coins),
+          builder: (_) => LevelCompleteScreen(
+            level: widget.levelId,
+            coinsEarned: coins,
+          ),
         ),
       );
     }
@@ -60,93 +62,118 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    final learnedCount = words.where((w) => w["isLearned"] == true).length;
+    final learnedCount =
+        words.where((w) => w["isLearned"] == true).length;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true, // 🔥 مهم
-      backgroundColor: Colors.transparent,
-
-      appBar: AppBar(
+    return Theme(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: const Color(0xFF2C5F7C),
+              displayColor: const Color(0xFF2C5F7C),
+            ),
+      ),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'COMMUNISIGN',
-          style: TextStyle(
-            color: Color(0xFF2C5F7C),
-            fontSize: 25,
-            fontWeight: FontWeight.bold,
+
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            'COMMUNISIGN',
+            style: TextStyle(
+              color: Color(0xFF2C5F7C),
+              fontSize: 25,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
 
-      body: GradientBackground(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
+        body: GradientBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
 
-            /// 💰 coins
-            Padding(
-              padding: const EdgeInsets.only(right: 16, top: 8),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Column(
-                  children: [
-                    Image.asset(
-                      'images/download (8).png',
-                      width: 40,
-                      height: 40,
+                /// 💰 coins
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'images/download (8).png',
+                          width: 40,
+                          height: 40,
+                        ),
+                        Text(
+                          '$coins',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C5F7C),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '$coins',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C5F7C),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// 🤖 avatar
+                SizedBox(
+                  height: 200,
+                  child: Image.asset('images/download (9).png'),
+                ),
+
+                const SizedBox(height: 8),
+
+                /// progress
+                Text(
+                  'Progress: $learnedCount / ${words.length}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF2C5F7C),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// GRID
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: GridView.builder(
+                      itemCount: words.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 2,
                       ),
+                      itemBuilder: (context, index) {
+                        final w = words[index];
+
+                        return PhraseCard(
+                          text: w["text"],
+                          isLearned: w["isLearned"],
+                          onTap: () => onWordTap(w),
+                        );
+                      },
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-
-            /// 🤖 avatar
-            SizedBox(
-              height: 220,
-              child: Image.asset('images/download (9).png'),
-            ),
-
-            const SizedBox(height: 6),
-
-            /// progress
-            Text(
-              'Progress: $learnedCount / ${words.length}',
-              style: const TextStyle(fontSize: 14, color: Color(0xFF2C5F7C)),
-            ),
-
-            const SizedBox(height: 6),
-
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: GridView.count(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 2,
-                  children: words.map((w) {
-                    return PhraseCard(
-                      text: w["text"],
-                      isLearned: w["isLearned"],
-                      onTap: () => onWordTap(w),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -180,7 +207,9 @@ class PhraseCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
-              color: isLearned ? Colors.white : const Color(0xFF2C5F7C),
+              color: isLearned
+                  ? Colors.white
+                  : const Color(0xFF2C5F7C),
             ),
           ),
         ),

@@ -12,10 +12,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
 
-  const LoginScreen({
-    super.key,
-    this.isDarkMode = false,
-  });
+  const LoginScreen({super.key, this.isDarkMode = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,7 +20,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -37,72 +33,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool get isDark =>
-      Theme.of(context).brightness == Brightness.dark;
-
-  // ================= GUEST =================
-  void _showGuestWarningDialog(BuildContext context) {
-    bool isChecked = false;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
-              title: const Text("Warning"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Guest mode has limited access.",
-                  ),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: isChecked,
-                        onChanged: (val) {
-                          setDialogState(() {
-                            isChecked = val ?? false;
-                          });
-                        },
-                      ),
-                      const Text("I agree"),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  onPressed: isChecked
-                      ? () {
-                          UserSession.isGuest = true;
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HomeScreen(),
-                            ),
-                          );
-                        }
-                      : null,
-                  child: const Text("Continue"),
-                ),
-              ],
-            );
-          },
-        );
-      },
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
     );
   }
 
-  // ================= LOGIN =================
   Future<void> _login() async {
     if (isLoading) return;
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
@@ -113,9 +51,22 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
+      print("🔥 LOGIN RESPONSE: $data");
+
+      if (data == null) {
+        throw Exception("Empty response from server");
+      }
+
+      final token = data["token"] ?? data["accessToken"];
+      final email = data["email"] ?? _emailController.text.trim();
+
+      if (token == null) {
+        throw Exception("Token not found in response");
+      }
+
       await UserSession.saveSession(
-        tokenValue: data["token"],
-        emailValue: data["email"] ?? _emailController.text.trim(),
+        tokenValue: token,
+        emailValue: email,
       );
 
       UserSession.isGuest = false;
@@ -134,9 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login failed")),
-      );
+      print("❌ LOGIN ERROR: $e");
+
+      _showSnack("Login failed: $e");
     }
 
     setState(() => isLoading = false);
@@ -144,9 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        Theme.of(context).colorScheme.onSurface;
-
+    final textColor = Theme.of(context).colorScheme.onSurface;
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
 
@@ -163,27 +112,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 20),
-
-                      // ================= GUEST =================
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: InkWell(
-                          onTap: () =>
-                              _showGuestWarningDialog(context),
-                          child: const Text(
-                            "Guest",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
-                      ),
 
                       const SizedBox(height: 60),
 
@@ -199,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 50),
 
-                      // ================= EMAIL =================
+                      /// EMAIL
                       Text("Email",
                           style: TextStyle(
                               color: textColor,
@@ -209,13 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       AppTextField(
                         controller: _emailController,
                         hint: "Enter email",
-                        keyboardType:
-                            TextInputType.emailAddress,
+                        keyboardType: TextInputType.emailAddress,
                       ),
 
                       const SizedBox(height: 20),
 
-                      // ================= PASSWORD =================
+                      /// PASSWORD
                       Text("Password",
                           style: TextStyle(
                               color: textColor,
@@ -234,8 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscurePassword =
-                                  !_obscurePassword;
+                              _obscurePassword = !_obscurePassword;
                             });
                           },
                         ),
@@ -243,12 +171,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 30),
 
-                      // ================= LOGIN BUTTON =================
+                      /// LOGIN BUTTON
                       SizedBox(
                         height: 55,
                         child: ElevatedButton(
-                          onPressed:
-                              isLoading ? null : _login,
+                          onPressed: isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                           ),
@@ -267,34 +194,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       const SizedBox(height: 10),
 
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const ForgetPass(),
-                              ),
-                            );
-                          },
-                          child: Text("Forgot Password",
-                              style:
-                                  TextStyle(color: textColor)),
-                        ),
+                      /// FORGOT PASSWORD
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ForgetPass(),
+                            ),
+                          );
+                        },
+                        child: Text("Forgot Password",
+                            style: TextStyle(color: textColor)),
                       ),
 
-                      const SizedBox(height: 20),
-
+                      /// SIGN UP
                       Center(
                         child: TextButton(
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const SignUpScreen(),
+                                builder: (_) => const SignUpScreen(),
                               ),
                             );
                           },
