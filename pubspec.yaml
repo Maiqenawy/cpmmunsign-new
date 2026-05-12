@@ -33,8 +33,7 @@ dependencies:
   confetti: ^0.7.0
   cupertino_icons: ^1.0.8
   geolocator: ^10.0.0
-  firebase_core: ^2.30.0
-  firebase_messaging: ^14.7.0
+ 
   video_player: ^2.8.1
  speech_to_text: ^6.6.0
 image_picker: ^1.0.7
