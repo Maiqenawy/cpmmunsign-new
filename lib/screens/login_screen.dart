@@ -39,8 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _login() async {
-    if (isLoading) return;
+Future<void> _login() async {
+      if (isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
@@ -50,8 +50,6 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-
-      print("🔥 LOGIN RESPONSE: $data");
 
       if (data == null) {
         throw Exception("Empty response from server");
@@ -71,8 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       UserSession.isGuest = false;
 
-      String? fcmToken =
-          await FirebaseMessaging.instance.getToken();
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
 
       if (fcmToken != null) {
         await Service.updateDeviceToken(fcmToken);
@@ -85,17 +82,18 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
-      print("❌ LOGIN ERROR: $e");
-
       _showSnack("Login failed: $e");
+    } finally {
+      setState(() => isLoading = false);
     }
-
-    setState(() => isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
 
@@ -114,59 +112,103 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
                       const SizedBox(height: 60),
 
                       const Center(
                         child: Text(
-                          "COMMUNISIGN",
+                          'COMMUNISIGN',
                           style: TextStyle(
-                            fontSize: 34,
+                            fontSize: 36,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 60),
 
-                      /// EMAIL
-                      Text("Email",
-                          style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold)),
+                      /// EMAIL LABEL
+                      Text(
+                        AppLang.t('email'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
 
-                      AppTextField(
+                      TextFormField(
                         controller: _emailController,
-                        hint: "Enter email",
-                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: AppLang.t('enter your email'),
+                          filled: true,
+                          fillColor:
+                              isDark ? Colors.grey[800] : Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppLang.t('email required');
+                          }
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value)) {
+                            return AppLang.t('email_invalid');
+                          }
+                          return null;
+                        },
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                      /// PASSWORD
-                      Text("Password",
-                          style: TextStyle(
-                              color: textColor,
-                              fontWeight: FontWeight.bold)),
+                      /// PASSWORD LABEL
+                      Text(
+                        AppLang.t('password'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 8),
 
-                      AppTextField(
+                      TextFormField(
                         controller: _passwordController,
-                        hint: "••••••••",
-                        obscure: _obscurePassword,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor:
+                              isDark ? Colors.grey[800] : Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword =
+                                    !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppLang.t('password required');
+                          }
+                          if (value.length < 6) {
+                            return AppLang.t('password short');
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 30),
@@ -178,6 +220,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                            ),
                           ),
                           child: isLoading
                               ? const CircularProgressIndicator(
@@ -186,8 +232,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text(
                                   "Login",
                                   style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.white),
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
                                 ),
                         ),
                       ),
@@ -200,12 +247,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ForgetPass(),
+                              builder: (_) =>
+                                  const ForgetPass(),
                             ),
                           );
                         },
-                        child: Text("Forgot Password",
-                            style: TextStyle(color: textColor)),
+                        child: Text(
+                          "Forgot Password",
+                          style: TextStyle(color: textColor),
+                        ),
                       ),
 
                       /// SIGN UP
@@ -215,7 +265,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const SignUpScreen(),
+                                builder: (_) =>
+                                    const SignUpScreen(),
                               ),
                             );
                           },

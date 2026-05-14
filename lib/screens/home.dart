@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cominsign_new/core/app_lang.dart';
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/chat_with_us.dart';
+import 'package:cominsign_new/screens/communication.dart';
 import 'package:cominsign_new/screens/learning.dart';
 import 'package:cominsign_new/screens/newcontact_page.dart';
 import 'package:flutter/material.dart';
@@ -234,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ChatWithUs(),
+                             builder: (_) => const Communication(),
                             ),
                           );
                         },

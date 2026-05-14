@@ -32,8 +32,7 @@ dependencies:
   confetti: ^0.7.0
   cupertino_icons: ^1.0.8
   geolocator: ^10.0.0
-  firebase_core: ^2.30.0
-  firebase_messaging: ^14.7.0
+ 
   video_player: ^2.8.1
   image_picker: ^1.0.7
   # Deep Link
@@ -41,6 +40,7 @@ dependencies:
   audioplayers: ^6.6.0
   google_mlkit_text_recognition: ^0.15.1
   permission_handler: ^11.3.1
+  firebase_messaging: ^16.2.1
 
 dev_dependencies:
   flutter_test:

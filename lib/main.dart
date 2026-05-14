@@ -1,42 +1,50 @@
-import 'package:cominsign_new/core/user_session.dart';
-import 'package:cominsign_new/screens/Level_screen.dart';
-import 'package:cominsign_new/screens/chat_with_us.dart';
-import 'package:cominsign_new/screens/communication.dart';
-import 'package:cominsign_new/screens/emergency.dart';
-import 'package:cominsign_new/screens/forget_pass.dart';
-import 'package:cominsign_new/screens/hello_screen.dart';
-import 'package:cominsign_new/screens/home.dart';
-import 'package:cominsign_new/screens/learning.dart' hide LevelScreen;
-import 'package:cominsign_new/screens/login_screen.dart';
-import 'package:cominsign_new/screens/reset_password.dart';
-import 'package:cominsign_new/screens/setting.dart';
-import 'package:cominsign_new/screens/signUp.dart';
-import 'package:cominsign_new/screens/splash_empty.dart';
-import 'package:cominsign_new/screens/splash_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
 
+import 'package:cominsign_new/core/user_session.dart';
+import 'package:cominsign_new/screens/home.dart';
+import 'package:cominsign_new/screens/login_screen.dart';
+import 'package:cominsign_new/screens/reset_password.dart';
+import 'package:cominsign_new/screens/splash_empty.dart';
+import 'package:cominsign_new/screens/splash_logo.dart';
+import 'package:cominsign_new/screens/signUp.dart';
+import 'package:cominsign_new/screens/forget_pass.dart';
+import 'package:cominsign_new/screens/chat_with_us.dart';
+import 'package:cominsign_new/screens/communication.dart';
+import 'package:cominsign_new/screens/emergency.dart';
+import 'package:cominsign_new/screens/learning.dart';
+import 'package:cominsign_new/screens/Level_screen.dart';
+import 'package:cominsign_new/screens/setting.dart';
+import 'package:cominsign_new/screens/hello_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await UserSession.loadSession();
+   await UserSession.loadSession(); // ✅ الصحيح
+final token = UserSession.token; //
 
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
   final language = prefs.getString('language') ?? 'en';
 
-  runApp(MyApp(isDarkMode: isDark, language: language));
+  runApp(MyApp(
+    isDarkMode: isDark,
+    language: language,
+    startScreen: token != null ? const HomeScreen() : const LoginScreen(),
+  ));
 }
 
 class MyApp extends StatefulWidget {
   final bool isDarkMode;
   final String language;
+  final Widget startScreen;
 
   const MyApp({
     super.key,
     required this.isDarkMode,
     required this.language,
+    required this.startScreen,
   });
 
   @override
@@ -47,9 +55,10 @@ class _MyAppState extends State<MyApp> {
   late bool isDarkMode;
   late String selectedLanguage;
 
-  late AppLinks _appLinks;
   final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+
+  late AppLinks _appLinks;
 
   @override
   void initState() {
@@ -58,6 +67,10 @@ class _MyAppState extends State<MyApp> {
     isDarkMode = widget.isDarkMode;
     selectedLanguage = widget.language;
 
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
     _appLinks = AppLinks();
 
     _appLinks.uriLinkStream.listen((uri) {
@@ -87,21 +100,16 @@ class _MyAppState extends State<MyApp> {
     setState(() => isDarkMode = value);
   }
 
-  Future<void> updateLanguage(String langCode) async {
+  Future<void> updateLanguage(String lang) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('language', langCode);
-    setState(() => selectedLanguage = langCode);
+    await prefs.setString('language', lang);
+    setState(() => selectedLanguage = lang);
   }
 
   ThemeData lightTheme() {
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: const ColorScheme.light(
-        surface: Colors.white,
-        onSurface: Colors.black,
-        primary: Colors.blue,
-      ),
     );
   }
 
@@ -109,21 +117,23 @@ class _MyAppState extends State<MyApp> {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: Colors.transparent,
-      colorScheme: const ColorScheme.dark(
-        surface: Color(0xFF121212),
-        onSurface: Colors.white,
-        primary: Colors.blue,
-      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = selectedLanguage == 'ar' || selectedLanguage == 'العربية';
+    final isArabic =
+        selectedLanguage == 'ar' || selectedLanguage == 'العربية';
 
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+
+      theme: lightTheme(),
+      darkTheme: darkTheme(),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
+      initialRoute: '/',
 
       builder: (context, child) {
         return Directionality(
@@ -132,12 +142,6 @@ class _MyAppState extends State<MyApp> {
           child: child!,
         );
       },
-
-      theme: lightTheme(),
-      darkTheme: darkTheme(),
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
-      initialRoute: '/',
 
       routes: {
         '/': (_) => const SplashEmptyScreen(),
