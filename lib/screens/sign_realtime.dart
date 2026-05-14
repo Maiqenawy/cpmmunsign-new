@@ -1,122 +1,317 @@
 import 'dart:convert';
-import 'package:cominsign_new/core/service/api-service.dart';
+
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 
 class SignRealtime extends StatefulWidget {
   const SignRealtime({super.key});
 
   @override
-  State<SignRealtime> createState() => _SignRealtimeState();
+  State<SignRealtime> createState() =>
+      _SignRealtimeState();
 }
 
-class _SignRealtimeState extends State<SignRealtime> {
+class _SignRealtimeState
+    extends State<SignRealtime> {
+
   late final WebViewController controller;
 
-  List<List<double>> frameBuffer = [];
-  String sentence = "";
+  // ================= 30 FRAMES =================
+  List<List<double>> sequence = [];
+
+  // ================= SENTENCE =================
+  List<String> sentenceWords = [];
+
   String lastWord = "";
 
-  List<String> predictions = [];
-  bool isSending = false;
+  // ================= UI =================
+  String prediction = "Scanning...";
+
+  bool isProcessing = false;
 
   @override
   void initState() {
+
     super.initState();
 
-    requestCameraPermission();
-
     controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+
+      ..setJavaScriptMode(
+        JavaScriptMode.unrestricted,
+      )
+
+      // ================= CHANNEL =================
       ..addJavaScriptChannel(
+
         "SignChannel",
-        onMessageReceived: (message) {
-          final List<dynamic> data = jsonDecode(message.message);
 
-          final List<double> keypoints = List<double>.from(
-            data.map((e) => (e as num).toDouble()),
-          );
+        onMessageReceived: (message) async {
 
-          onNewFrame(keypoints);
+          try {
+
+            List<dynamic> data =
+                jsonDecode(message.message);
+
+            List<double> frame =
+                data.map((e) =>
+                    e.toDouble()).toList();
+
+            // لازم 246
+            if (frame.length != 246) {
+
+              print(
+                "Invalid frame: ${frame.length}",
+              );
+
+              return;
+            }
+
+            // إضافة frame
+            sequence.add(frame);
+
+            print(
+              "Frames: ${sequence.length}",
+            );
+
+            // ================= SEND =================
+            if (sequence.length == 30 &&
+                !isProcessing) {
+
+              isProcessing = true;
+
+              await sendSequence(sequence);
+
+              sequence.clear();
+
+              isProcessing = false;
+            }
+
+          } catch (e) {
+
+            print("Frame Error: $e");
+          }
         },
       )
-      ..loadFlutterAsset("assets/mediapipe.html");
+
+      // ================= HTML =================
+      ..loadFlutterAsset(
+        "assets/mediapipe.html",
+      );
   }
 
-  // ================= CAMERA PERMISSION =================
-  Future<void> requestCameraPermission() async {
-    await Permission.camera.request();
-  }
+  // ================= SEND TO MODEL =================
+  Future<void> sendSequence(
+    List<List<double>> frames,
+  ) async {
 
-  void onNewFrame(List<double> keypoints) async {
-    frameBuffer.add(keypoints);
+    try {
 
-    if (frameBuffer.length > 30) {
-      frameBuffer.removeAt(0);
-    }
+      final response = await http.post(
 
-    if (frameBuffer.length == 30 && !isSending) {
-      isSending = true;
+        Uri.parse(
+          "https://sign-language-api-production-2148.up.railway.app/predict",
+        ),
 
-      try {
-        final word = await Service.sendFrames(frameBuffer);
+        headers: {
+          "Content-Type":
+              "application/json",
+        },
 
-        predictions.add(word);
+        body: jsonEncode({
 
-        if (predictions.length > 7) {
-          predictions.removeAt(0);
+          "sequence": frames,
+        }),
+      );
+
+      print(response.body);
+
+      if (response.statusCode == 200) {
+
+        final data =
+            jsonDecode(response.body);
+
+        // ================= BEST WORD =================
+        String bestWord =
+            data["prediction"];
+
+        // ================= AVOID REPEAT =================
+        if (bestWord != lastWord) {
+
+          sentenceWords.add(bestWord);
+
+          lastWord = bestWord;
         }
 
-        final Map<String, int> freq = {};
+        setState(() {
 
-        for (var w in predictions) {
-          freq[w] = (freq[w] ?? 0) + 1;
-        }
+          prediction =
 
-        String bestWord = freq.entries
-            .reduce((a, b) => a.value > b.value ? a : b)
-            .key;
+              "Prediction: ${data["prediction"]}\n\n"
 
-        bool isStable = freq[bestWord]! >= 4;
+              "${data["top3"][0]["word"]} "
+              "(${(data["top3"][0]["conf"] * 100).toStringAsFixed(1)}%)\n"
 
-        if (isStable && bestWord != lastWord) {
-          setState(() {
-            sentence += " $bestWord";
-            lastWord = bestWord;
-          });
+              "${data["top3"][1]["word"]} "
+              "(${(data["top3"][1]["conf"] * 100).toStringAsFixed(1)}%)\n"
 
-          predictions.clear();
-        }
-      } catch (e) {
-        print("ERROR: $e");
+              "${data["top3"][2]["word"]} "
+              "(${(data["top3"][2]["conf"] * 100).toStringAsFixed(1)}%)";
+        });
+
+      } else {
+
+        setState(() {
+
+          prediction =
+              "Server Error ${response.statusCode}";
+        });
       }
 
-      await Future.delayed(const Duration(milliseconds: 500));
-      isSending = false;
+    } catch (e) {
+
+      setState(() {
+
+        prediction =
+            "Connection Error";
+      });
+
+      print(e);
     }
   }
 
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Real-Time Sign")),
-      body: Column(
-        children: [
-          Expanded(
-            flex: 2,
-            child: WebViewWidget(controller: controller),
+
+      backgroundColor: Colors.black,
+
+      appBar: AppBar(
+
+        title: const Text(
+          "Real-Time Sign",
+        ),
+
+        actions: [
+
+          // ================= DONE =================
+          IconButton(
+
+            onPressed: () {
+
+              Navigator.pop(
+
+                context,
+
+                sentenceWords.join(" "),
+              );
+            },
+
+            icon: const Icon(Icons.done),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Text(
-                sentence,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+        ],
+      ),
+
+      body: Stack(
+
+        children: [
+
+          // ================= CAMERA =================
+          WebViewWidget(
+            controller: controller,
+          ),
+
+          // ================= RESULTS =================
+          Positioned(
+
+            bottom: 30,
+
+            left: 20,
+
+            right: 20,
+
+            child: Column(
+
+              children: [
+
+                // ================= CURRENT =================
+                Container(
+
+                  padding:
+                      const EdgeInsets.all(16),
+
+                  decoration: BoxDecoration(
+
+                    color: Colors.black
+                        .withOpacity(0.7),
+
+                    borderRadius:
+                        BorderRadius.circular(
+                      16,
+                    ),
+                  ),
+
+                  child: Text(
+
+                    prediction,
+
+                    textAlign:
+                        TextAlign.center,
+
+                    style:
+                        const TextStyle(
+
+                      color: Colors.white,
+
+                      fontSize: 22,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 15),
+
+                // ================= FULL SENTENCE =================
+                Container(
+
+                  padding:
+                      const EdgeInsets.all(14),
+
+                  decoration: BoxDecoration(
+
+                    color: Colors.green
+                        .withOpacity(0.8),
+
+                    borderRadius:
+                        BorderRadius.circular(
+                      16,
+                    ),
+                  ),
+
+                  child: Text(
+
+                    sentenceWords.join(" "),
+
+                    textAlign:
+                        TextAlign.center,
+
+                    style:
+                        const TextStyle(
+
+                      color: Colors.white,
+
+                      fontSize: 20,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
