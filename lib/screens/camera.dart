@@ -78,7 +78,7 @@ class _SignRealtimeState extends State<SignRealtime> {
 
       // ================= LOAD HTML =================
       ..loadFlutterAsset(
-        "assets/sign_camera.html",
+        "assets/mediapipe.html",
       );
   }
 
