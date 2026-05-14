@@ -14,34 +14,49 @@ class Communication extends StatefulWidget {
 }
 
 class _CommunicationState extends State<Communication> {
-  final TextEditingController textController = TextEditingController();
+
+  final TextEditingController textController =
+      TextEditingController();
+
   final SpeechToText speech = SpeechToText();
+
   final ImagePicker picker = ImagePicker();
 
   bool isListening = false;
   bool loading = false;
 
   List<String> signs = [];
+
   String predictedText = "";
 
   // ================= TEXT TO SIGN =================
   void translateText() async {
+
     if (textController.text.isEmpty) return;
 
     setState(() {
+
       loading = true;
       signs = [];
     });
 
     try {
-      final result = await Service.textToSigns(textController.text);
+
+      final result =
+          await Service.textToSigns(
+        textController.text,
+      );
 
       setState(() {
+
         signs = result;
         loading = false;
       });
+
     } catch (e) {
+
       setState(() {
+
         loading = false;
       });
     }
@@ -49,15 +64,22 @@ class _CommunicationState extends State<Communication> {
 
   // ================= SPEECH =================
   void startListening() async {
-    bool available = await speech.initialize();
+
+    bool available =
+        await speech.initialize();
 
     if (available) {
+
       setState(() => isListening = true);
 
       speech.listen(
+
         onResult: (result) {
+
           setState(() {
-            textController.text = result.recognizedWords;
+
+            textController.text =
+                result.recognizedWords;
           });
         },
       );
@@ -65,22 +87,31 @@ class _CommunicationState extends State<Communication> {
   }
 
   void stopListening() {
+
     speech.stop();
+
     setState(() => isListening = false);
   }
 
-  // ================= SIGN TO TEXT IMAGE =================
+  // ================= IMAGE SIGN =================
   Future captureSign() async {
+
     final XFile? image =
-        await picker.pickImage(source: ImageSource.camera);
+        await picker.pickImage(
+      source: ImageSource.camera,
+    );
 
     if (image == null) return;
 
     setState(() => loading = true);
 
-    final result = await Service.signToText(File(image.path));
+    final result =
+        await Service.signToText(
+      File(image.path),
+    );
 
     setState(() {
+
       predictedText = result;
       loading = false;
     });
@@ -88,96 +119,167 @@ class _CommunicationState extends State<Communication> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Communication")),
+
+      appBar: AppBar(
+        title: const Text("Communication"),
+      ),
+
       body: Padding(
+
         padding: const EdgeInsets.all(20),
+
         child: Column(
+
           children: [
+
+            // ================= TEXT FIELD =================
             TextField(
+
               controller: textController,
+
               decoration: InputDecoration(
+
                 hintText: "Type message",
+
                 border: const OutlineInputBorder(),
+
                 suffixIcon: IconButton(
+
                   icon: Icon(
-                    isListening ? Icons.mic : Icons.mic_none,
+
+                    isListening
+                        ? Icons.mic
+                        : Icons.mic_none,
                   ),
+
                   onPressed: () {
-                    isListening ? stopListening() : startListening();
+
+                    isListening
+                        ? stopListening()
+                        : startListening();
                   },
                 ),
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 15),
 
-            // ================= REAL TIME CAMERA =================
+            // ================= REALTIME =================
             ElevatedButton(
+
               onPressed: () async {
-                final result = await Navigator.push(
+
+                final result =
+                    await Navigator.push(
+
                   context,
+
                   MaterialPageRoute(
-                    builder: (_) => const SignRealtime(),
+
+                    builder: (_) =>
+                        const SignRealtime(),
                   ),
                 );
 
+                // ✅ الجملة الراجعة من الكاميرا
                 if (result != null) {
+
                   setState(() {
-                    predictedText = result.toString();
+
+                    predictedText =
+                        result.toString();
+
+                    textController.text =
+                        predictedText;
                   });
                 }
               },
-              child: const Text("Real-Time Sign"),
+
+              child: const Text(
+                "Real-Time Sign",
+              ),
             ),
 
             const SizedBox(height: 10),
 
+            // ================= CLEAR =================
             ElevatedButton(
+
               onPressed: () {
+
                 setState(() {
+
                   textController.clear();
+
                   signs = [];
+
                   predictedText = "";
                 });
               },
+
               child: const Text("Clear"),
             ),
 
             const SizedBox(height: 10),
 
+            // ================= TEXT TO SIGNS =================
             ElevatedButton(
+
               onPressed: translateText,
-              child: const Text("Text → Signs"),
+
+              child: const Text(
+                "Text → Signs",
+              ),
             ),
 
             const SizedBox(height: 10),
 
+            // ================= IMAGE TO TEXT =================
             ElevatedButton(
+
               onPressed: captureSign,
-              child: const Text("Sign → Text (Camera)"),
+
+              child: const Text(
+                "Sign → Text (Camera)",
+              ),
             ),
 
             const SizedBox(height: 20),
 
-            if (loading) const CircularProgressIndicator(),
+            if (loading)
+              const CircularProgressIndicator(),
 
             const SizedBox(height: 20),
 
+            // ================= RESULT =================
             if (predictedText.isNotEmpty)
+
               Text(
-                "AI Result: $predictedText",
+
+                predictedText,
+
+                textAlign: TextAlign.center,
+
                 style: const TextStyle(
-                  fontSize: 18,
+
+                  fontSize: 20,
+
                   fontWeight: FontWeight.bold,
                 ),
               ),
 
             const SizedBox(height: 20),
 
+            // ================= VIDEOS =================
             if (signs.isNotEmpty)
+
               Expanded(
-                child: SequencePlayer(videos: signs),
+
+                child: SequencePlayer(
+                  videos: signs,
+                ),
               ),
           ],
         ),
