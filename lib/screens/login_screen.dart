@@ -4,10 +4,8 @@ import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/forget_pass.dart';
 import 'package:cominsign_new/screens/home.dart';
 import 'package:cominsign_new/screens/signUp.dart';
-import 'package:cominsign_new/widgets/app_text_field.dart';
-import 'package:cominsign_new/widgets/gradient_background.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cominsign_new/widgets/gradient_background.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -39,8 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-Future<void> _login() async {
-      if (isLoading) return;
+  Future<void> _login() async {
+    if (isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
@@ -52,14 +50,16 @@ Future<void> _login() async {
       );
 
       if (data == null) {
-        throw Exception("Empty response from server");
+        _showSnack("Server error");
+        return;
       }
 
       final token = data["token"] ?? data["accessToken"];
       final email = data["email"] ?? _emailController.text.trim();
 
       if (token == null) {
-        throw Exception("Token not found in response");
+        _showSnack(data["message"] ?? "Login failed");
+        return;
       }
 
       await UserSession.saveSession(
@@ -69,30 +69,24 @@ Future<void> _login() async {
 
       UserSession.isGuest = false;
 
-      String? fcmToken = await FirebaseMessaging.instance.getToken();
-
-      if (fcmToken != null) {
-        await Service.updateDeviceToken(fcmToken);
-      }
-
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
+      Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
       _showSnack("Login failed: $e");
     } finally {
-      setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
@@ -110,9 +104,11 @@ Future<void> _login() async {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 60),
+
+                      const SizedBox(height: 40),
 
                       const Center(
                         child: Text(
@@ -126,9 +122,9 @@ Future<void> _login() async {
                         ),
                       ),
 
-                      const SizedBox(height: 60),
+                      const SizedBox(height: 40),
 
-                      /// EMAIL LABEL
+                      /// EMAIL
                       Text(
                         AppLang.t('email'),
                         style: const TextStyle(
@@ -143,8 +139,7 @@ Future<void> _login() async {
                         decoration: InputDecoration(
                           hintText: AppLang.t('enter your email'),
                           filled: true,
-                          fillColor:
-                              isDark ? Colors.grey[800] : Colors.white,
+                          fillColor: isDark ? Colors.grey[800] : Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -163,9 +158,9 @@ Future<void> _login() async {
                         },
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                      /// PASSWORD LABEL
+                      /// PASSWORD
                       Text(
                         AppLang.t('password'),
                         style: const TextStyle(
@@ -180,8 +175,7 @@ Future<void> _login() async {
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor:
-                              isDark ? Colors.grey[800] : Colors.white,
+                          fillColor: isDark ? Colors.grey[800] : Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -194,8 +188,7 @@ Future<void> _login() async {
                             ),
                             onPressed: () {
                               setState(() {
-                                _obscurePassword =
-                                    !_obscurePassword;
+                                _obscurePassword = !_obscurePassword;
                               });
                             },
                           ),
@@ -211,7 +204,7 @@ Future<void> _login() async {
                         },
                       ),
 
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 25),
 
                       /// LOGIN BUTTON
                       SizedBox(
@@ -221,13 +214,17 @@ Future<void> _login() async {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Text(
                                   "Login",
@@ -247,8 +244,7 @@ Future<void> _login() async {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  const ForgetPass(),
+                              builder: (_) => const ForgetPass(),
                             ),
                           );
                         },
@@ -265,8 +261,7 @@ Future<void> _login() async {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const SignUpScreen(),
+                                builder: (_) => const SignUpScreen(),
                               ),
                             );
                           },

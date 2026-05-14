@@ -20,6 +20,9 @@ import 'package:cominsign_new/screens/hello_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ✅ تهيئة Firebase
+
+
 
    await UserSession.loadSession(); // ✅ الصحيح
 final token = UserSession.token; //
