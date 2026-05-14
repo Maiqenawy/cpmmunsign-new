@@ -113,13 +113,21 @@ class _SignRealtimeState extends State<SignRealtime> {
 
         final data = jsonDecode(response.body);
 
-        setState(() {
+      setState(() {
 
-          prediction =
-              data["class_name"] ??
-              data["prediction"] ??
-              "No Result";
-        });
+  prediction =
+      "Prediction: ${data["prediction"]}\n\n"
+
+      "${data["top3"][0]["word"]} "
+      "(${(data["top3"][0]["conf"] * 100).toStringAsFixed(1)}%)\n"
+
+      "${data["top3"][1]["word"]} "
+      "(${(data["top3"][1]["conf"] * 100).toStringAsFixed(1)}%)\n"
+
+      "${data["top3"][2]["word"]} "
+      "(${(data["top3"][2]["conf"] * 100).toStringAsFixed(1)}%)";
+
+});
 
       } else {
 
