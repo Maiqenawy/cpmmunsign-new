@@ -220,18 +220,7 @@ class Service {
     }
   }
 
-  // ================= FIREBASE TOKEN =================
-  static Future updateDeviceToken(String fcmToken) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/update-device-token"),
-      headers: headersWithAuth(),
-      body: jsonEncode({
-        "fcmToken": fcmToken,
-      }),
-    );
-
-    print("UPDATE TOKEN RESPONSE: ${response.body}");
-  }
+  
 
   // ================= CHAT =================
   static Future<String> chat(String message) async {
@@ -353,6 +342,32 @@ class Service {
   }
 
   // ================= AI: REALTIME FRAMES =================
+  static Future<String> predictSign(
+    List<List<double>> frames,
+) async {
+
+  final response = await http.post(
+    Uri.parse(
+      "https://sign-language-api-production-2148.up.railway.app/predict",
+    ),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: jsonEncode({
+      "sequence": [frames]
+    }),
+  );
+
+  print(response.body);
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return data["prediction"].toString();
+  } else {
+    throw Exception("Prediction failed");
+  }
+}
 static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
