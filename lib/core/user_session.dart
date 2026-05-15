@@ -4,6 +4,7 @@ class UserSession {
   static String? token;
   static String? email;
   static bool isGuest = false;
+ 
 
   // ================= SAVE SESSION =================
   static Future<void> saveSession({
