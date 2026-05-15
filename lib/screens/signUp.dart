@@ -39,13 +39,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _isValidEmail(String email) {
     return RegExp(
-      r'^[\w\-.]+@([\w\-]+\.)+[\w\-]{2,4}$',
+     r'^[a-zA-Z0-9._%+-]+@gmail\.com$',
     ).hasMatch(email.trim());
   }
 
   Future<void> _onRegister() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+    if (!_isValidEmail(emailController.text)) {
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Please enter a valid Gmail address"),
+      backgroundColor: Colors.red,
+    ),
+  );
+
+  return;
+}
     setState(() => isLoading = true);
     try {
       await Service.register(
