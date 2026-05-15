@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // ضروري لتعريف kIsWeb
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
 
+// استيراد الشاشات والملفات الخاصة بمشروعك
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/home.dart';
 import 'package:cominsign_new/screens/login_screen.dart';
@@ -18,15 +20,23 @@ import 'package:cominsign_new/screens/Level_screen.dart';
 import 'package:cominsign_new/screens/setting.dart';
 import 'package:cominsign_new/screens/hello_screen.dart';
 
+// استيراد مكتبة WebView للأندرويد
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+
 void main() async {
+  // التأكد من تهيئة كل أدوات فلاتر قبل التشغيل
   WidgetsFlutterBinding.ensureInitialized();
-  // ✅ تهيئة Firebase
 
+  // ✅ حل مشكلة الويب: تشغيل الـ Debugging للأندرويد "فقط" إذا لم نكن على الويب
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    AndroidWebViewController.enableDebugging(true);
+  }
 
+  // تحميل الجلسة والتوكن
+  await UserSession.loadSession();
+  final token = UserSession.token;
 
-   await UserSession.loadSession(); // ✅ الصحيح
-final token = UserSession.token; //
-
+  // تحميل الإعدادات المحفوظة (اللغة والوضع الليلي)
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
   final language = prefs.getString('language') ?? 'en';
@@ -58,33 +68,27 @@ class _MyAppState extends State<MyApp> {
   late bool isDarkMode;
   late String selectedLanguage;
 
-  final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
-
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   late AppLinks _appLinks;
 
   @override
   void initState() {
     super.initState();
-
     isDarkMode = widget.isDarkMode;
     selectedLanguage = widget.language;
-
     _initDeepLinks();
   }
 
+  // تهيئة روابط الـ Deep Links (مثل استعادة كلمة السر)
   void _initDeepLinks() {
     _appLinks = AppLinks();
-
     _appLinks.uriLinkStream.listen((uri) {
       if (uri == null) return;
 
       final email = uri.queryParameters['email'];
       final token = uri.queryParameters['token'];
 
-      if (uri.host == "reset-password" &&
-          email != null &&
-          token != null) {
+      if (uri.host == "reset-password" && email != null && token != null) {
         navigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ResetPasswordScreen(
@@ -125,23 +129,21 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic =
-        selectedLanguage == 'ar' || selectedLanguage == 'العربية';
+    final isArabic = selectedLanguage == 'ar' || selectedLanguage == 'العربية';
 
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-
       theme: lightTheme(),
       darkTheme: darkTheme(),
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
+      
+      // الشاشة الابتدائية (Splash)
       initialRoute: '/',
 
       builder: (context, child) {
         return Directionality(
-          textDirection:
-              isArabic ? TextDirection.rtl : TextDirection.ltr,
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
           child: child!,
         );
       },
@@ -160,12 +162,12 @@ class _MyAppState extends State<MyApp> {
         '/learning': (_) => const Learning(),
         '/level': (_) => const LevelScreen(levelId: 1),
         '/setting': (_) => SettingsScreen(
-          isDarkMode: isDarkMode,
-          selectedLanguage: selectedLanguage,
-          onThemeChanged: updateTheme,
-          onLanguageChanged: updateLanguage,
-          t: (key) => key,
-        ),
+              isDarkMode: isDarkMode,
+              selectedLanguage: selectedLanguage,
+              onThemeChanged: updateTheme,
+              onLanguageChanged: updateLanguage,
+              t: (key) => key,
+            ),
       },
     );
   }

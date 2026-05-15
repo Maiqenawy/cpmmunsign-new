@@ -1,109 +1,136 @@
-// ملاحظة: لازم زميلك يكون ضايف مكتبات camera و http و google_mlkit_hand_detection
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart'; // مهم جداً عشان kIsWeb
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
-class SequenceCameraScreen extends StatefulWidget {
-  final List<CameraDescription> cameras;
-  const SequenceCameraScreen({super.key, required this.cameras});
+class SignRealtime extends StatefulWidget {
+  const SignRealtime({super.key});
 
   @override
-  State<SequenceCameraScreen> createState() => _SequenceCameraScreenState();
+  State<SignRealtime> createState() => _SignRealtimeState();
 }
 
-class _SequenceCameraScreenState extends State<SequenceCameraScreen> {
-  CameraController? _controller;
-  List<List<double>> _sequence = []; // دي اللي هنجمع فيها الـ 30 فريم
-  String _prediction = "Scanning...";
-  bool _isProcessing = false;
+class _SignRealtimeState extends State<SignRealtime> {
+  WebViewController? _webViewController;
+  final List<List<double>> sequence = [];
+  String prediction = "Scanning...";
+  bool isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
+    initCameraWebView();
   }
 
-  Future<void> _initCamera() async {
-    _controller = CameraController(widget.cameras[0], ResolutionPreset.medium);
-    await _controller!.initialize();
-
-    // بدأ معالجة الصور من الكاميرا لايف
-    _controller!.startImageStream((CameraImage image) {
-      if (!_isProcessing) {
-        _processFrame(image);
-      }
-    });
-    setState(() {});
-  }
-
-  void _processFrame(CameraImage image) async {
-    // 1. هنا زميلك بيحول الصورة لـ Landmarks (أرقام)
-    // هنفترض إن النقط المستخرجة من الفريم الواحد اسمها currentLandmarks
-    List<double> currentLandmarks = await _extractLandmarks(image);
-
-    _sequence.add(currentLandmarks);
-
-    // 2. لما نوصل لـ 30 فريم، نبعتهم للسيرفر
-    if (_sequence.length == 30) {
-      _isProcessing = true;
-      await _sendSequenceToServer(_sequence);
-      _sequence.clear(); // نمسح السيكونس عشان نجمع 30 جداد
-      _isProcessing = false;
+  Future<void> initCameraWebView() async {
+    // 1. طلب صلاحية الكاميرا للموبايل فقط (الويب بيطلبها لوحده)
+    if (!kIsWeb) {
+      await Permission.camera.request();
     }
+
+    // 2. إعداد الكنترولر الأساسي
+    final controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..addJavaScriptChannel(
+        "SignChannel",
+        onMessageReceived: (JavaScriptMessage message) {
+          if (isProcessing) return;
+          try {
+            final List data = jsonDecode(message.message);
+            final frame = data.map((e) => (e as num).toDouble()).toList();
+            
+            if (frame.length == 246) {
+              sequence.add(frame);
+              if (sequence.length >= 30) {
+                isProcessing = true;
+                final framesToSend = List<List<double>>.from(sequence);
+                sequence.clear();
+                sendSequence(framesToSend);
+              }
+            }
+          } catch (e) {
+            debugPrint("Data Error: $e");
+          }
+        },
+      )
+      ..loadRequest(Uri.parse("https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
+
+    // 3. الجزء الحرج: إعدادات الأندرويد (لا يتم تنفيذها إلا على الأندرويد فقط)
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (controller.platform is AndroidWebViewController) {
+        final androidController = controller.platform as AndroidWebViewController;
+        await androidController.setMediaPlaybackRequiresUserGesture(false);
+        await androidController.setOnPlatformPermissionRequest((request) => request.grant());
+      }
+    }
+
+    setState(() {
+      _webViewController = controller;
+    });
   }
 
-  Future<void> _sendSequenceToServer(List<List<double>> sequence) async {
+  Future<void> sendSequence(List<List<double>> frames) async {
     try {
-      var url = Uri.parse(
-        "https://sign-language-api-production-2148.up.railway.app/docs",
-      );
-
-      // إرسال الداتا كـ JSON بنفس الشكل اللي السيرفر طالبه في الصورة
-      var response = await http.post(
-        url,
+      final response = await http.post(
+        Uri.parse("https://sign-language-api-production-2148.up.railway.app/predict"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "sequence": sequence, // دي المصفوفة الـ 30 فريم
-        }),
-      );
+        body: jsonEncode({"sequence": frames}),
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        setState(() {
-          _prediction = data['class_name'];
-        });
+        final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            prediction = data["prediction"] ?? "Unknown";
+          });
+        }
       }
     } catch (e) {
-      print("Error: $e");
+      debugPrint("API Error: $e");
+    } finally {
+      isProcessing = false;
     }
-  }
-
-  // دالة وهمية لاستخراج النقط (زميلك أكيد عارف يكتبها بمكتبة ML Kit)
-  Future<List<double>> _extractLandmarks(CameraImage image) async {
-    // زميلك هيكتب هنا كود تحويل الفريم لـ 246 نقطة أو حسب الموديل بتاعك
-    return List.generate(246, (index) => 0.0);
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_controller == null || !_controller!.value.isInitialized)
-      return Container();
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign Language Sequence")),
-      body: Column(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text("Real-Time Sign"),
+        backgroundColor: Colors.deepPurple,
+      ),
+      body: Stack(
         children: [
-          Expanded(child: CameraPreview(_controller!)),
-          Text(
-            "Prediction: $_prediction",
-            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+          _webViewController == null
+              ? const Center(child: CircularProgressIndicator())
+              : WebViewWidget(controller: _webViewController!),
+          
+          // طبقة لعرض النتيجة
+          Positioned(
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                prediction,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white, 
+                  fontSize: 28, 
+                  fontWeight: FontWeight.bold
+                ),
+              ),
+            ),
           ),
         ],
       ),

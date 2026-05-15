@@ -228,16 +228,7 @@ class Service {
     }
   }
 
-  // ================= FIREBASE TOKEN =================
-  static Future updateDeviceToken(String fcmToken) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/update-device-token"),
-      headers: headersWithAuth(),
-      body: jsonEncode({"fcmToken": fcmToken}),
-    );
-
-    print("UPDATE TOKEN RESPONSE: ${response.body}");
-  }
+  
 
   // ================= CHAT =================
   static Future<String> chat(String message) async {
@@ -354,7 +345,8 @@ class Service {
   }
 
   // ================= AI: REALTIME FRAMES =================
-  static Future<String> sendFrames(List<List<double>> frames) async {
+  
+static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
         "https://sign-language-api-production-2148.up.railway.app/predict",

@@ -1,15 +1,18 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:cominsign_new/main.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('App starts successfully', (WidgetTester tester) async {
+  testWidgets('App starts successfully',
+      (WidgetTester tester) async {
+
     await tester.pumpWidget(
-      const MyApp(
+      MyApp(
         isDarkMode: false,
         language: 'English',
+        startScreen: const Scaffold(),
       ),
     );
 

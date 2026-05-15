@@ -43,6 +43,9 @@ dependencies:
   firebase_messaging: ^16.2.2
   firebase_core: ^4.9.0
   model_viewer_plus: ^1.9.0
+  shelf: ^1.4.1
+  shelf_static: ^1.1.2
+  
 
 dev_dependencies:
   flutter_test:

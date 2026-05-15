@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8" />
 
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
+  <script src="https://unpkg.com/@mediapipe/holistic/holistic.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://unpkg.com/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
 <body style="margin:0; overflow:hidden; background:black;">
@@ -15,12 +15,15 @@
   id="video"
   autoplay
   playsinline
+  muted
   style="width:100%; height:100%; object-fit:cover;"
 ></video>
 
 <script>
 
 const video = document.getElementById("video");
+
+console.log("HTML STARTED");
 
 // ================= FACE INDEXES =================
 const FACE_INDEXES = [
@@ -34,28 +37,33 @@ const FACE_INDEXES = [
 
 // ================= HOLISTIC =================
 const holistic = new Holistic({
+
   locateFile: (file) => {
-    return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
+    return `https://unpkg.com/@mediapipe/holistic/${file}`;
   }
+
 });
 
 holistic.setOptions({
+
   modelComplexity: 1,
   smoothLandmarks: true,
   refineFaceLandmarks: true,
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5,
+
 });
 
-// ================= FRAME BUFFER =================
-let lastSent = 0;
+console.log("HOLISTIC READY");
 
 // ================= RESULTS =================
+let lastSent = 0;
+
 holistic.onResults((results) => {
 
   let keypoints = [];
 
-  // ================= LEFT HAND =================
+  // LEFT HAND
   if (results.leftHandLandmarks) {
 
     results.leftHandLandmarks.forEach(lm => {
@@ -67,7 +75,7 @@ holistic.onResults((results) => {
     keypoints.push(...Array(63).fill(0));
   }
 
-  // ================= RIGHT HAND =================
+  // RIGHT HAND
   if (results.rightHandLandmarks) {
 
     results.rightHandLandmarks.forEach(lm => {
@@ -79,7 +87,7 @@ holistic.onResults((results) => {
     keypoints.push(...Array(63).fill(0));
   }
 
-  // ================= FACE =================
+  // FACE
   if (results.faceLandmarks) {
 
     FACE_INDEXES.forEach(i => {
@@ -89,7 +97,7 @@ holistic.onResults((results) => {
       if (lm) {
         keypoints.push(lm.x, lm.y, lm.z);
       } else {
-        keypoints.push(0, 0, 0);
+        keypoints.push(0,0,0);
       }
     });
 
@@ -98,21 +106,24 @@ holistic.onResults((results) => {
     keypoints.push(...Array(120).fill(0));
   }
 
-  // ================= VALIDATE =================
+  // VALIDATE
   if (keypoints.length !== 246) {
+
     console.log("INVALID FEATURES:", keypoints.length);
+
     return;
   }
 
-  // ================= THROTTLE =================
+  // THROTTLE
   const now = Date.now();
 
-  // إرسال كل 100ms تقريبًا
   if (now - lastSent < 100) return;
 
   lastSent = now;
 
-  // ================= SEND TO FLUTTER =================
+  console.log("SENDING TO FLUTTER");
+
+  // SEND TO FLUTTER
   try {
 
     SignChannel.postMessage(
@@ -121,25 +132,75 @@ holistic.onResults((results) => {
 
   } catch (e) {
 
-    console.log("Flutter channel error:", e);
+    console.log("CHANNEL ERROR:", e);
   }
 });
 
-// ================= CAMERA =================
-const camera = new Camera(video, {
+// ================= START CAMERA =================
+async function startCamera() {
 
-  onFrame: async () => {
+  try {
 
-    await holistic.send({
-      image: video
+    console.log("REQUEST CAMERA");
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+
+      video: true,
+      audio: false
+
     });
-  },
 
-  width: 640,
-  height: 480,
-});
+    console.log("CAMERA GRANTED");
 
-camera.start();
+    video.srcObject = stream;
+
+    await video.play();
+
+    console.log(
+      "VIDEO SIZE:",
+      video.videoWidth,
+      video.videoHeight
+    );
+
+    const camera = new Camera(video, {
+
+      onFrame: async () => {
+
+        await holistic.send({
+          image: video
+        });
+
+      },
+
+      width: 640,
+      height: 480,
+    });
+
+    camera.start();
+
+    console.log("CAMERA STARTED");
+
+  } catch (err) {
+
+    console.log("CAMERA ERROR:", err);
+
+    document.body.innerHTML += `
+      <div style="
+        position:absolute;
+        top:20px;
+        left:20px;
+        color:white;
+        background:red;
+        padding:10px;
+        z-index:999;
+      ">
+        ${err}
+      </div>
+    `;
+  }
+}
+
+startCamera();
 
 </script>
 
