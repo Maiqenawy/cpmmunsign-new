@@ -37,8 +37,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
 
-    selectedLanguage =
-        widget.selectedLanguage == 'العربية' ? 'ar' : 'en';
+  selectedLanguage =
+    AppLang.currentLocale.languageCode;
 
     if (!UserSession.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
