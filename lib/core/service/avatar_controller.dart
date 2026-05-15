@@ -1,25 +1,69 @@
-
 import 'package:flutter/material.dart';
-class AvatarController extends ChangeNotifier {
-  List<String> queue = [];
-  String current = "idle";
+import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:cominsign_new/widgets/gradient_background.dart';
 
-  void setSigns(List<String> signs) {
-    queue = signs;
-    playNext();
+class AvatarScreen extends StatefulWidget {
+  const AvatarScreen({super.key});
+
+  @override
+  State<AvatarScreen> createState() => _AvatarScreenState();
+}
+
+class _AvatarScreenState extends State<AvatarScreen> {
+  String currentAnimation = "idle";
+
+  void changeAnimation(String newAnimation) {
+    setState(() {
+      currentAnimation = newAnimation;
+    });
   }
 
-  void playNext() async {
-    if (queue.isEmpty) {
-      current = "idle";
-      notifyListeners();
-      return;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GradientBackground(
+        child: Column(
+          children: [
+            Expanded(
+              child: ModelViewer(
+                src:
+                    'assets/cartoon_male_characters_-_low-poly_3d_model.glb',
+                alt: "A 3D model of an avatar",
+                backgroundColor: Colors.transparent,
+                autoPlay: true,
+                ar: true,
+                autoRotate: false,
+                cameraControls: true,
 
-    current = queue.removeAt(0);
-    notifyListeners();
+                // ⭐ هنا الربط الصحيح
+                animationName: currentAnimation,
+              ),
+            ),
 
-    await Future.delayed(Duration(seconds: 2));
-    playNext();
+            // 🔘 أزرار تجربة الأنيميشن
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Wrap(
+                spacing: 10,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => changeAnimation("idle"),
+                    child: const Text("Idle"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => changeAnimation("wave"),
+                    child: const Text("Wave"),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => changeAnimation("run"),
+                    child: const Text("Run"),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

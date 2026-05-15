@@ -57,7 +57,7 @@ class _SequenceCameraScreenState extends State<SequenceCameraScreen> {
   Future<void> _sendSequenceToServer(List<List<double>> sequence) async {
     try {
       var url = Uri.parse(
-        "https://sign-language-api-production-2148.up.railway.app/predict/",
+        "https://sign-language-api-production-2148.up.railway.app/docs",
       );
 
       // إرسال الداتا كـ JSON بنفس الشكل اللي السيرفر طالبه في الصورة

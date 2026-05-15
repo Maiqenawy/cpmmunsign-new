@@ -4,13 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:cominsign_new/core/user_session.dart';
 
 class Service {
-  static const String baseUrl = "http://cominisign.runasp.net/api";
+  static const String baseUrl = "https://cominisign.runasp.net/api";
 
   static String token = "";
 
-  static Map<String, String> headers = {
-    "Content-Type": "application/json",
-  };
+  static Map<String, String> headers = {"Content-Type": "application/json"};
 
   static Map<String, String> headersWithAuth() {
     return {
@@ -20,6 +18,7 @@ class Service {
   }
 
   // ================= REGISTER =================
+
   static Future register({
     required String name,
     required String email,
@@ -27,46 +26,64 @@ class Service {
     required String confirmPassword,
     required String address,
   }) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/register"),
-      headers: headers,
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "password": password,
-        "confirmPassword": confirmPassword,
-        "address": address,
-      }),
-    );
+    try {
+      var response = await http.post(
+        Uri.parse("$baseUrl/Account/register"),
+        headers: headers,
+        body: jsonEncode({
+          "name": name,
+          "email": email,
+          "password": password,
+          "confirmPassword": confirmPassword,
+          "address": address,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      if (response.body.isEmpty) return {};
-      return jsonDecode(response.body);
-    } else {
-      throw Exception(response.body);
+      // ✅ الحل: تحويل البودي لنص صريح قبل الفحص
+      String resBody = response.body;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (resBody.isEmpty) return {};
+        var data = jsonDecode(resBody);
+
+        if (data is Map && data["token"] != null) {
+          token = data["token"];
+          UserSession.token = data["token"];
+        }
+        return data;
+      } else {
+        // التعامل مع أخطاء السيرفر
+        String errorMsg = "Registration failed";
+        if (resBody.isNotEmpty) {
+          try {
+            var errorData = jsonDecode(resBody);
+            errorMsg = errorData['message'] ?? errorMsg;
+          } catch (_) {}
+        }
+        throw errorMsg;
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
   // ================= LOGIN =================
-  static Future login({
-    required String email,
-    required String password,
-  }) async {
+  static Future login({required String email, required String password}) async {
     var response = await http.post(
       Uri.parse("$baseUrl/Account/login"),
       headers: headers,
-      body: jsonEncode({
-        "email": email,
-        "password": password,
-      }),
+      body: jsonEncode({"email": email, "password": password}),
     );
 
-    if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
-      token = data["token"];
+    String responseBody = response.body;
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      var data = jsonDecode(responseBody);
+      token = data["token"] ?? "";
+      UserSession.token = token; // مزامنة التوكن مع الجلسة
       return data;
     } else {
-      throw Exception("Login failed");
+      throw Exception("Login failed: $responseBody");
     }
   }
 
@@ -115,8 +132,9 @@ class Service {
       headers: headersWithAuth(),
     );
 
-    if (res.body.isEmpty) return [];
-    return jsonDecode(res.body);
+    String responseBody = res.body;
+    if (responseBody.isEmpty) return [];
+    return jsonDecode(responseBody);
   }
 
   static Future addContact({
@@ -127,14 +145,10 @@ class Service {
     var res = await http.post(
       Uri.parse("$baseUrl/contact"),
       headers: headersWithAuth(),
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "relation": relation,
-      }),
+      body: jsonEncode({"name": name, "email": email, "relation": relation}),
     );
 
-    if (res.statusCode != 200) {
+    if (res.statusCode != 200 && res.statusCode != 201) {
       throw Exception("Failed to add contact");
     }
   }
@@ -148,11 +162,7 @@ class Service {
     var res = await http.put(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
-      body: jsonEncode({
-        "name": name,
-        "email": email,
-        "relation": relation,
-      }),
+      body: jsonEncode({"name": name, "email": email, "relation": relation}),
     );
 
     if (res.statusCode != 200) {
@@ -210,9 +220,7 @@ class Service {
     var response = await http.post(
       Uri.parse("$baseUrl/Emergency/send-sos/$pictogramId"),
       headers: headersWithAuth(),
-      body: jsonEncode({
-        "location": location,
-      }),
+      body: jsonEncode({"location": location}),
     );
 
     if (response.statusCode != 200) {
@@ -225,9 +233,7 @@ class Service {
     var response = await http.post(
       Uri.parse("$baseUrl/Account/update-device-token"),
       headers: headersWithAuth(),
-      body: jsonEncode({
-        "fcmToken": fcmToken,
-      }),
+      body: jsonEncode({"fcmToken": fcmToken}),
     );
 
     print("UPDATE TOKEN RESPONSE: ${response.body}");
@@ -241,17 +247,16 @@ class Service {
         "Content-Type": "application/json",
         "Authorization": "Bearer ${UserSession.token}",
       },
-      body: jsonEncode({
-        "message": message,
-      }),
+      body: jsonEncode({"message": message}),
     );
 
-    if (response.body.isEmpty) {
+    String responseBody = response.body;
+    if (responseBody.isEmpty) {
       throw Exception("Empty response");
     }
 
     if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
+      var data = jsonDecode(responseBody);
       return data["reply"];
     } else {
       throw Exception("Chat failed");
@@ -290,9 +295,7 @@ class Service {
     var res = await http.post(
       Uri.parse("$baseUrl/learning/progress"),
       headers: headersWithAuth(),
-      body: jsonEncode({
-        "learningWordId": wordId,
-      }),
+      body: jsonEncode({"learningWordId": wordId}),
     );
 
     return jsonDecode(res.body);
@@ -337,9 +340,7 @@ class Service {
       Uri.parse("$baseUrl/ai/sign-to-text"),
     );
 
-    request.files.add(
-      await http.MultipartFile.fromPath("Frame", image.path),
-    );
+    request.files.add(await http.MultipartFile.fromPath("Frame", image.path));
 
     var response = await request.send();
     var res = await http.Response.fromStream(response);
@@ -353,28 +354,20 @@ class Service {
   }
 
   // ================= AI: REALTIME FRAMES =================
-static Future<String> sendFrames(List<List<double>> frames) async {
+  static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
         "https://sign-language-api-production-2148.up.railway.app/predict",
       ),
       headers: headers,
-      body: jsonEncode({
-        "sequence": frames, // ✅ المهم هنا
-      }),
+      body: jsonEncode({"sequence": frames}),
     );
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-
-      // حسب شكل الـ API
-      return data.toString(); 
-      // أو لو بيرجع:
-      // return data["prediction"];
+      return data.toString();
     } else {
-      throw Exception(
-        "Real-time prediction failed: ${response.body}",
-      );
+      throw Exception("Real-time prediction failed: ${response.body}");
     }
   }
 }
