@@ -34,12 +34,22 @@ class _EmergencyPageState extends State<EmergencyPage> {
   }
 
   Future<void> loadData() async {
+
+  try {
+
     final data = await Service.getPictograms();
+
+    print(data);
 
     setState(() {
       pictograms = data;
     });
+
+  } catch (e) {
+
+    print(e);
   }
+}
 
 Future<String> getLocation() async {
   LocationPermission permission = await Geolocator.requestPermission();
