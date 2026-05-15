@@ -5,6 +5,7 @@ import 'package:cominsign_new/screens/chat_with_us.dart';
 import 'package:cominsign_new/screens/communication.dart';
 import 'package:cominsign_new/screens/learning.dart';
 import 'package:cominsign_new/screens/newcontact_page.dart';
+import 'package:cominsign_new/screens/emergency.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 
@@ -257,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const NewContactPage(),
+                              builder: (_) => const EmergencyPage(),
                             ),
                           );
                         },

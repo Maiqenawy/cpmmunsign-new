@@ -4,5 +4,8 @@
   "preferences": "التفضيلات",
   "language": "اللغة",
   "dark_mode": "الوضع الليلي",
-  "logout": "تسجيل الخروج"
+  "logout": "تسجيل الخروج",
+  "english": "الإنجليزية",
+  "arabic": "العربية",
+  "emergency_contacts": "جهات اتصال الطوارئ"
 }

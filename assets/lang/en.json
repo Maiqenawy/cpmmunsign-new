@@ -1,7 +1,11 @@
-{  "settings": "Settings",
+{
+  "settings": "Settings",
   "user": "User",
   "preferences": "Preferences",
   "language": "Language",
   "dark_mode": "Dark Mode",
-  "logout": "Logout"
-  }
+  "logout": "Logout",
+  "english": "English",
+  "arabic": "Arabic",
+  "emergency_contacts": "Emergency Contacts"
+}
