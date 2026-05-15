@@ -257,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const NewContactPage(),
+                              builder: (_) => const EmergencyPage(),
                             ),
                           );
                         },
