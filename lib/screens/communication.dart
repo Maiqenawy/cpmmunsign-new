@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../models/avatar_sign_model.dart';
-
+import 'package:cominsign_new/widgets/avatar_animation_player.dart';
 // تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
 
@@ -170,15 +170,18 @@ class _CommunicationState extends State<Communication> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: loading
                         ? const CircularProgressIndicator(color: Color(0xFF1B6B55))
-                        : (signs.isNotEmpty
-                            ? Container(
-                               decoration: BoxDecoration(
-                   borderRadius: BorderRadius.circular(20), // ✅ الآن الحواف الدائرية داخل BoxDecoration
-),
-                                clipBehavior: Clip.antiAlias,
-                                child: SequencePlayer(videos: signs),
-                              )
-                            : _AvatarWidget()), // يعرض الأفاتار إن لم تكن هناك فيديوهات إشارة شغالّلة
+                      : (signs.isNotEmpty
+    ? Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        clipBehavior: Clip.antiAlias,
+
+        child: AvatarAnimationPlayer(
+          signs: signs,
+        ),
+      )
+    : _AvatarWidget()),// يعرض الأفاتار إن لم تكن هناك فيديوهات إشارة شغالّلة
                   ),
                 ),
               ),
