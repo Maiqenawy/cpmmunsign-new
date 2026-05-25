@@ -3,6 +3,7 @@ import 'package:cominsign_new/screens/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import '../models/avatar_sign_model.dart';
 
 // تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
@@ -44,7 +45,7 @@ class _CommunicationState extends State<Communication> {
 
   bool isListening = false;
   bool loading = false;
-  List<String> signs = [];
+  List<AvatarSign> signs = [];
   String predictedText = "";
 
   // ================= TEXT TO SIGN =================
