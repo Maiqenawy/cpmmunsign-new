@@ -308,21 +308,24 @@ class Service {
     );
   }
 
-  // ================= AI: TEXT → SIGNS =================
-  static Future<List<String>> textToSigns(String text) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/ai/text-to-signs"),
-      headers: headers,
-      body: jsonEncode({"text": text}),
-    );
+// ================= AI: TEXT → SIGNS =================
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return List<String>.from(data["Signs"] ?? []);
-    } else {
-      throw Exception("Translation failed");
-    }
+static Future<List<dynamic>> textToSigns(String text) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/text-to-signs"),
+    headers: headers,
+    body: jsonEncode({"text": text}),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    // الباك بيرجع List مباشرة
+    return List<dynamic>.from(data);
+  } else {
+    throw Exception("Translation failed");
   }
+}
 
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
