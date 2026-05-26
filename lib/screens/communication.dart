@@ -177,8 +177,9 @@ class _CommunicationState extends State<Communication> {
         ),
         clipBehavior: Clip.antiAlias,
 
-        child: AvatarAnimationPlayer(
-          signs: signs,
+        child:AvatarLandmarkPlayer(
+  signs: signs,
+
         ),
       )
     : _AvatarWidget()),// يعرض الأفاتار إن لم تكن هناك فيديوهات إشارة شغالّلة
