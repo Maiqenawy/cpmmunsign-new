@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8" />
 
   <script src="https://unpkg.com/@mediapipe/holistic/holistic.js"></script>
-
   <script src="https://unpkg.com/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
-<body style="margin:0; overflow:hidden; background:black;">
+<body style="margin:0; background:black; overflow:hidden;">
 
-<video
-  id="video"
+<video id="video"
   autoplay
   playsinline
   muted
-  style="width:100%; height:100%; object-fit:cover;"
-></video>
+  style="width:100%; height:100%; object-fit:cover;">
+</video>
 
 <script>
 
 const video = document.getElementById("video");
 
-console.log("HTML STARTED");
+// ================= STATE =================
+let running = true;
+let lastSent = 0;
+let camera = null;
 
 // ================= FACE INDEXES =================
 const FACE_INDEXES = [
@@ -38,10 +38,8 @@ const FACE_INDEXES = [
 // ================= HOLISTIC =================
 const holistic = new Holistic({
 
-  locateFile: (file) => {
-    return `https://unpkg.com/@mediapipe/holistic/${file}`;
-  }
-
+  locateFile: (file) =>
+    `https://unpkg.com/@mediapipe/holistic/${file}`
 });
 
 holistic.setOptions({
@@ -49,131 +47,100 @@ holistic.setOptions({
   modelComplexity: 1,
   smoothLandmarks: true,
   refineFaceLandmarks: true,
-  minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5,
+  minDetectionConfidence: 0.6,
+  minTrackingConfidence: 0.6,
 
 });
 
 console.log("HOLISTIC READY");
 
-// ================= RESULTS =================
-let lastSent = 0;
-
+// ================= CLEAN RESULTS =================
 holistic.onResults((results) => {
 
-  let keypoints = [];
+  if (!running) return;
+
+  const keypoints = [];
 
   // LEFT HAND
-  if (results.leftHandLandmarks) {
-
+  if (results.leftHandLandmarks?.length === 21) {
     results.leftHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
-
   } else {
-
     keypoints.push(...Array(63).fill(0));
   }
 
   // RIGHT HAND
-  if (results.rightHandLandmarks) {
-
+  if (results.rightHandLandmarks?.length === 21) {
     results.rightHandLandmarks.forEach(lm => {
       keypoints.push(lm.x, lm.y, lm.z);
     });
-
   } else {
-
     keypoints.push(...Array(63).fill(0));
   }
 
-  // FACE
-  if (results.faceLandmarks) {
+  // FACE (safe access)
+  if (results.faceLandmarks?.length >= 468) {
 
     FACE_INDEXES.forEach(i => {
-
       const lm = results.faceLandmarks[i];
-
       if (lm) {
         keypoints.push(lm.x, lm.y, lm.z);
       } else {
-        keypoints.push(0,0,0);
+        keypoints.push(0, 0, 0);
       }
     });
 
   } else {
-
-    keypoints.push(...Array(120).fill(0));
+    keypoints.push(...Array(FACE_INDEXES.length * 3).fill(0));
   }
 
   // VALIDATE
-  if (keypoints.length !== 246) {
+  if (keypoints.length !== 246) return;
 
-    console.log("INVALID FEATURES:", keypoints.length);
-
-    return;
-  }
-
-  // THROTTLE
+  // THROTTLE (stable)
   const now = Date.now();
-
-  if (now - lastSent < 100) return;
-
+  if (now - lastSent < 120) return;
   lastSent = now;
-
-  console.log("SENDING TO FLUTTER");
 
   // SEND TO FLUTTER
   try {
+    if (window.SignChannel && running) {
 
-    SignChannel.postMessage(
-      JSON.stringify(keypoints)
-    );
-
+      window.SignChannel.postMessage(
+        JSON.stringify(keypoints)
+      );
+    }
   } catch (e) {
-
     console.log("CHANNEL ERROR:", e);
   }
+
 });
 
-// ================= START CAMERA =================
+// ================= CAMERA (ONLY ONE SOURCE) =================
 async function startCamera() {
 
   try {
 
-    console.log("REQUEST CAMERA");
+    console.log("STARTING CAMERA");
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-
-      video: true,
-      audio: false
-
-    });
-
-    console.log("CAMERA GRANTED");
-
-    video.srcObject = stream;
-
-    await video.play();
-
-    console.log(
-      "VIDEO SIZE:",
-      video.videoWidth,
-      video.videoHeight
-    );
-
-    const camera = new Camera(video, {
+    camera = new Camera(video, {
 
       onFrame: async () => {
 
-        await holistic.send({
-          image: video
-        });
+        if (!running) return;
+        if (video.readyState < 2) return;
+
+        try {
+          await holistic.send({ image: video });
+        } catch (e) {
+          console.log("FRAME ERROR:", e);
+        }
 
       },
 
       width: 640,
-      height: 480,
+      height: 480
     });
 
     camera.start();
@@ -181,25 +148,39 @@ async function startCamera() {
     console.log("CAMERA STARTED");
 
   } catch (err) {
-
     console.log("CAMERA ERROR:", err);
-
-    document.body.innerHTML += `
-      <div style="
-        position:absolute;
-        top:20px;
-        left:20px;
-        color:white;
-        background:red;
-        padding:10px;
-        z-index:999;
-      ">
-        ${err}
-      </div>
-    `;
   }
 }
 
+// ================= CLEAN EXIT =================
+function stopEverything() {
+
+  running = false;
+
+  try {
+    if (camera) camera.stop();
+  } catch (e) {}
+
+  try {
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(t => t.stop());
+    }
+  } catch (e) {}
+
+  console.log("STOPPED CLEANLY");
+}
+
+// Flutter / WebView lifecycle hooks
+window.addEventListener("beforeunload", stopEverything);
+window.addEventListener("pagehide", stopEverything);
+
+// Safety heartbeat (detect freeze)
+setInterval(() => {
+  if (!running) return;
+  console.log("ALIVE");
+}, 5000);
+
+// START
 startCamera();
 
 </script>

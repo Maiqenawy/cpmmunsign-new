@@ -24,11 +24,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-     model_viewer_plus: ^1.9.3
   webview_flutter: ^4.0.7
   camera: ^0.12.0
   http: ^0.13.6
-
   flutter_cube: ^0.1.1
   speech_to_text: ^7.3.0
   shared_preferences: ^2.2.2
@@ -45,7 +43,7 @@ dependencies:
   permission_handler: ^11.3.1
   firebase_messaging: ^16.2.2
   firebase_core: ^4.9.0
-  model_viewer_plus: ^1.9.0
+  model_viewer_plus: ^1.9.3
   shelf: ^1.4.1
   shelf_static: ^1.1.2
   
@@ -62,7 +60,7 @@ flutter:
 
   assets:
    
-    - assets/avatar/avatar.glb
+   
     - assets/mediapipe.html
     - assets/lang/en.json
     - assets/lang/ar.json
@@ -81,7 +79,6 @@ flutter:
     - images/SETTING.png
     - images/love.png
     - assets/sounds/freesound_community-success-1-6297.mp3
-    - assets/mediapipe.html
     - assets/cartoon_male_characters_-_low-poly_3d_model.glb
 
 
@@ -101,7 +98,7 @@ flutter:
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
+  #         style:  italic
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf

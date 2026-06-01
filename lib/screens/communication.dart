@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:cominsign_new/screens/avatar_landmark_player.dart';
+import 'package:cominsign_new/screens/avatar_sign_model.dart';
 import 'package:cominsign_new/screens/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import '../models/avatar_sign_model.dart';
-import 'package:cominsign_new/widgets/avatar_landmark_player.dart';
+
+
 // تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
 

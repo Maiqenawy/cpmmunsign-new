@@ -1,9 +1,7 @@
 import 'dart:async';
+import 'package:cominsign_new/screens/avatar_sign_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cube/flutter_cube.dart';
-
-import '../models/avatar_sign_model.dart';
-
 class AvatarLandmarkPlayer extends StatefulWidget {
 
   final List<AvatarSign> signs;

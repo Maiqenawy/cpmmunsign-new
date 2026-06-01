@@ -63,14 +63,15 @@ class ForgetPassState extends State<ForgetPass> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Failed to send code"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  print("FORGOT PASSWORD ERROR: $e");
 
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(e.toString()),
+      backgroundColor: Colors.red,
+    ),
+  );
+}
     setState(() => isLoading = false);
   }
 

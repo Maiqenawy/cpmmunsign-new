@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:cominsign_new/core/user_session.dart';
+import 'package:cominsign_new/screens/avatar_sign_model.dart';
 
 class Service {
   static const String baseUrl = "https://cominisign.runasp.net/api";
@@ -89,18 +90,21 @@ class Service {
 
   // ================= FORGOT PASSWORD =================
   static Future forgotPassword(String email) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/forgot-password"),
-      headers: headers,
-      body: jsonEncode({"email": email}),
-    );
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/forgot-password"),
+    headers: headers,
+    body: jsonEncode({"email": email}),
+  );
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception("Failed to send code");
-    }
+  print("Status Code: ${response.statusCode}");
+  print("Response Body: ${response.body}");
+
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception(response.body);
   }
+}
 
   // ================= RESET PASSWORD =================
   static Future resetPassword({
@@ -228,8 +232,6 @@ class Service {
     }
   }
 
-  
-
   // ================= CHAT =================
   static Future<String> chat(String message) async {
     var response = await http.post(
@@ -308,24 +310,24 @@ class Service {
     );
   }
 
-// ================= AI: TEXT → SIGNS =================
+  // ================= AI: TEXT → SIGNS =================
 
-static Future<List<dynamic>> textToSigns(String text) async {
-  final response = await http.post(
-    Uri.parse("$baseUrl/ai/text-to-signs"),
-    headers: headers,
-    body: jsonEncode({"text": text}),
-  );
+  static Future<List<AvatarSign>> textToSigns(String text) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/text-to-signs"),
+      headers: headers,
+      body: jsonEncode({"text": text}),
+    );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-    // الباك بيرجع List مباشرة
-    return List<dynamic>.from(data);
-  } else {
-    throw Exception("Translation failed");
+      // الباك بيرجع List مباشرة
+      return (data as List).map((e) => AvatarSign.fromJson(e)).toList();
+    } else {
+      throw Exception("Translation failed");
+    }
   }
-}
 
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
@@ -348,8 +350,8 @@ static Future<List<dynamic>> textToSigns(String text) async {
   }
 
   // ================= AI: REALTIME FRAMES =================
-  
-static Future<String> sendFrames(List<List<double>> frames) async {
+
+  static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
         "https://sign-language-api-production-2148.up.railway.app/predict",
