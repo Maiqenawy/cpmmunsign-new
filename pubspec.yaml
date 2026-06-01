@@ -61,7 +61,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/cartoon_male_characters_-_low-poly_3d_model.glb
+   
+    - assets/avatar/avatar.glb
     - assets/mediapipe.html
     - assets/lang/en.json
     - assets/lang/ar.json
