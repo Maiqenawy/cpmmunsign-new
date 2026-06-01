@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart'; // مهم جداً عشان kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -15,9 +15,13 @@ class SignRealtime extends StatefulWidget {
 
 class _SignRealtimeState extends State<SignRealtime> {
   WebViewController? _webViewController;
+
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
+
   bool isProcessing = false;
+  bool _initialized = false;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -26,30 +30,45 @@ class _SignRealtimeState extends State<SignRealtime> {
   }
 
   Future<void> initCameraWebView() async {
-    // 1. طلب صلاحية الكاميرا للموبايل فقط (الويب بيطلبها لوحده)
+    if (_initialized) return;
+    _initialized = true;
+
+    // 🔐 Permission
     if (!kIsWeb) {
       await Permission.camera.request();
     }
 
-    // 2. إعداد الكنترولر الأساسي
-    final controller = WebViewController()
+    // 🌐 WebView setup
+    _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
       ..addJavaScriptChannel(
         "SignChannel",
-        onMessageReceived: (JavaScriptMessage message) {
+        onMessageReceived: (JavaScriptMessage message) async {
           if (isProcessing) return;
+
           try {
             final List data = jsonDecode(message.message);
-            final frame = data.map((e) => (e as num).toDouble()).toList();
-            
+            final frame =
+                data.map((e) => (e as num).toDouble()).toList();
+
             if (frame.length == 246) {
               sequence.add(frame);
-              if (sequence.length >= 30) {
+
+              // prevent overflow
+              if (sequence.length > 30) {
+                sequence.removeAt(0);
+              }
+
+              if (sequence.length == 30) {
                 isProcessing = true;
-                final framesToSend = List<List<double>>.from(sequence);
+
+                final framesToSend =
+                    List<List<double>>.from(sequence);
+
                 sequence.clear();
-                sendSequence(framesToSend);
+
+                await sendSequence(framesToSend);
               }
             }
           } catch (e) {
@@ -57,32 +76,50 @@ class _SignRealtimeState extends State<SignRealtime> {
           }
         },
       )
-      ..loadRequest(Uri.parse("https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
+      ..loadRequest(Uri.parse(
+          "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
 
-    // 3. الجزء الحرج: إعدادات الأندرويد (لا يتم تنفيذها إلا على الأندرويد فقط)
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      if (controller.platform is AndroidWebViewController) {
-        final androidController = controller.platform as AndroidWebViewController;
-        await androidController.setMediaPlaybackRequiresUserGesture(false);
-        await androidController.setOnPlatformPermissionRequest((request) => request.grant());
+    // 🤖 Android specific
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android) {
+      final platform = _webViewController!.platform;
+
+      if (platform is AndroidWebViewController) {
+        await platform.setMediaPlaybackRequiresUserGesture(false);
+        await platform.setOnPlatformPermissionRequest(
+          (request) => request.grant(),
+        );
       }
     }
 
-    setState(() {
-      _webViewController = controller;
+    if (mounted) {
+      setState(() {});
+    }
+
+    // ⏳ Splash delay
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
     });
   }
 
   Future<void> sendSequence(List<List<double>> frames) async {
     try {
-      final response = await http.post(
-        Uri.parse("https://sign-language-api-production-2148.up.railway.app/predict"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"sequence": frames}),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse(
+                "https://sign-language-api-production-2148.up.railway.app/predict"),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"sequence": frames}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
         if (mounted) {
           setState(() {
             prediction = data["prediction"] ?? "Unknown";
@@ -106,11 +143,51 @@ class _SignRealtimeState extends State<SignRealtime> {
       ),
       body: Stack(
         children: [
-          _webViewController == null
-              ? const Center(child: CircularProgressIndicator())
-              : WebViewWidget(controller: _webViewController!),
-          
-          // طبقة لعرض النتيجة
+
+          // 🌐 WebView (stable)
+          Positioned.fill(
+            child: (_webViewController != null)
+                ? WebViewWidget(
+                    key: const ValueKey("stable_webview"),
+                    controller: _webViewController!,
+                  )
+                : const Center(child: CircularProgressIndicator()),
+          ),
+
+          // 🔥 Splash overlay (does NOT destroy WebView)
+          if (_showSplash)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black,
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.sign_language,
+                        color: Colors.deepPurple,
+                        size: 100,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        "Loading AI Camera...",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      CircularProgressIndicator(
+                        color: Colors.deepPurple,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // 📊 Prediction UI
           Positioned(
             bottom: 40,
             left: 20,
@@ -125,9 +202,9 @@ class _SignRealtimeState extends State<SignRealtime> {
                 prediction,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: Colors.white, 
-                  fontSize: 28, 
-                  fontWeight: FontWeight.bold
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),

@@ -24,163 +24,109 @@ const video = document.getElementById("video");
 let running = true;
 let lastSent = 0;
 let camera = null;
-
-// ================= FACE INDEXES =================
-const FACE_INDEXES = [
-  33,133,160,159,158,157,173,246,
-  362,263,387,386,385,384,398,466,
-  1,2,98,327,
-  61,146,91,181,84,17,314,405,
-  321,375,291,78,95,88,178,87,
-  14,317,402,318
-];
+let lastFrame = null;
 
 // ================= HOLISTIC =================
 const holistic = new Holistic({
-
   locateFile: (file) =>
     `https://unpkg.com/@mediapipe/holistic/${file}`
 });
 
 holistic.setOptions({
-
   modelComplexity: 1,
   smoothLandmarks: true,
-  refineFaceLandmarks: true,
   minDetectionConfidence: 0.6,
   minTrackingConfidence: 0.6,
-
 });
 
-console.log("HOLISTIC READY");
+console.log("READY");
 
-// ================= CLEAN RESULTS =================
+// ================= NORMALIZATION =================
+function normalizeHand(hand) {
+  if (!hand || hand.length !== 21) return Array(63).fill(0);
+
+  const base = hand[0]; // wrist
+
+  return hand.flatMap(lm => [
+    lm.x - base.x,
+    lm.y - base.y,
+    lm.z - base.z
+  ]);
+}
+
+// ================= RESULTS =================
 holistic.onResults((results) => {
 
   if (!running) return;
 
-  const keypoints = [];
+  let keypoints = [];
 
-  // LEFT HAND
-  if (results.leftHandLandmarks?.length === 21) {
-    results.leftHandLandmarks.forEach(lm => {
-      keypoints.push(lm.x, lm.y, lm.z);
-    });
-  } else {
-    keypoints.push(...Array(63).fill(0));
-  }
+  // 🔥 LEFT HAND ONLY
+  keypoints.push(
+    ...normalizeHand(results.leftHandLandmarks)
+  );
 
-  // RIGHT HAND
-  if (results.rightHandLandmarks?.length === 21) {
-    results.rightHandLandmarks.forEach(lm => {
-      keypoints.push(lm.x, lm.y, lm.z);
-    });
-  } else {
-    keypoints.push(...Array(63).fill(0));
-  }
+  // 🔥 RIGHT HAND ONLY
+  keypoints.push(
+    ...normalizeHand(results.rightHandLandmarks)
+  );
 
-  // FACE (safe access)
-  if (results.faceLandmarks?.length >= 468) {
+  // VALIDATE SIZE (126 values only)
+  if (keypoints.length !== 126) return;
 
-    FACE_INDEXES.forEach(i => {
-      const lm = results.faceLandmarks[i];
-      if (lm) {
-        keypoints.push(lm.x, lm.y, lm.z);
-      } else {
-        keypoints.push(0, 0, 0);
+  // 🔥 MOTION DETECTION (important fix)
+  let motion = false;
+
+  if (lastFrame) {
+    for (let i = 0; i < keypoints.length; i++) {
+      if (Math.abs(keypoints[i] - lastFrame[i]) > 0.003) {
+        motion = true;
+        break;
       }
-    });
-
+    }
   } else {
-    keypoints.push(...Array(FACE_INDEXES.length * 3).fill(0));
+    motion = true;
   }
 
-  // VALIDATE
-  if (keypoints.length !== 246) return;
+  lastFrame = keypoints;
 
-  // THROTTLE (stable)
+  if (!motion) return;
+
+  // THROTTLE
   const now = Date.now();
   if (now - lastSent < 120) return;
   lastSent = now;
 
   // SEND TO FLUTTER
   try {
-    if (window.SignChannel && running) {
-
+    if (window.SignChannel) {
       window.SignChannel.postMessage(
         JSON.stringify(keypoints)
       );
     }
   } catch (e) {
-    console.log("CHANNEL ERROR:", e);
+    console.log("ERROR:", e);
   }
 
 });
 
-// ================= CAMERA (ONLY ONE SOURCE) =================
+// ================= CAMERA =================
 async function startCamera() {
 
-  try {
+  camera = new Camera(video, {
+    onFrame: async () => {
+      if (!running) return;
+      if (video.readyState < 2) return;
 
-    console.log("STARTING CAMERA");
+      await holistic.send({ image: video });
+    },
+    width: 640,
+    height: 480
+  });
 
-    camera = new Camera(video, {
-
-      onFrame: async () => {
-
-        if (!running) return;
-        if (video.readyState < 2) return;
-
-        try {
-          await holistic.send({ image: video });
-        } catch (e) {
-          console.log("FRAME ERROR:", e);
-        }
-
-      },
-
-      width: 640,
-      height: 480
-    });
-
-    camera.start();
-
-    console.log("CAMERA STARTED");
-
-  } catch (err) {
-    console.log("CAMERA ERROR:", err);
-  }
+  camera.start();
 }
 
-// ================= CLEAN EXIT =================
-function stopEverything() {
-
-  running = false;
-
-  try {
-    if (camera) camera.stop();
-  } catch (e) {}
-
-  try {
-    if (video.srcObject) {
-      video.srcObject.getTracks().forEach(t => t.stop());
-    }
-  } catch (e) {}
-
-  console.log("STOPPED CLEANLY");
-}
-
-// Flutter / WebView lifecycle hooks
-window.addEventListener("beforeunload", stopEverything);
-window.addEventListener("pagehide", stopEverything);
-
-// Safety heartbeat (detect freeze)
-setInterval(() => {
-  if (!running) return;
-  console.log("ALIVE");
-}, 5000);
-
-// START
 startCamera();
 
 </script>
