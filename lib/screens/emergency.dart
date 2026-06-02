@@ -25,6 +25,8 @@ class _EmergencyPageState extends State<EmergencyPage> {
 
     if (!UserSession.isLoggedIn) {
       Future.microtask(() {
+        if (!mounted) return;
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -45,15 +47,14 @@ class _EmergencyPageState extends State<EmergencyPage> {
 
       final data = await Service.getPictograms();
 
-      print("API DATA: $data");
-      print("DATA LENGTH: ${data.length}");
+      if (!mounted) return;
 
       setState(() {
         pictograms = data;
         isLoading = false;
       });
     } catch (e) {
-      print("LOAD ERROR: $e");
+      if (!mounted) return;
 
       setState(() {
         isLoading = false;
@@ -63,14 +64,30 @@ class _EmergencyPageState extends State<EmergencyPage> {
   }
 
   Future<String> getLocation() async {
-    LocationPermission permission = await Geolocator.requestPermission();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    if (!serviceEnabled) {
+      throw Exception("Location service is disabled");
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied) {
       throw Exception("Location permission denied");
     }
 
-    final pos = await Geolocator.getCurrentPosition();
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception("Location permission permanently denied");
+    }
+
+    final pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
     return "${pos.latitude},${pos.longitude}";
   }
 
@@ -83,10 +100,14 @@ class _EmergencyPageState extends State<EmergencyPage> {
         location: location,
       );
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("SOS sent 📩")),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
@@ -115,8 +136,6 @@ class _EmergencyPageState extends State<EmergencyPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    print("BUILD pictograms: ${pictograms.length}");
 
     return Scaffold(
       body: GradientBackground(
@@ -172,11 +191,14 @@ class _EmergencyPageState extends State<EmergencyPage> {
                       itemBuilder: (_, i) {
                         final item = pictograms[i];
 
-                        print("ITEM: $item");
-
                         return GestureDetector(
-                          onTap: () =>
-                              sendSOS(item["pictogramId"]),
+                          onTap: () {
+                            final id = item["pictogramId"];
+
+                            if (id == null) return;
+
+                            sendSOS(id);
+                          },
                           child: Container(
                             decoration: BoxDecoration(
                               color: cs.surface.withOpacity(0.8),
