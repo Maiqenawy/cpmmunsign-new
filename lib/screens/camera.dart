@@ -63,8 +63,14 @@ if (frame.length == 246) {
 
   debugPrint(
     "FRAME ACCEPTED"
+    
   );
+final nonZero =
+    frame.where((e) => e != 0).length;
 
+debugPrint(
+  "NON ZERO VALUES = $nonZero"
+);
   sequence.add(frame);
 
   if (sequence.length > 30) {
