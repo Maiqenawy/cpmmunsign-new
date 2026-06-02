@@ -62,9 +62,10 @@ console.log("READY");
 
 function normalizeHand(hand) {
 
-  if (!hand || hand.length !== 21)
-     console.log("HAND NOT DETECTED");
+  if (!hand || hand.length !== 21) {
+    console.log("HAND NOT DETECTED");
     return Array(63).fill(0);
+  }
 
   const base = hand[0];
 
@@ -75,18 +76,20 @@ function normalizeHand(hand) {
   ]);
 }
 
-function normalizeFace(face) {
 
-  if (!face || face.length < 40)
-     console.log("FACE NOT DETECTED");
+
+  function normalizeFace(face) {
+
+  if (!face || face.length < 40) {
+    console.log("FACE NOT DETECTED");
     return Array(120).fill(0);
+  }
 
   const base = face[1];
 
   let result = [];
 
   for (let i = 0; i < 40; i++) {
-
     result.push(
       face[i].x - base.x,
       face[i].y - base.y,
