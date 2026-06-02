@@ -63,6 +63,7 @@ console.log("READY");
 function normalizeHand(hand) {
 
   if (!hand || hand.length !== 21)
+     console.log("HAND NOT DETECTED");
     return Array(63).fill(0);
 
   const base = hand[0];
@@ -77,6 +78,7 @@ function normalizeHand(hand) {
 function normalizeFace(face) {
 
   if (!face || face.length < 40)
+     console.log("FACE NOT DETECTED");
     return Array(120).fill(0);
 
   const base = face[1];
@@ -96,6 +98,20 @@ function normalizeFace(face) {
 }
 
 holistic.onResults((results) => {
+  console.log(
+  "LEFT:",
+  results.leftHandLandmarks
+);
+
+console.log(
+  "RIGHT:",
+  results.rightHandLandmarks
+);
+
+console.log(
+  "FACE:",
+  results.faceLandmarks
+);
 
   if (!running) return;
 
