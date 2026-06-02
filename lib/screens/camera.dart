@@ -51,26 +51,38 @@ class _SignRealtimeState extends State<SignRealtime> {
             final List data = jsonDecode(message.message);
             final frame =
                 data.map((e) => (e as num).toDouble()).toList();
+debugPrint(
+  "FRAME SIZE = ${frame.length}"
+);
 
-            if (frame.length == 246) {
-              sequence.add(frame);
+if (frame.length == 246) {
 
-              // prevent overflow
-              if (sequence.length > 30) {
-                sequence.removeAt(0);
-              }
+  debugPrint(
+    "FRAME ACCEPTED"
+  );
 
-              if (sequence.length == 30) {
-                isProcessing = true;
+  sequence.add(frame);
 
-                final framesToSend =
-                    List<List<double>>.from(sequence);
+  if (sequence.length > 30) {
+    sequence.removeAt(0);
+  }
 
-                sequence.clear();
+  if (sequence.length == 30) {
 
-                await sendSequence(framesToSend);
-              }
-            }
+    debugPrint(
+      "30 FRAMES READY"
+    );
+
+    isProcessing = true;
+
+    final framesToSend =
+        List<List<double>>.from(sequence);
+
+    sequence.clear();
+
+    await sendSequence(framesToSend);
+  }
+}
           } catch (e) {
             debugPrint("Data Error: $e");
           }
@@ -105,33 +117,67 @@ class _SignRealtimeState extends State<SignRealtime> {
       }
     });
   }
+Future<void> sendSequence(
+  List<List<double>> frames,
+) async {
 
-  Future<void> sendSequence(List<List<double>> frames) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse(
-                "https://sign-language-api-production-2148.up.railway.app/predict"),
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({"sequence": frames}),
-          )
-          .timeout(const Duration(seconds: 15));
+  try {
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    debugPrint(
+      "SENDING ${frames.length} FRAMES"
+    );
 
-        if (mounted) {
-          setState(() {
-            prediction = data["prediction"] ?? "Unknown";
-          });
-        }
+    final response = await http
+        .post(
+          Uri.parse(
+            "https://sign-language-api-production-2148.up.railway.app/predict",
+          ),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: jsonEncode({
+            "sequence": frames,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    debugPrint(
+      "STATUS = ${response.statusCode}"
+    );
+
+    debugPrint(
+      "BODY = ${response.body}"
+    );
+
+    if (response.statusCode == 200) {
+
+      final data =
+          jsonDecode(response.body);
+
+      if (mounted) {
+
+        setState(() {
+
+          prediction =
+              data["prediction"]
+              ?? "Unknown";
+        });
       }
-    } catch (e) {
-      debugPrint("API Error: $e");
-    } finally {
-      isProcessing = false;
     }
+
+  } catch (e) {
+
+    debugPrint(
+      "API ERROR = $e"
+    );
+
+  } finally {
+
+    isProcessing = false;
   }
+}
 
   @override
   Widget build(BuildContext context) {
