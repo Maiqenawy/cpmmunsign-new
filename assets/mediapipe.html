@@ -38,6 +38,27 @@ holistic.setOptions({
 });
 
 console.log("READY");
+  setInterval(() => {
+
+  try {
+
+    if (window.SignChannel) {
+
+      console.log(
+        "SENDING TEST"
+      );
+
+      window.SignChannel.postMessage(
+        "HELLO"
+      );
+    }
+
+  } catch(e) {
+
+    console.log(e);
+  }
+
+}, 3000);
 
 function normalizeHand(hand) {
 
