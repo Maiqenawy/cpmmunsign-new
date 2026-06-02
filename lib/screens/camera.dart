@@ -73,7 +73,9 @@ debugPrint(
   "NON ZERO VALUES = $nonZero"
 );
   sequence.add(frame);
-
+debugPrint(
+  "SEQUENCE SIZE = ${sequence.length}"
+);
   if (sequence.length > 30) {
     sequence.removeAt(0);
   }
@@ -83,6 +85,7 @@ debugPrint(
     debugPrint(
       "30 FRAMES READY"
     );
+     debugPrint("CALLING API...");
 
     isProcessing = true;
 
