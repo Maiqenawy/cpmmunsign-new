@@ -95,7 +95,7 @@ console.log(
   "FACE:",
   results.faceLandmarks
 );
-
+console.log("ON RESULTS CALLED");
   if (!running) return;
 
   let keypoints = [];
@@ -177,7 +177,7 @@ async function startCamera() {
 
   camera = new Camera(video, {
     onFrame: async () => {
-
+         console.log("FRAME CAPTURED");
       if (!running) return;
 
       if (video.readyState < 2)
