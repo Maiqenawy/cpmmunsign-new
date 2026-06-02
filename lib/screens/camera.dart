@@ -55,6 +55,7 @@ class _SignRealtimeState extends State<SignRealtime> {
             final List data = jsonDecode(message.message);
             final frame =
                 data.map((e) => (e as num).toDouble()).toList();
+          
 debugPrint(
   "FRAME SIZE = ${frame.length}"
 );
