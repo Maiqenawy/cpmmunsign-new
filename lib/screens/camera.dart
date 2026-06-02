@@ -45,6 +45,10 @@ class _SignRealtimeState extends State<SignRealtime> {
       ..addJavaScriptChannel(
         "SignChannel",
         onMessageReceived: (JavaScriptMessage message) async {
+          debugPrint("MESSAGE RECEIVED");
+          debugPrint(
+    "MESSAGE FROM JS = ${message.message}"
+  );
           if (isProcessing) return;
 
           try {
