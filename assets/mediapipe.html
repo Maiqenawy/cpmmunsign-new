@@ -20,13 +20,11 @@
 
 const video = document.getElementById("video");
 
-// ================= STATE =================
 let running = true;
 let lastSent = 0;
 let camera = null;
 let lastFrame = null;
 
-// ================= HOLISTIC =================
 const holistic = new Holistic({
   locateFile: (file) =>
     `https://unpkg.com/@mediapipe/holistic/${file}`
@@ -41,11 +39,12 @@ holistic.setOptions({
 
 console.log("READY");
 
-// ================= NORMALIZATION =================
 function normalizeHand(hand) {
-  if (!hand || hand.length !== 21) return Array(63).fill(0);
 
-  const base = hand[0]; // wrist
+  if (!hand || hand.length !== 21)
+    return Array(63).fill(0);
+
+  const base = hand[0];
 
   return hand.flatMap(lm => [
     lm.x - base.x,
@@ -54,37 +53,76 @@ function normalizeHand(hand) {
   ]);
 }
 
-// ================= RESULTS =================
+function normalizeFace(face) {
+
+  if (!face || face.length < 40)
+    return Array(120).fill(0);
+
+  const base = face[1];
+
+  let result = [];
+
+  for (let i = 0; i < 40; i++) {
+
+    result.push(
+      face[i].x - base.x,
+      face[i].y - base.y,
+      face[i].z - base.z
+    );
+  }
+
+  return result;
+}
+
 holistic.onResults((results) => {
 
   if (!running) return;
 
   let keypoints = [];
 
-  // 🔥 LEFT HAND ONLY
+  // Left Hand = 63
   keypoints.push(
     ...normalizeHand(results.leftHandLandmarks)
   );
 
-  // 🔥 RIGHT HAND ONLY
+  // Right Hand = 63
   keypoints.push(
     ...normalizeHand(results.rightHandLandmarks)
   );
 
-  // VALIDATE SIZE (126 values only)
-  if (keypoints.length !== 126) return;
+  // Face = 120
+  keypoints.push(
+    ...normalizeFace(results.faceLandmarks)
+  );
 
-  // 🔥 MOTION DETECTION (important fix)
+  if (keypoints.length !== 246) {
+
+    console.log(
+      "INVALID FEATURES:",
+      keypoints.length
+    );
+
+    return;
+  }
+
   let motion = false;
 
   if (lastFrame) {
+
     for (let i = 0; i < keypoints.length; i++) {
-      if (Math.abs(keypoints[i] - lastFrame[i]) > 0.003) {
+
+      if (
+        Math.abs(
+          keypoints[i] - lastFrame[i]
+        ) > 0.003
+      ) {
         motion = true;
         break;
       }
     }
+
   } else {
+
     motion = true;
   }
 
@@ -92,33 +130,42 @@ holistic.onResults((results) => {
 
   if (!motion) return;
 
-  // THROTTLE
   const now = Date.now();
-  if (now - lastSent < 120) return;
+
+  if (now - lastSent < 120)
+    return;
+
   lastSent = now;
 
-  // SEND TO FLUTTER
   try {
+
     if (window.SignChannel) {
+
       window.SignChannel.postMessage(
         JSON.stringify(keypoints)
       );
     }
+
   } catch (e) {
-    console.log("ERROR:", e);
+
+    console.log(e);
   }
 
 });
 
-// ================= CAMERA =================
 async function startCamera() {
 
   camera = new Camera(video, {
     onFrame: async () => {
-      if (!running) return;
-      if (video.readyState < 2) return;
 
-      await holistic.send({ image: video });
+      if (!running) return;
+
+      if (video.readyState < 2)
+        return;
+
+      await holistic.send({
+        image: video
+      });
     },
     width: 640,
     height: 480
@@ -130,6 +177,3 @@ async function startCamera() {
 startCamera();
 
 </script>
-
-</body>
-</html>
