@@ -73,6 +73,9 @@ debugPrint(
   "NON ZERO VALUES = $nonZero"
 );
   sequence.add(frame);
+  debugPrint(
+  "FRAME ADDED AT ${DateTime.now()}"
+);
 debugPrint(
   "SEQUENCE SIZE = ${sequence.length}"
 );
