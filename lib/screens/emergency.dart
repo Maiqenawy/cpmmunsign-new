@@ -3,6 +3,8 @@ import 'package:cominsign_new/core/user_session.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gradient_background.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+
 import 'login_screen.dart';
 
 class EmergencyPage extends StatefulWidget {
@@ -20,8 +22,6 @@ class _EmergencyPageState extends State<EmergencyPage> {
   @override
   void initState() {
     super.initState();
-
-    print("IS LOGGED IN: ${UserSession.isLoggedIn}");
 
     if (!UserSession.isLoggedIn) {
       Future.microtask(() {
@@ -63,7 +63,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
     }
   }
 
-  Future<String> getLocation() async {
+  Future<Map<String, String>> getLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
     if (!serviceEnabled) {
@@ -76,41 +76,53 @@ class _EmergencyPageState extends State<EmergencyPage> {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       throw Exception("Location permission denied");
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception("Location permission permanently denied");
     }
 
     final pos = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    return "${pos.latitude},${pos.longitude}";
+    List<Placemark> places = await placemarkFromCoordinates(
+      pos.latitude,
+      pos.longitude,
+    );
+
+    final place = places.first;
+
+    final address =
+        "${place.locality ?? ''}, ${place.administrativeArea ?? ''}, ${place.country ?? ''}";
+
+    final mapsUrl =
+        "https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}";
+
+    return {"address": address, "maps": mapsUrl};
   }
 
   Future<void> sendSOS(int id) async {
     try {
-      String location = await getLocation();
+      final location = await getLocation();
 
-      await Service.sendSOS(
-        pictogramId: id,
-        location: location,
-      );
+      final message =
+          "🚨 EMERGENCY SOS\n"
+          "Location: ${location["address"]}\n"
+          "Map: ${location["maps"]}";
+
+      await Service.sendSOS(pictogramId: id, location: message);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("SOS sent 📩")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("SOS sent 📩")));
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -159,18 +171,11 @@ class _EmergencyPageState extends State<EmergencyPage> {
                 child: Builder(
                   builder: (_) {
                     if (isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     if (error != null) {
-                      return Center(
-                        child: Text(
-                          "Error:\n$error",
-                          textAlign: TextAlign.center,
-                        ),
-                      );
+                      return Center(child: Text("Error:\n$error"));
                     }
 
                     if (pictograms.isEmpty) {
@@ -184,20 +189,19 @@ class _EmergencyPageState extends State<EmergencyPage> {
                       itemCount: pictograms.length,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                      ),
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
                       itemBuilder: (_, i) {
                         final item = pictograms[i];
 
                         return GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             final id = item["pictogramId"];
-
                             if (id == null) return;
 
-                            sendSOS(id);
+                            await sendSOS(id);
                           },
                           child: Container(
                             decoration: BoxDecoration(
@@ -215,12 +219,13 @@ class _EmergencyPageState extends State<EmergencyPage> {
                                 const SizedBox(height: 12),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10),
+                                    horizontal: 10,
+                                  ),
                                   child: Text(
                                     item["sentenceText"] ?? "",
                                     textAlign: TextAlign.center,
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ),
