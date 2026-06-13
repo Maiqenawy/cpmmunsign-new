@@ -61,13 +61,34 @@ const createScene = async () =>
         scene
     );
 
+  try {
+
     const result =
     await BABYLON.SceneLoader.ImportMeshAsync(
         "",
-        "./",
+        "flutter_assets/assets/",
         "avatar.glb",
         scene
     );
+
+    console.log("GLB Loaded");
+
+    if(result.skeletons.length > 0)
+    {
+        skeleton = result.skeletons[0];
+
+        console.log(
+            skeleton.bones.map(
+                b => b.name
+            )
+        );
+    }
+
+}
+catch(e)
+{
+    console.error(e);
+}
 
     if(result.skeletons.length > 0)
     {
