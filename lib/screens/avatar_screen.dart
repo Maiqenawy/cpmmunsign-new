@@ -91,13 +91,11 @@ class _AvatarScreenState
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-
-    return Scaffold(
-      body: WebViewWidget(
-        controller: controller,
-      ),
-    );
+@override
+Widget build(BuildContext context) {
+  return WebViewWidget(
+    controller: controller,
+  );
+}
   }
 }
