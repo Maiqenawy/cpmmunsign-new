@@ -5,7 +5,7 @@ import 'package:cominsign_new/screens/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
+import 'package:cominsign_new/screens/avatar_screen.dart';
 
 // تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
