@@ -179,7 +179,7 @@ class _CommunicationState extends State<Communication> {
         ),
         clipBehavior: Clip.antiAlias,
 
-        child:AvatarLandmarkPlayer(
+        child:AvatarScreen(
   signs: signs,
 
         ),
