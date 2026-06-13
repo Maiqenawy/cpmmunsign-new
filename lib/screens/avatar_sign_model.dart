@@ -1,16 +1,18 @@
 class AvatarFrame {
-  final List<dynamic> leftHand;
-  final List<dynamic> rightHand;
+  final List leftHand;
+  final List rightHand;
 
   AvatarFrame({
     required this.leftHand,
     required this.rightHand,
   });
 
-  factory AvatarFrame.fromJson(Map<String, dynamic> json) {
+  factory AvatarFrame.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return AvatarFrame(
-      leftHand: json["left_hand"] ?? [],
-      rightHand: json["right_hand"] ?? [],
+      leftHand: json["left_hand"],
+      rightHand: json["right_hand"],
     );
   }
 }
@@ -26,7 +28,9 @@ class AvatarSign {
     required this.frames,
   });
 
-  factory AvatarSign.fromJson(Map<String, dynamic> json) {
+  factory AvatarSign.fromJson(
+    Map<String, dynamic> json,
+  ) {
     return AvatarSign(
       word: json["word"],
       totalFrames: json["total_frames"],
