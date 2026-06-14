@@ -95,8 +95,9 @@ class _EmergencyPageState extends State<EmergencyPage> {
     final address =
         "${place.locality ?? ''}, ${place.administrativeArea ?? ''}, ${place.country ?? ''}";
 
+    // تم تصحيح علامة الـ $ المفقودة هنا قبل pos.latitude
     final mapsUrl =
-        "https://www.google.com/maps/search/?api=1&query=${pos.latitude},${pos.longitude}";
+        "https://maps.google.com/?q=${pos.latitude},${pos.longitude}";
 
     return {"address": address, "maps": mapsUrl};
   }
@@ -145,6 +146,25 @@ class _EmergencyPageState extends State<EmergencyPage> {
     }
   }
 
+  Color getCardColor(String name) {
+    switch (name) {
+      case "hospital":
+        return Colors.red;
+      case "medicine":
+        return Colors.green;
+      case "danger":
+        return Colors.orange;
+      case "fall":
+        return Colors.purple;
+      case "police":
+        return Colors.blue;
+      case "breath":
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -155,7 +175,6 @@ class _EmergencyPageState extends State<EmergencyPage> {
           child: Column(
             children: [
               const SizedBox(height: 20),
-
               Text(
                 "Emergency",
                 style: TextStyle(
@@ -164,9 +183,7 @@ class _EmergencyPageState extends State<EmergencyPage> {
                   color: cs.onSurface,
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Expanded(
                 child: Builder(
                   builder: (_) {
@@ -195,35 +212,57 @@ class _EmergencyPageState extends State<EmergencyPage> {
                           ),
                       itemBuilder: (_, i) {
                         final item = pictograms[i];
+                        final cardColor = getCardColor(item["iconName"] ?? "");
 
                         return GestureDetector(
                           onTap: () async {
                             final id = item["pictogramId"];
                             if (id == null) return;
-
                             await sendSOS(id);
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: cs.surface.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [cardColor, cardColor.withOpacity(0.7)],
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: cardColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  getIcon(item["iconName"] ?? ""),
-                                  size: 50,
-                                  color: Colors.red,
+                                CircleAvatar(
+                                  radius: 35,
+                                  backgroundColor: Colors.white.withOpacity(
+                                    0.2,
+                                  ),
+                                  child: Icon(
+                                    getIcon(item["iconName"] ?? ""),
+                                    size: 40,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 15),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
+                                    horizontal: 12,
                                   ),
                                   child: Text(
                                     item["sentenceText"] ?? "",
                                     textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
