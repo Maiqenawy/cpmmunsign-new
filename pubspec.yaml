@@ -25,12 +25,15 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.0.7
+  flutter_inappwebview: ^6.0.0
   camera: ^0.12.0
   http: ^0.13.6
-  flutter_cube: ^0.1.1
+#  flutter_cube: ^0.1.1
+
   speech_to_text: ^7.3.0
   shared_preferences: ^2.2.2
   confetti: ^0.7.0
+   
   cupertino_icons: ^1.0.8
   geolocator: ^13.0.1
   geocoding: ^3.0.0
@@ -62,7 +65,8 @@ flutter:
 
   assets:
    
-   
+    - assets/avatar.glb
+    - assets/avatar_player.html
     - assets/mediapipe.html
     - assets/lang/en.json
     - assets/lang/ar.json
@@ -81,7 +85,7 @@ flutter:
     - images/SETTING.png
     - images/love.png
     - assets/sounds/freesound_community-success-1-6297.mp3
-    - assets/cartoon_male_characters_-_low-poly_3d_model.glb
+   
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
