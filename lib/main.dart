@@ -27,6 +27,7 @@ void main() async {
   // التأكد من تهيئة كل أدوات فلاتر قبل التشغيل
   WidgetsFlutterBinding.ensureInitialized();
 
+
   // ✅ حل مشكلة الويب: تشغيل الـ Debugging للأندرويد "فقط" إذا لم نكن على الويب
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     AndroidWebViewController.enableDebugging(true);
