@@ -113,7 +113,7 @@ debugPrint(
 
         // إرسال البيانات المجهزة للـ JavaScript داخل الـ WebView
      await controller.runJavaScript(
-  "window.animateFrame(${jsonEncode({
+  window.animateFrame(${jsonEncode({
     "leftHand": leftHandFormatted,
     "rightHand": rightHandFormatted,
   })});"
@@ -132,14 +132,15 @@ debugPrint(
       currentFrame++;
 
       // الانتقال إلى الفريم التالي أو الإشارة التالية
-    if (currentSign >= widget.signs.length) {
-  break;
+  if (currentFrame >= sign.frames.length) {
 
-        currentSign++;
-    }
-        if (currentSign >= widget.signs.length) {
-          currentSign = 0; // إعادة الأنيميشن من البداية عند الانتهاء
-        }
+  currentFrame = 0;
+  currentSign++;
+
+  if (currentSign >= widget.signs.length) {
+    break;
+  }
+}
       }
     }
   }
