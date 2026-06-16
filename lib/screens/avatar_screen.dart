@@ -80,11 +80,11 @@ if (oldWidget.signs != widget.signs &&
         );
         continue;
       }
+
+}
       finally {
 
   isAnimating = false;
-
-}
 
       final sign = widget.signs[currentSign];
        debugPrint(
@@ -112,14 +112,12 @@ debugPrint(
 );
 
         // إرسال البيانات المجهزة للـ JavaScript داخل الـ WebView
-        await controller.runJavaScript(
-          '''
-          animateFrame(
-            ${jsonEncode({
-              "leftHand": leftHandFormatted,
-              "rightHand": rightHandFormatted,
-            })}
-          );
+     await controller.runJavaScript(
+  "window.animateFrame(${jsonEncode({
+    "leftHand": leftHandFormatted,
+    "rightHand": rightHandFormatted,
+  })});"
+);
           ''',
         );
       } else {
