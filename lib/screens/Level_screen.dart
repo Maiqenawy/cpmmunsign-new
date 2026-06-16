@@ -4,9 +4,12 @@ import 'complete_level.dart';
 import '../widgets/gradient_background.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'avatar_screen.dart';
+import 'avatar_sign_model.dart';
 
 class LevelScreen extends StatefulWidget {
   final int levelId;
+  List<AvatarSign> selectedSigns = [];
 
   const LevelScreen({
     Key? key,
@@ -41,6 +44,27 @@ class _LevelScreenState extends State<LevelScreen> {
   }
 
   Future onWordTap(Map word) async {
+    try {
+
+    final sign =
+        await Service.wordToSign(
+          word["learningWordId"],
+        );
+
+    setState(() {
+
+      selectedSigns = [sign];
+
+    });
+
+  } catch (e) {
+
+    debugPrint(
+      "Avatar Error = $e",
+    );
+
+  }
+
     print("الكلمة التي تم الضغط عليها هي: ${word["text"]}");
 
     // ✅ اسم الأنيميشن
