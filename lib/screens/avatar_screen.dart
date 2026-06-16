@@ -3,9 +3,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'avatar_sign_model.dart';
 
 class AvatarScreen extends StatefulWidget {
-  final List<dynamic> signs;
+  final List<AvatarSign> signs;
 
   const AvatarScreen({
     super.key,
@@ -33,9 +34,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
         JavaScriptMode.unrestricted,
       )
       ..setOnConsoleMessage((message) {
-        if (message.message == "MODEL_LOADED") {
-          debugPrint("MODEL LOADED");
-        }
+       if (message.message == "MODEL_LOADED") {
+  debugPrint("MODEL LOADED");
+
+  if (widget.signs.isNotEmpty) {
+    startAnimation();
+  }
+}
       })
       ..loadFlutterAsset(
         'assets/avatar_player.html',

@@ -54,62 +54,45 @@ const createScene = async () =>
 
     camera.attachControl(canvas,true);
 
-    const light =
     new BABYLON.HemisphericLight(
         "light",
         new BABYLON.Vector3(0,1,0),
         scene
     );
 
-  try {
+    try {
 
-    const result =
-    await BABYLON.SceneLoader.ImportMeshAsync(
-        "",
-        "flutter_assets/assets/",
-        "avatar.glb",
-        scene
-    );
-
-    console.log("GLB Loaded");
-
-    if(result.skeletons.length > 0)
-    {
-        skeleton = result.skeletons[0];
-        if (window.flutter_inappwebview) {
-        window.flutter_inappwebview.callHandler('onModelLoaded');
-        } else {
-        // إذا كنت تستخدم webview_flutter الرسمي:
-        console.log("MODEL_LOADED"); 
-    }
-        console.log(
-            skeleton.bones.map(
-                b => b.name
-            )
+        const result =
+        await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "flutter_assets/assets/",
+            "avatar.glb",
+            scene
         );
+
+        console.log("GLB Loaded");
+
+        if(result.skeletons.length > 0)
+        {
+            skeleton = result.skeletons[0];
+
+            console.log(
+                skeleton.bones.map(
+                    b => b.name
+                )
+            );
+
+            console.log("MODEL_LOADED");
+        }
+
     }
-
-}
-catch(e)
-{
-    console.error(e);
-}
-
-    if(result.skeletons.length > 0)
+    catch(e)
     {
-        skeleton =
-        result.skeletons[0];
-
-        console.log(
-            skeleton.bones.map(
-                b => b.name
-            )
-        );
+        console.error("GLB ERROR:", e);
     }
 
     return scene;
 };
-
 createScene();
 
 engine.runRenderLoop(() =>
