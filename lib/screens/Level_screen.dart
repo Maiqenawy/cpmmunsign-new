@@ -164,7 +164,7 @@ class _LevelScreenState extends State<LevelScreen> {
   }
 }
 
-cclass PhraseCard extends StatelessWidget {
+class PhraseCard extends StatelessWidget {
   final String text;
   final bool isLearned;
   final VoidCallback onTap;
