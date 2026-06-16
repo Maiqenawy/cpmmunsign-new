@@ -170,6 +170,8 @@ function rotateBone(
 
 window.animateFrame = function(frame)
 {
+    console.log("ANIMATE CALLED");
+console.log(frame);
     if(!skeleton) return;
 
     const left = frame.leftHand;
