@@ -19,13 +19,15 @@ class AvatarFrame {
 
 class AvatarSign {
   final String word;
-  final int totalFrames;
-  final List<AvatarFrame> frames;
+  final int frames;
+  final int landmarksPerFrame;
+  final List<dynamic> landmarks;
 
   AvatarSign({
     required this.word,
-    required this.totalFrames,
     required this.frames,
+    required this.landmarksPerFrame,
+    required this.landmarks,
   });
 
   factory AvatarSign.fromJson(
@@ -33,10 +35,9 @@ class AvatarSign {
   ) {
     return AvatarSign(
       word: json["word"],
-      totalFrames: json["total_frames"],
-      frames: (json["frames"] as List)
-          .map((e) => AvatarFrame.fromJson(e))
-          .toList(),
+      frames: json["frames"],
+      landmarksPerFrame: json["landmarks_per_frame"],
+      landmarks: json["landmarks"],
     );
   }
 }
