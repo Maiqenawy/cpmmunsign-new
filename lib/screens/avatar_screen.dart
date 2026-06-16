@@ -1,5 +1,6 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -20,28 +21,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   int currentSign = 0;
   int currentFrame = 0;
-bool isAnimating = false;
-  @override
-void didUpdateWidget(
-  AvatarScreen oldWidget,
-) {
-  super.didUpdateWidget(
-    oldWidget,
-  );
 
-if (oldWidget.signs != widget.signs &&
-    widget.signs.isNotEmpty){
+  bool isAnimating = false;
 
-    currentSign = 0;
-    currentFrame = 0;
-
-    if (!isAnimating) {
-
-      startAnimation();
-
-    }
-  }
-}
   @override
   void initState() {
     super.initState();
@@ -50,112 +32,144 @@ if (oldWidget.signs != widget.signs &&
       ..setJavaScriptMode(
         JavaScriptMode.unrestricted,
       )
-     ..setOnConsoleMessage((message) {
-    if (message.message == "MODEL_LOADED") {
-      debugPrint("JS says Model is Loaded! Starting animation...");
-      startAnimation(); // 🟢 نبدأ الأنيميشن فوراً لما الجافا سكريبت يأكد
+      ..setOnConsoleMessage((message) {
+        if (message.message == "MODEL_LOADED") {
+          debugPrint("MODEL LOADED");
+        }
+      })
+      ..loadFlutterAsset(
+        'assets/avatar_player.html',
+      );
+  }
+
+  @override
+  void didUpdateWidget(
+    AvatarScreen oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.signs != widget.signs &&
+        widget.signs.isNotEmpty) {
+      currentSign = 0;
+      currentFrame = 0;
+
+      startAnimation();
     }
-  })
-  ..loadFlutterAsset('assets/avatar_player.html');
+  }
 
   Future<void> startAnimation() async {
-     debugPrint(
-    "START ANIMATION CALLED"
-  );
-
-  debugPrint(
-    "SIGNS COUNT = ${widget.signs.length}"
-  );
     if (isAnimating) return;
 
-  isAnimating = true;
+    if (widget.signs.isEmpty) return;
+
+    isAnimating = true;
+
     try {
+      while (
+          mounted &&
+          currentSign < widget.signs.length) {
+        final sign =
+            widget.signs[currentSign];
 
-    while (mounted &&
-           widget.signs.isNotEmpty) {
-
-      if (widget.signs.isEmpty) {
-        await Future.delayed(
-          const Duration(milliseconds: 100),
+        debugPrint(
+          "CURRENT SIGN = $currentSign",
         );
-        continue;
+
+        while (
+            mounted &&
+            currentFrame <
+                sign.landmarks.length) {
+          final List<double>
+              currentLandmarks =
+              List<double>.from(
+            sign.landmarks[currentFrame],
+          );
+
+          if (currentLandmarks.length >= 126) {
+            final leftHand =
+                currentLandmarks.sublist(
+              0,
+              63,
+            );
+
+            final rightHand =
+                currentLandmarks.sublist(
+              63,
+              126,
+            );
+
+            final leftHandFormatted =
+                _formatLandmarks(
+              leftHand,
+            );
+
+            final rightHandFormatted =
+                _formatLandmarks(
+              rightHand,
+            );
+
+            await controller.runJavaScript(
+              '''
+window.animateFrame(
+${jsonEncode({
+                "leftHand":
+                    leftHandFormatted,
+                "rightHand":
+                    rightHandFormatted,
+              })}
+);
+''',
+            );
+          }
+
+          await Future.delayed(
+            const Duration(
+              milliseconds: 30,
+            ),
+          );
+
+          currentFrame++;
+        }
+
+        currentFrame = 0;
+        currentSign++;
       }
 
-}
-      finally {
-
-  isAnimating = false;
-
-      final sign = widget.signs[currentSign];
-       debugPrint(
-      "CURRENT SIGN = $currentSign"
-    );
-
-    debugPrint(
-      "TOTAL FRAMES = ${sign.frames.length}"
-    );
-      
-      // بافتراض أن الـ frame عبارة عن مصفوفة مسطحة List<double> تحتوي على كل الـ landmarks
-      final List<double> currentLandmarks = sign.landmarks[currentFrame];
-
-      // التحقق من أن بيانات الفريم مكتملة (21 نقطة لكل يد * 3 أبعاد = 126 قيمة)
-      if (currentLandmarks.length >= 126) {
-        // تقسيم الـ Landmarks لـ leftHand و rightHand
-        var leftHand = currentLandmarks.sublist(0, 63);
-        var rightHand = currentLandmarks.sublist(63, 126);
-
-        // تحويل المصفوفة المسطحة إلى مصفوفة ثنائية الأبعاد يفهمها الـ JavaScript
-        var leftHandFormatted = _formatLandmarks(leftHand);
-        var rightHandFormatted = _formatLandmarks(rightHand);
-debugPrint(
-  "SENDING FRAME $currentFrame"
-);
-
-        // إرسال البيانات المجهزة للـ JavaScript داخل الـ WebView
-     await controller.runJavaScript(
-  window.animateFrame(${jsonEncode({
-    "leftHand": leftHandFormatted,
-    "rightHand": rightHandFormatted,
-  })});"
-);
-          ''',
-        );
-      } else {
-        debugPrint("Warning: Frame data is incomplete or invalid!");
-      }
-
-      // مدة الانتظار بين الفريم والآخر (30 إلى 40 مللي ثانية تعطي سلاسة ممتازة)
-      await Future.delayed(
-        const Duration(milliseconds: 30),
+      currentSign = 0;
+      currentFrame = 0;
+    } catch (e) {
+      debugPrint(
+        "Animation Error = $e",
       );
-
-      currentFrame++;
-
-      // الانتقال إلى الفريم التالي أو الإشارة التالية
-  if (currentFrame >= sign.frames.length) {
-
-  currentFrame = 0;
-  currentSign++;
-
-  if (currentSign >= widget.signs.length) {
-    break;
-  }
-}
-      }
+    } finally {
+      isAnimating = false;
     }
   }
 
-  // دالة مساعدة لتحويل المصفوفة المسطحة لمصفوفة ثنائية الأبعاد (كل 3 قيم X, Y, Z في مصفوفة فرعية)
-  List<List<double>> _formatLandmarks(List<double> flatList) {
+  List<List<double>> _formatLandmarks(
+    List<double> flatList,
+  ) {
     List<List<double>> formatted = [];
-    for (int i = 0; i < flatList.length; i += 3) {
-      formatted.add([flatList[i], flatList[i + 1], flatList[i + 2]]);
+
+    for (
+      int i = 0;
+      i < flatList.length;
+      i += 3
+    ) {
+      formatted.add([
+        flatList[i],
+        flatList[i + 1],
+        flatList[i + 2],
+      ]);
     }
+
     return formatted;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return WebViewWidget(
       controller: controller,
     );
