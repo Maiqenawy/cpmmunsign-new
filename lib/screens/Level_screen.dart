@@ -28,6 +28,7 @@ class _LevelScreenState extends State<LevelScreen> {
   @override
   void initState() {
     super.initState();
+    selectedSigns = [];
     loadData();
   }
 
