@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'avatar_sign_model.dart';
@@ -22,7 +21,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   int currentSign = 0;
   int currentFrame = 0;
-bool isJsReady = false;
+
+  bool isJsReady = false;
   bool isAnimating = false;
 
   @override
@@ -30,86 +30,60 @@ bool isJsReady = false;
     super.initState();
 
     controller = WebViewController()
-      ..setJavaScriptMode(
-        JavaScriptMode.unrestricted,
-      )
-    ..setOnConsoleMessage((message) {
-  if (message.message == "MODEL_LOADED") {
-    debugPrint("MODEL LOADED");
-    isJsReady = true;
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setOnConsoleMessage((message) {
+        debugPrint("JS: ${message.message}");
 
-    if (widget.signs.isNotEmpty) {
-      startAnimation();
-    }
-  }
-})
+        if (message.message == "MODEL_LOADED") {
+          isJsReady = true;
+
+          if (widget.signs.isNotEmpty) {
+            startAnimation();
+          }
+        }
       })
-    debugPrint("WebView is loading: assets/avatar_player.html");
-      ..loadFlutterAsset(
-        'assets/avatar_player.html',
-      );
+      ..loadFlutterAsset('assets/avatar_player.html');
   }
 
   @override
-  void didUpdateWidget(
-    AvatarScreen oldWidget,
-  ) {
+  void didUpdateWidget(covariant AvatarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.signs != widget.signs &&
-        widget.signs.isNotEmpty) {
+    if (oldWidget.signs != widget.signs && widget.signs.isNotEmpty) {
       currentSign = 0;
       currentFrame = 0;
-
       startAnimation();
     }
   }
 
   Future<void> startAnimation() async {
-    if (isAnimating) return;
-
-    if (widget.signs.isEmpty) return;
-
+    if (isAnimating || widget.signs.isEmpty) return;
     isAnimating = true;
 
     try {
-      while (
-          mounted &&
-          currentSign < widget.signs.length) {
-        final sign =
-            widget.signs[currentSign];
+      while (mounted && currentSign < widget.signs.length) {
+        final sign = widget.signs[currentSign];
 
-        debugPrint(
-          "CURRENT SIGN = $currentSign",
-        );while (mounted && currentFrame < sign.landmarks.length) {
+        while (mounted && currentFrame < sign.landmarks.length) {
+          final flat = List<double>.from(sign.landmarks[currentFrame]);
 
-  final List<double> currentLandmarks =
-      List<double>.from(sign.landmarks[currentFrame]);
+          if (flat.length >= 126) {
+            final left = _format(flat.sublist(0, 63));
+            final right = _format(flat.sublist(63, 126));
 
-  if (currentLandmarks.length >= 126) {
+            await controller.runJavaScript('''
+              if (window.animateFrame) {
+                window.animateFrame(${jsonEncode({
+                  "leftHand": left,
+                  "rightHand": right,
+                })});
+              }
+            ''');
+          }
 
-    final leftHand = currentLandmarks.sublist(0, 63);
-    final rightHand = currentLandmarks.sublist(63, 126);
-
-    final leftHandFormatted = _formatLandmarks(leftHand);
-    final rightHandFormatted = _formatLandmarks(rightHand);
-
-    // ⭐ هنا أهم جزء
-    await controller.runJavaScript('''
-      if (!window.isJsReady) {
-        console.log("JS NOT READY");
-      }
-
-      window.animateFrame(${jsonEncode({
-        "leftHand": leftHandFormatted,
-        "rightHand": rightHandFormatted,
-      })});
-    ''');
-  }
-
-  await Future.delayed(const Duration(milliseconds: 50));
-  currentFrame++;
-}
+          await Future.delayed(const Duration(milliseconds: 50));
+          currentFrame++;
+        }
 
         currentFrame = 0;
         currentSign++;
@@ -117,41 +91,21 @@ bool isJsReady = false;
 
       currentSign = 0;
       currentFrame = 0;
-    } catch (e) {
-      debugPrint(
-        "Animation Error = $e",
-      );
     } finally {
       isAnimating = false;
     }
   }
 
-  List<List<double>> _formatLandmarks(
-    List<double> flatList,
-  ) {
-    List<List<double>> formatted = [];
-
-    for (
-      int i = 0;
-      i < flatList.length;
-      i += 3
-    ) {
-      formatted.add([
-        flatList[i],
-        flatList[i + 1],
-        flatList[i + 2],
-      ]);
+  List<List<double>> _format(List<double> data) {
+    List<List<double>> out = [];
+    for (int i = 0; i < data.length; i += 3) {
+      out.add([data[i], data[i + 1], data[i + 2]]);
     }
-
-    return formatted;
+    return out;
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return WebViewWidget(
-      controller: controller,
-    );
+  Widget build(BuildContext context) {
+    return WebViewWidget(controller: controller);
   }
 }
