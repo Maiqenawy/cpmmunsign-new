@@ -83,6 +83,7 @@ const createScene = async () =>
             );
 
             console.log("MODEL_LOADED");
+window.MODEL_LOADED = true;
         }
 
     }
@@ -158,8 +159,9 @@ function rotateBone(
 
 window.animateFrame = function(frame)
 {
-   console.log("Data received in JS:", frame);
+  
     if(!skeleton) return;
+    if (!window.MODEL_LOADED) return;
 
     const left = frame.leftHand;
     const right = frame.rightHand;
