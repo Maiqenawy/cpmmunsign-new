@@ -9,7 +9,7 @@ import 'avatar_sign_model.dart';
 
 class LevelScreen extends StatefulWidget {
   final int levelId;
-  List<AvatarSign> selectedSigns = [];
+ 
 
   const LevelScreen({
     Key? key,
@@ -24,6 +24,7 @@ class _LevelScreenState extends State<LevelScreen> {
   List words = [];
   bool loading = true;
   int coins = 0;
+   List<AvatarSign> selectedSigns = [];
 
   // ⭐ الأنيميشن الحالي
   String currentAnimation = "idle";
@@ -181,27 +182,12 @@ class _LevelScreenState extends State<LevelScreen> {
                 const SizedBox(height: 10),
 
                 /// 🤖 3D Avatar
-                SizedBox(
-                  height: 250,
-                  child: ModelViewer(
-                    // ⭐ يجبر إعادة تحميل الافتار عند تغيير الحركة
-                    key: ValueKey(currentAnimation),
-
-                    src:
-                        'assets/cartoon_male_characters_-_low-poly_3d_model.glb',
-
-                    alt: "Sign Language Avatar",
-
-                    backgroundColor: Colors.transparent,
-
-                    autoPlay: true,
-                    autoRotate: false,
-                    cameraControls: true,
-
-                    // ⭐ الأنيميشن الحالي
-                    animationName: currentAnimation,
-                  ),
-                ),
+               SizedBox(
+  height: 250,
+  child: AvatarScreen(
+    signs: selectedSigns,
+  ),
+),
 
                 const SizedBox(height: 8),
 
