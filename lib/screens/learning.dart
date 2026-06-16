@@ -110,13 +110,18 @@ class _LearningState extends State<Learning> {
             ),
       ),
       child: Scaffold(
+        // ✅ مهم جدًا: إزالة AppBar اللي كان عامل فراغ فوق
         appBar: AppBar(
+          toolbarHeight: 0,
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
 
+        extendBodyBehindAppBar: true, // يخلي الخلفية تحت الـ status bar
+
         body: Stack(
           children: [
+            // ✅ الخلفية full screen
             Positioned.fill(
               child: GradientBackground(
                 child: const SizedBox.expand(),
@@ -237,7 +242,6 @@ class LevelCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             Row(
               children: [
                 if (isLocked)
