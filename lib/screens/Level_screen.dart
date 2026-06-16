@@ -2,7 +2,7 @@ import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:flutter/material.dart';
 import 'complete_level.dart';
 import '../widgets/gradient_background.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
+
 import 'package:permission_handler/permission_handler.dart';
 import 'avatar_screen.dart';
 import 'avatar_sign_model.dart';
