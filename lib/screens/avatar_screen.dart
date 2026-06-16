@@ -91,6 +91,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
         currentFrame = 0;
         currentSign++;
       }
+                                                 if (mounted) {
+      await controller.runJavaScript("if (window.setIdleMode) { window.setIdleMode(); }");
+    }
 
       currentSign = 0;
       currentFrame = 0;
