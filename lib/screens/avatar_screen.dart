@@ -33,9 +33,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
         JavaScriptMode.unrestricted,
       )
       ..setOnConsoleMessage((message) {
-        if (message.message == "MODEL_LOADED") {
-          debugPrint("MODEL LOADED");
-        }
+       if (message.message == "MODEL_LOADED") {
+  debugPrint("MODEL LOADED");
+
+  if (widget.signs.isNotEmpty) {
+    startAnimation();
+  }
+}
       })
       ..loadFlutterAsset(
         'assets/avatar_player.html',
