@@ -29,16 +29,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
       ..setJavaScriptMode(
         JavaScriptMode.unrestricted,
       )
-      ..loadFlutterAsset(
-        'assets/avatar_player.html',
-      );
-
-    // تأخير لمدة ثانيتين للتأكد من تحميل الـ WebView تماماً قبل بدء الأنيميشن
-    Future.delayed(
-      const Duration(seconds: 2),
-      startAnimation,
-    );
-  }
+     ..setOnConsoleMessage((message) {
+    if (message.message == "MODEL_LOADED") {
+      debugPrint("JS says Model is Loaded! Starting animation...");
+      startAnimation(); // 🟢 نبدأ الأنيميشن فوراً لما الجافا سكريبت يأكد
+    }
+  })
+  ..loadFlutterAsset('assets/avatar_player.html');
 
   Future<void> startAnimation() async {
      debugPrint(
