@@ -164,7 +164,7 @@ class _LevelScreenState extends State<LevelScreen> {
   }
 }
 
-class PhraseCard extends StatelessWidget {
+cclass PhraseCard extends StatelessWidget {
   final String text;
   final bool isLearned;
   final VoidCallback onTap;
@@ -188,8 +188,10 @@ class PhraseCard extends StatelessWidget {
         child: Center(child: Text(text)),
       ),
     );
-  } 
-  class _AvatarWidget extends StatelessWidget {
+  }
+} // <-- يقفل PhraseCard هنا
+
+class _AvatarWidget extends StatelessWidget {
   const _AvatarWidget({super.key});
 
   @override
@@ -213,5 +215,4 @@ class PhraseCard extends StatelessWidget {
       ),
     );
   }
-}
 }
