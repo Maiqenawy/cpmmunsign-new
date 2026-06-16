@@ -48,6 +48,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
   @override
   void didUpdateWidget(covariant AvatarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.signs.isEmpty) {
+    controller.runJavaScript("if (window.setIdleMode) { window.setIdleMode(); }");
+  }
 
     if (oldWidget.signs != widget.signs && widget.signs.isNotEmpty) {
       currentSign = 0;
