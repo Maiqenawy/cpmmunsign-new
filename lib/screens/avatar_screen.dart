@@ -44,6 +44,7 @@ bool isJsReady = false;
   }
 })
       })
+    debugPrint("WebView is loading: assets/avatar_player.html");
       ..loadFlutterAsset(
         'assets/avatar_player.html',
       );
