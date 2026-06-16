@@ -22,7 +22,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   int currentSign = 0;
   int currentFrame = 0;
-
+bool isJsReady = false;
   bool isAnimating = false;
 
   @override
@@ -33,14 +33,16 @@ class _AvatarScreenState extends State<AvatarScreen> {
       ..setJavaScriptMode(
         JavaScriptMode.unrestricted,
       )
-      ..setOnConsoleMessage((message) {
-       if (message.message == "MODEL_LOADED") {
-  debugPrint("MODEL LOADED");
+    ..setOnConsoleMessage((message) {
+  if (message.message == "MODEL_LOADED") {
+    debugPrint("MODEL LOADED");
+    isJsReady = true;
 
-  if (widget.signs.isNotEmpty) {
-    startAnimation();
+    if (widget.signs.isNotEmpty) {
+      startAnimation();
+    }
   }
-}
+})
       })
       ..loadFlutterAsset(
         'assets/avatar_player.html',
@@ -129,7 +131,7 @@ ${jsonEncode({
 
           await Future.delayed(
             const Duration(
-              milliseconds: 30,
+              milliseconds: 50,
             ),
           );
 
