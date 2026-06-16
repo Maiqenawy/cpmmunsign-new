@@ -328,7 +328,32 @@ class Service {
       throw Exception("Translation failed");
     }
   }
+static Future<AvatarSign> wordToSign(
+  int wordId,
+) async {
 
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/word-to-sign"),
+    headers: headers,
+    body: jsonEncode({
+      "wordId": wordId,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+
+    final data =
+        jsonDecode(response.body);
+
+    return AvatarSign.fromJson(data);
+
+  } else {
+
+    throw Exception(
+      "Word to sign failed",
+    );
+  }
+}
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
