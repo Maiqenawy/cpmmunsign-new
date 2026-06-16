@@ -81,63 +81,35 @@ bool isJsReady = false;
 
         debugPrint(
           "CURRENT SIGN = $currentSign",
-        );
+        );while (mounted && currentFrame < sign.landmarks.length) {
 
-        while (
-            mounted &&
-            currentFrame <
-                sign.landmarks.length) {
-          final List<double>
-              currentLandmarks =
-              List<double>.from(
-            sign.landmarks[currentFrame],
-          );
+  final List<double> currentLandmarks =
+      List<double>.from(sign.landmarks[currentFrame]);
 
-          if (currentLandmarks.length >= 126) {
-            final leftHand =
-                currentLandmarks.sublist(
-              0,
-              63,
-            );
+  if (currentLandmarks.length >= 126) {
 
-            final rightHand =
-                currentLandmarks.sublist(
-              63,
-              126,
-            );
+    final leftHand = currentLandmarks.sublist(0, 63);
+    final rightHand = currentLandmarks.sublist(63, 126);
 
-            final leftHandFormatted =
-                _formatLandmarks(
-              leftHand,
-            );
+    final leftHandFormatted = _formatLandmarks(leftHand);
+    final rightHandFormatted = _formatLandmarks(rightHand);
 
-            final rightHandFormatted =
-                _formatLandmarks(
-              rightHand,
-            );
+    // ⭐ هنا أهم جزء
+    await controller.runJavaScript('''
+      if (!window.isJsReady) {
+        console.log("JS NOT READY");
+      }
 
-            await controller.runJavaScript(
-              '''
-window.animateFrame(
-${jsonEncode({
-                "leftHand":
-                    leftHandFormatted,
-                "rightHand":
-                    rightHandFormatted,
-              })}
-);
-''',
-            );
-          }
+      window.animateFrame(${jsonEncode({
+        "leftHand": leftHandFormatted,
+        "rightHand": rightHandFormatted,
+      })});
+    ''');
+  }
 
-          await Future.delayed(
-            const Duration(
-              milliseconds: 50,
-            ),
-          );
-
-          currentFrame++;
-        }
+  await Future.delayed(const Duration(milliseconds: 50));
+  currentFrame++;
+}
 
         currentFrame = 0;
         currentSign++;
