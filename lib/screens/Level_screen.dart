@@ -51,6 +51,17 @@ class _LevelScreenState extends State<LevelScreen> {
         await Service.wordToSign(
           word["learningWordId"],
         );
+      debugPrint(
+  "WORD = ${sign.word}",
+);
+
+debugPrint(
+  "FRAMES = ${sign.frames}",
+);
+
+debugPrint(
+  "LANDMARKS = ${sign.landmarks.length}",
+);
 
     setState(() {
 
