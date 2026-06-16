@@ -77,6 +77,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
         // تحويل المصفوفة المسطحة إلى مصفوفة ثنائية الأبعاد يفهمها الـ JavaScript
         var leftHandFormatted = _formatLandmarks(leftHand);
         var rightHandFormatted = _formatLandmarks(rightHand);
+debugPrint(
+  "SENDING FRAME $currentFrame"
+);
 
         // إرسال البيانات المجهزة للـ JavaScript داخل الـ WebView
         await controller.runJavaScript(
