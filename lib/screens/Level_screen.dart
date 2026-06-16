@@ -4,9 +4,12 @@ import 'complete_level.dart';
 import '../widgets/gradient_background.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'avatar_screen.dart';
+import 'avatar_sign_model.dart';
 
 class LevelScreen extends StatefulWidget {
   final int levelId;
+ 
 
   const LevelScreen({
     Key? key,
@@ -21,6 +24,7 @@ class _LevelScreenState extends State<LevelScreen> {
   List words = [];
   bool loading = true;
   int coins = 0;
+   List<AvatarSign> selectedSigns = [];
 
   // ⭐ الأنيميشن الحالي
   String currentAnimation = "idle";
@@ -41,6 +45,27 @@ class _LevelScreenState extends State<LevelScreen> {
   }
 
   Future onWordTap(Map word) async {
+    try {
+
+    final sign =
+        await Service.wordToSign(
+          word["learningWordId"],
+        );
+
+    setState(() {
+
+      selectedSigns = [sign];
+
+    });
+
+  } catch (e) {
+
+    debugPrint(
+      "Avatar Error = $e",
+    );
+
+  }
+
     print("الكلمة التي تم الضغط عليها هي: ${word["text"]}");
 
     // ✅ اسم الأنيميشن
@@ -157,27 +182,12 @@ class _LevelScreenState extends State<LevelScreen> {
                 const SizedBox(height: 10),
 
                 /// 🤖 3D Avatar
-                SizedBox(
-                  height: 250,
-                  child: ModelViewer(
-                    // ⭐ يجبر إعادة تحميل الافتار عند تغيير الحركة
-                    key: ValueKey(currentAnimation),
-
-                    src:
-                        'assets/cartoon_male_characters_-_low-poly_3d_model.glb',
-
-                    alt: "Sign Language Avatar",
-
-                    backgroundColor: Colors.transparent,
-
-                    autoPlay: true,
-                    autoRotate: false,
-                    cameraControls: true,
-
-                    // ⭐ الأنيميشن الحالي
-                    animationName: currentAnimation,
-                  ),
-                ),
+               SizedBox(
+  height: 250,
+  child: AvatarScreen(
+    signs: selectedSigns,
+  ),
+),
 
                 const SizedBox(height: 8),
 

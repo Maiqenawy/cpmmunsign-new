@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:cominsign_new/screens/avatar_sign_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cube/flutter_cube.dart';
-class AvatarLandmarkPlayer extends StatefulWidget {
+import 'avatar_sign_model.dart';
 
+class AvatarLandmarkPlayer extends StatefulWidget {
   final List<AvatarSign> signs;
 
   const AvatarLandmarkPlayer({
@@ -12,15 +12,11 @@ class AvatarLandmarkPlayer extends StatefulWidget {
   });
 
   @override
-  State<AvatarLandmarkPlayer> createState()
-      => _AvatarLandmarkPlayerState();
+  State<AvatarLandmarkPlayer> createState() => _AvatarLandmarkPlayerState();
 }
 
-class _AvatarLandmarkPlayerState
-    extends State<AvatarLandmarkPlayer> {
-
+class _AvatarLandmarkPlayerState extends State<AvatarLandmarkPlayer> {
   Object? avatar;
-
   Scene? scene;
 
   int currentSign = 0;
@@ -30,20 +26,18 @@ class _AvatarLandmarkPlayerState
 
   @override
   Widget build(BuildContext context) {
-
     return Cube(
       onSceneCreated: onSceneCreated,
     );
   }
 
   void onSceneCreated(Scene scene) {
-
     this.scene = scene;
 
     scene.camera.zoom = 10;
 
     avatar = Object(
-      fileName: 'assets/avatar/avatar.glb',
+      fileName: 'assets/avatar.glb',
     );
 
     scene.world.add(avatar!);
@@ -52,31 +46,26 @@ class _AvatarLandmarkPlayerState
   }
 
   void startAnimation() {
-
     timer = Timer.periodic(
       const Duration(milliseconds: 100),
       (_) {
+        if (avatar == null || widget.signs.isEmpty) return;
 
-        if (avatar == null) return;
+        final sign = widget.signs[currentSign];
 
-        final sign =
-            widget.signs[currentSign];
+        if (sign.landmarks.isEmpty) return;
 
-        final frame =
-            sign.frames[currentFrame];
+        final frame = sign.landmarks[currentFrame];
 
         animateHands(frame);
 
         currentFrame++;
 
-        if (currentFrame >= sign.frames.length) {
-
+        if (currentFrame >= sign.framesCount) {
           currentFrame = 0;
-
           currentSign++;
 
           if (currentSign >= widget.signs.length) {
-
             currentSign = 0;
           }
         }
@@ -84,45 +73,28 @@ class _AvatarLandmarkPlayerState
     );
   }
 
-  void animateHands(AvatarFrame frame) {
-
+  void animateHands(List<double> frame) {
     if (avatar == null) return;
 
     try {
+      if (frame.length < 2) return;
 
-      final leftX =
-          frame.leftHand[0][0];
+      final x = frame[0];
+      final y = frame[1];
 
-      final leftY =
-          frame.leftHand[0][1];
-
-      final rightX =
-          frame.rightHand[0][0];
-
-      final rightY =
-          frame.rightHand[0][1];
-
-      avatar!.rotation.y =
-          rightX * 100;
-
-      avatar!.rotation.x =
-          leftY * 100;
+      avatar!.rotation.y = x * 100;
+      avatar!.rotation.x = y * 100;
 
       avatar!.updateTransform();
-
       scene?.update();
-    }
-    catch (e) {
-
+    } catch (e) {
       print(e);
     }
   }
 
   @override
   void dispose() {
-
     timer?.cancel();
-
     super.dispose();
   }
 }
