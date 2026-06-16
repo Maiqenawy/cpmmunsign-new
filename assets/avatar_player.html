@@ -76,7 +76,12 @@ const createScene = async () =>
     if(result.skeletons.length > 0)
     {
         skeleton = result.skeletons[0];
-
+        if (window.flutter_inappwebview) {
+        window.flutter_inappwebview.callHandler('onModelLoaded');
+        } else {
+        // إذا كنت تستخدم webview_flutter الرسمي:
+        console.log("MODEL_LOADED"); 
+    }
         console.log(
             skeleton.bones.map(
                 b => b.name
@@ -170,6 +175,7 @@ function rotateBone(
 
 window.animateFrame = function(frame)
 {
+   console.log("Data received in JS:", frame);
     if(!skeleton) return;
 
     const left = frame.leftHand;

@@ -29,18 +29,22 @@ class _AvatarScreenState extends State<AvatarScreen> {
       ..setJavaScriptMode(
         JavaScriptMode.unrestricted,
       )
-      ..loadFlutterAsset(
-        'assets/avatar_player.html',
-      );
-
-    // تأخير لمدة ثانيتين للتأكد من تحميل الـ WebView تماماً قبل بدء الأنيميشن
-    Future.delayed(
-      const Duration(seconds: 2),
-      startAnimation,
-    );
-  }
+     ..setOnConsoleMessage((message) {
+    if (message.message == "MODEL_LOADED") {
+      debugPrint("JS says Model is Loaded! Starting animation...");
+      startAnimation(); // 🟢 نبدأ الأنيميشن فوراً لما الجافا سكريبت يأكد
+    }
+  })
+  ..loadFlutterAsset('assets/avatar_player.html');
 
   Future<void> startAnimation() async {
+     debugPrint(
+    "START ANIMATION CALLED"
+  );
+
+  debugPrint(
+    "SIGNS COUNT = ${widget.signs.length}"
+  );
     while (mounted) {
       if (widget.signs.isEmpty) {
         await Future.delayed(
@@ -50,6 +54,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
       }
 
       final sign = widget.signs[currentSign];
+       debugPrint(
+      "CURRENT SIGN = $currentSign"
+    );
+
+    debugPrint(
+      "TOTAL FRAMES = ${sign.frames.length}"
+    );
       
       // بافتراض أن الـ frame عبارة عن مصفوفة مسطحة List<double> تحتوي على كل الـ landmarks
       final List<double> currentLandmarks = sign.frames[currentFrame];
@@ -63,6 +74,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
         // تحويل المصفوفة المسطحة إلى مصفوفة ثنائية الأبعاد يفهمها الـ JavaScript
         var leftHandFormatted = _formatLandmarks(leftHand);
         var rightHandFormatted = _formatLandmarks(rightHand);
+debugPrint(
+  "SENDING FRAME $currentFrame"
+);
 
         // إرسال البيانات المجهزة للـ JavaScript داخل الـ WebView
         await controller.runJavaScript(
