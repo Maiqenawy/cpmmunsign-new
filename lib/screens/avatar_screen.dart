@@ -20,7 +20,27 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   int currentSign = 0;
   int currentFrame = 0;
+bool isAnimating = false;
+  @override
+void didUpdateWidget(
+  AvatarScreen oldWidget,
+) {
+  super.didUpdateWidget(
+    oldWidget,
+  );
 
+  if (widget.signs.isNotEmpty) {
+
+    currentSign = 0;
+    currentFrame = 0;
+
+    if (!isAnimating) {
+
+      startAnimation();
+
+    }
+  }
+}
   @override
   void initState() {
     super.initState();
@@ -45,7 +65,14 @@ class _AvatarScreenState extends State<AvatarScreen> {
   debugPrint(
     "SIGNS COUNT = ${widget.signs.length}"
   );
-    while (mounted) {
+    if (isAnimating) return;
+
+  isAnimating = true;
+    try {
+
+    while (mounted &&
+           widget.signs.isNotEmpty) {
+
       if (widget.signs.isEmpty) {
         await Future.delayed(
           const Duration(milliseconds: 100),
@@ -63,7 +90,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
     );
       
       // بافتراض أن الـ frame عبارة عن مصفوفة مسطحة List<double> تحتوي على كل الـ landmarks
-      final List<double> currentLandmarks = sign.frames[currentFrame];
+      final List<double> currentLandmarks = sign.landmarks[currentFrame]
 
       // التحقق من أن بيانات الفريم مكتملة (21 نقطة لكل يد * 3 أبعاد = 126 قيمة)
       if (currentLandmarks.length >= 126) {
