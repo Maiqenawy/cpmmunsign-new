@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'avatar_sign_model.dart';
 
 class AvatarScreen extends StatefulWidget {
   final List<AvatarSign> signs;
