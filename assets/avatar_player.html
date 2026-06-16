@@ -62,13 +62,13 @@ const createScene = async () =>
 
     try {
 
-        const result =
-        await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "flutter_assets/assets/",
-            "avatar.glb",
-            scene
-        );
+       const result =
+await BABYLON.SceneLoader.ImportMeshAsync(
+    "",
+    "assets/",
+    "avatar.glb",
+    scene
+);
 
         console.log("GLB Loaded");
 

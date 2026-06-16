@@ -55,9 +55,9 @@ class _LevelScreenState extends State<LevelScreen> {
   "WORD = ${sign.word}",
 );
 
-debugPrint(
-  "FRAMES = ${sign.frames}",
-);
+//debugPrint(
+ // "FRAMES = ${sign.frames}",
+//);
 
 debugPrint(
   "LANDMARKS = ${sign.landmarks.length}",
