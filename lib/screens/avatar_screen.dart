@@ -29,7 +29,8 @@ void didUpdateWidget(
     oldWidget,
   );
 
-  if (widget.signs.isNotEmpty) {
+if (oldWidget.signs != widget.signs &&
+    widget.signs.isNotEmpty){
 
     currentSign = 0;
     currentFrame = 0;
@@ -79,6 +80,11 @@ void didUpdateWidget(
         );
         continue;
       }
+      finally {
+
+  isAnimating = false;
+
+}
 
       final sign = widget.signs[currentSign];
        debugPrint(
@@ -90,7 +96,7 @@ void didUpdateWidget(
     );
       
       // بافتراض أن الـ frame عبارة عن مصفوفة مسطحة List<double> تحتوي على كل الـ landmarks
-      final List<double> currentLandmarks = sign.landmarks[currentFrame]
+      final List<double> currentLandmarks = sign.landmarks[currentFrame];
 
       // التحقق من أن بيانات الفريم مكتملة (21 نقطة لكل يد * 3 أبعاد = 126 قيمة)
       if (currentLandmarks.length >= 126) {
@@ -128,10 +134,11 @@ debugPrint(
       currentFrame++;
 
       // الانتقال إلى الفريم التالي أو الإشارة التالية
-      if (currentFrame >= sign.frames.length) {
-        currentFrame = 0;
-        currentSign++;
+    if (currentSign >= widget.signs.length) {
+  break;
 
+        currentSign++;
+    }
         if (currentSign >= widget.signs.length) {
           currentSign = 0; // إعادة الأنيميشن من البداية عند الانتهاء
         }
