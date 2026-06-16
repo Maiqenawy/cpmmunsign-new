@@ -75,11 +75,16 @@ const createScene = async () =>
         if(result.skeletons.length > 0)
         {
             skeleton = result.skeletons[0];
+             console.log(skeleton.bones.map(b => b.name));
+
+    window.MODEL_LOADED = true;
 
             console.log(
                 skeleton.bones.map(
                     b => b.name
                 )
+                window.isJsReady = true;
+console.log("JS_READY"
             );
 
             console.log("MODEL_LOADED");
