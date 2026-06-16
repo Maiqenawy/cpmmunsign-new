@@ -4,7 +4,7 @@ import 'complete_level.dart';
 import '../widgets/gradient_background.dart';
 import 'avatar_screen.dart';
 import 'avatar_sign_model.dart';
-
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 class LevelScreen extends StatefulWidget {
   final int levelId;
 
@@ -125,10 +125,14 @@ class _LevelScreenState extends State<LevelScreen> {
 
               const SizedBox(height: 10),
 
-              SizedBox(
-                height: 250,
-                child: AvatarScreen(signs: selectedSigns),
-              ),
+            SizedBox(
+  height: 250,
+  child: selectedSigns.isNotEmpty
+      ? AvatarScreen(
+          signs: selectedSigns,
+        )
+      : const _AvatarWidget(),
+),
 
               Text('Progress: $learnedCount / ${words.length}'),
 
@@ -182,6 +186,32 @@ class PhraseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(child: Text(text)),
+      ),
+    );
+  }
+} // <-- يقفل PhraseCard هنا
+
+class _AvatarWidget extends StatelessWidget {
+  const _AvatarWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 300,
+      height: 250,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: const ModelViewer(
+        src: 'assets/avatar.glb',
+        alt: 'CommuniSign 3D Avatar',
+        autoRotate: false,
+        cameraControls: false,
+        disableZoom: true,
+        shadowIntensity: 1,
+        backgroundColor: Colors.transparent,
       ),
     );
   }
