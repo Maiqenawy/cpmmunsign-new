@@ -41,6 +41,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Future<void> startAnimation() async {
+     debugPrint(
+    "START ANIMATION CALLED"
+  );
+
+  debugPrint(
+    "SIGNS COUNT = ${widget.signs.length}"
+  );
     while (mounted) {
       if (widget.signs.isEmpty) {
         await Future.delayed(
@@ -50,6 +57,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
       }
 
       final sign = widget.signs[currentSign];
+       debugPrint(
+      "CURRENT SIGN = $currentSign"
+    );
+
+    debugPrint(
+      "TOTAL FRAMES = ${sign.frames.length}"
+    );
       
       // بافتراض أن الـ frame عبارة عن مصفوفة مسطحة List<double> تحتوي على كل الـ landmarks
       final List<double> currentLandmarks = sign.frames[currentFrame];
