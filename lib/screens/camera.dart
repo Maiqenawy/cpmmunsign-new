@@ -170,20 +170,19 @@ Future<void> sendSequence(
 
     if (response.statusCode == 200) {
 
-      final data =
-          jsonDecode(response.body);
+  final data =
+      jsonDecode(response.body);
 
-      if (mounted) {
+  if (mounted) {
 
-        setState(() {
+    setState(() {
 
-          prediction =
-              data["prediction"]
-              ?? "Unknown";
-        });
-      }
-    }
-
+      prediction =
+          data["predicted_word"]
+          ?? "Unknown";
+    });
+  }
+}
   } catch (e) {
 
     debugPrint(
