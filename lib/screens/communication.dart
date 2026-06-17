@@ -63,6 +63,13 @@ class _CommunicationState extends State<Communication> {
 
     try {
       final result = await Service.textToSigns(textController.text);
+      debugPrint("SIGNS COUNT = ${result.length}");
+
+for (var s in result) {
+  debugPrint(
+    "${s.word} -> ${s.landmarks.length} frames",
+  );
+}
       setState(() {
         signs = result;
         loading = false;
