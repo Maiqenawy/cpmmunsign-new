@@ -266,14 +266,66 @@ Future<void> sendSequence(
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                prediction,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              child: Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+
+    Text(
+      "Current Word",
+      style: TextStyle(
+        color: Colors.grey,
+        fontSize: 16,
+      ),
+    ),
+
+    const SizedBox(height: 6),
+
+    Text(
+      prediction,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+
+    const SizedBox(height: 12),
+
+    if (predictions.isNotEmpty)
+      Column(
+        children: [
+          const Text(
+            "Suggestions",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          ...predictions.map((item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      prediction = item["word"];
+                    });
+                  },
+                  child: Text(
+                    "${item["word"]} (${item["confidence"]}%)",
+                  ),
                 ),
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+  ],
+)
               ),
             ),
           ),
