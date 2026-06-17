@@ -328,10 +328,7 @@ class Service {
       throw Exception("Translation failed");
     }
   }
-static Future<AvatarSign> wordToSign(
-  int wordId,
-) async {
-
+static Future<AvatarSign> wordToSign(int wordId) async {
   final response = await http.post(
     Uri.parse("$baseUrl/ai/word-to-sign"),
     headers: headers,
@@ -340,17 +337,19 @@ static Future<AvatarSign> wordToSign(
     }),
   );
 
-  if (response.statusCode == 200) {
+  debugPrint("========== WORD TO SIGN ==========");
+  debugPrint("WORD ID = $wordId");
+  debugPrint("STATUS = ${response.statusCode}");
+  debugPrint("BODY = ${response.body}");
+  debugPrint("==================================");
 
-    final data =
-        jsonDecode(response.body);
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
 
     return AvatarSign.fromJson(data);
-
   } else {
-
     throw Exception(
-      "Word to sign failed",
+      "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
     );
   }
 }
