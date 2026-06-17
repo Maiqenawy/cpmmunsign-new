@@ -5,6 +5,7 @@ import '../widgets/gradient_background.dart';
 import 'avatar_screen.dart';
 import 'avatar_sign_model.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+
 class LevelScreen extends StatefulWidget {
   final int levelId;
 
@@ -22,7 +23,6 @@ class _LevelScreenState extends State<LevelScreen> {
   bool loading = true;
   int coins = 0;
   List<AvatarSign> selectedSigns = [];
-
   String currentAnimation = "idle";
 
   @override
@@ -45,12 +45,11 @@ class _LevelScreenState extends State<LevelScreen> {
       final sign = await Service.wordToSign(word["learningWordId"]);
 
       debugPrint("WORD = ${sign.word}");
-      //debugPrint("FRAMES = ${sign.frames}");
       debugPrint("LANDMARKS = ${sign.landmarks.length}");
+      
       if (sign.landmarks.isNotEmpty) {
-  debugPrint(
-    "FIRST FRAME LENGTH = ${sign.landmarks.first.length}",
-  );
+        debugPrint("FIRST FRAME LENGTH = ${sign.landmarks.first.length}");
+      }
 
       setState(() {
         selectedSigns = [sign];
@@ -79,6 +78,7 @@ class _LevelScreenState extends State<LevelScreen> {
     if (check["completed"]) {
       await Service.unlockNextLevel(widget.levelId);
 
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -99,8 +99,7 @@ class _LevelScreenState extends State<LevelScreen> {
       );
     }
 
-    final learnedCount =
-        words.where((w) => w["isLearned"] == true).length;
+    final learnedCount = words.where((w) => w["isLearned"] == true).length;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -116,7 +115,6 @@ class _LevelScreenState extends State<LevelScreen> {
           child: Column(
             children: [
               const SizedBox(height: 10),
-
               Align(
                 alignment: Alignment.topRight,
                 child: Column(
@@ -126,25 +124,18 @@ class _LevelScreenState extends State<LevelScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 10),
-
-            SizedBox(
-  height: 250,
-  child: selectedSigns.isNotEmpty
-      ? AvatarScreen(
-          signs: selectedSigns,
-        )
-      : const _AvatarWidget(),
-),
-
+              SizedBox(
+                height: 250,
+                child: selectedSigns.isNotEmpty
+                    ? AvatarScreen(signs: selectedSigns)
+                    : const _AvatarWidget(),
+              ),
               Text('Progress: $learnedCount / ${words.length}'),
-
               Expanded(
                 child: GridView.builder(
                   itemCount: words.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
@@ -193,7 +184,7 @@ class PhraseCard extends StatelessWidget {
       ),
     );
   }
-} // <-- يقفل PhraseCard هنا
+}
 
 class _AvatarWidget extends StatelessWidget {
   const _AvatarWidget({super.key});

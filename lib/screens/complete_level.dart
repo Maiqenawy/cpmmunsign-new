@@ -50,8 +50,7 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark =
-        Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       body: Container(
@@ -93,31 +92,50 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.star, color: Colors.amber, size: 35),
+                          SizedBox(width: 5),
+                          Icon(Icons.star, color: Colors.amber, size: 50),
+                          SizedBox(width: 5),
+                          Icon(Icons.star, color: Colors.amber, size: 35),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       Text(
                         "COMMUNISIGN",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF114B5F),
+                          color: isDark ? Colors.white : const Color(0xFF114B5F),
                         ),
                       ),
-
                       const SizedBox(height: 30),
-
+                      const Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber,
+                        size: 90,
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      /// 🛠️ تم إصلاح الخطأ هنا بدمج الـ BoxDecoration
                       Container(
-                        width: 170,
-                        height: 170,
+                        width: 190,
+                        height: 190,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
+                              color: Colors.amber.withOpacity(.6),
+                              blurRadius: 40,
+                              spreadRadius: 10,
+                            ),
+                            BoxShadow(
                               blurRadius: 15,
                               spreadRadius: 4,
-                              color:
-                                  Colors.black.withOpacity(0.15),
+                              color: Colors.black.withOpacity(0.15),
                             ),
                           ],
                           image: const DecorationImage(
@@ -128,37 +146,36 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 30),
-
                       Text(
                         "You earned ${widget.coinsEarned} coins!",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF114B5F),
+                          color: isDark ? Colors.white70 : const Color(0xFF114B5F),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       Text(
                         "Yay! Level Up!",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF114B5F),
+                          color: isDark ? Colors.white : const Color(0xFF114B5F),
                         ),
                       ),
-
-                      const SizedBox(height: 50),
-
+                      const SizedBox(height: 24),
+                      Text(
+                        "Great job! Keep learning and unlock more signs.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       SizedBox(
                         width: 230,
                         height: 55,
@@ -172,8 +189,7 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
                                 : const Color(0xFF114B5F),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                             elevation: 8,
                           ),
@@ -197,9 +213,7 @@ class _LevelCompleteScreenState extends State<LevelCompleteScreen>
                 left: 10,
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  color: isDark
-                      ? Colors.white
-                      : Colors.black,
+                  color: isDark ? Colors.white : Colors.black,
                   onPressed: () {
                     Navigator.pop(context);
                   },
@@ -226,7 +240,6 @@ class FloatingConfetti extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final random = math.Random(index);
-
     final startX = random.nextDouble();
 
     final colors = [
@@ -243,18 +256,12 @@ class FloatingConfetti extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
-        final progress =
-            (controller.value + index * 0.04) % 1.0;
-
-        final screenWidth =
-            MediaQuery.of(context).size.width;
-
-        final screenHeight =
-            MediaQuery.of(context).size.height;
+        final progress = (controller.value + index * 0.04) % 1.0;
+        final screenWidth = MediaQuery.of(context).size.width;
+        final screenHeight = MediaQuery.of(context).size.height;
 
         return Positioned(
-          left: startX * screenWidth +
-              math.sin(progress * math.pi * 2) * 30,
+          left: startX * screenWidth + math.sin(progress * math.pi * 2) * 30,
           top: progress * screenHeight,
           child: Transform.rotate(
             angle: progress * math.pi * 4,
@@ -263,8 +270,7 @@ class FloatingConfetti extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius:
-                    BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ),
