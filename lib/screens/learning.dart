@@ -105,87 +105,116 @@ class _LearningState extends State<Learning> {
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: const Color(0xFF2C3E50),
-              displayColor: const Color(0xFF2C3E50),
+              bodyColor: const Color(0xFF1E3A5F),
+              displayColor: const Color(0xFF1E3A5F),
             ),
       ),
       child: Scaffold(
-        // ✅ مهم جدًا: إزالة AppBar اللي كان عامل فراغ فوق
-        appBar: AppBar(
-          toolbarHeight: 0,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-
-        extendBodyBehindAppBar: true, // يخلي الخلفية تحت الـ status bar
-
-        body: Stack(
-          children: [
-            // ✅ الخلفية full screen
-            Positioned.fill(
-              child: GradientBackground(
-                child: const SizedBox.expand(),
-              ),
-            ),
-
-            SafeArea(
-              child: levels.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No Levels Found",
-                        style: TextStyle(fontSize: 20),
+        extendBodyBehindAppBar: true, 
+        // 🛠️ تم احتواء الشاشة كاملة داخل ويدجت الخلفية الثابتة الخاصة بكِ
+        body: GradientBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // شريط علوي يحتوي على السهم والعنوان ليطابق الصورة
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E3A5F), size: 26),
+                        onPressed: () => Navigator.maybePop(context),
                       ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      children: [
-                        const SizedBox(height: 20),
-
-                        const Text(
+                      const Expanded(
+                        child: Text(
                           "COMMUNISIGN",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 26,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
+                            color: Color(0xFF1E3A5F),
+                            letterSpacing: 1.2,
                           ),
                         ),
+                      ),
+                      const SizedBox(width: 48), // لموازنة السهم والحفاظ على السنترة
+                    ],
+                  ),
+                ),
 
-                        const SizedBox(height: 30),
-
-                        ...levels.map((level) {
-                          final int levelId = level["levelId"] ?? 0;
-                          final bool locked = isLocked(levelId);
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: LevelCard(
-                              levelName: level["name"] ?? "Level",
-                              coins: level["requiredCoins"] ?? 0,
-                              isLocked: locked,
-                              gradientColors: const [
-                                Color(0xFF80CBC4),
-                                Color(0xFF4DB6AC),
-                              ],
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => LevelScreen(
-                                      levelId: levelId,
+                // قائمة المحتوى القابل للتمرير
+                Expanded(
+                  child: levels.isEmpty
+                      ? const Center(
+                          child: Text(
+                            "No Levels Found",
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          children: [
+                            
+                            // 📍 هنا الصورة التي تظهر فوق الكروت
+                            Center(
+                              child: Image.asset(
+                                'images/download (7).png', 
+                                height: 260, 
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    height: 220,
+                                    margin: const EdgeInsets.symmetric(vertical: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black12,
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
-                                  ),
-                                ).then((_) => loadData());
-                              },
+                                    child: const Center(
+                                      child: Text(
+                                        "ضع ملف الصورة هنا في الكود\n(images/download (7).png)",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          );
-                        }),
+                            
+                            const SizedBox(height: 20), // مسافة بين الصورة وأول كارت
 
-                        const SizedBox(height: 30),
-                      ],
-                    ),
+                            // عرض كروت المستويات مجلوبة من الـ API
+                            ...levels.map((level) {
+                              final int levelId = level["levelId"] ?? 0;
+                              final bool locked = isLocked(levelId);
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: LevelCard(
+                                  levelName: level["name"] ?? "Level",
+                                  coins: level["requiredCoins"] ?? 0,
+                                  isLocked: locked,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => LevelScreen(
+                                          levelId: levelId,
+                                        ),
+                                      ),
+                                    ).then((_) => loadData());
+                                  },
+                                ),
+                              );
+                            }),
+
+                            const SizedBox(height: 30),
+                          ],
+                        ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -200,7 +229,6 @@ class LevelCard extends StatelessWidget {
   final String levelName;
   final int coins;
   final bool isLocked;
-  final List<Color> gradientColors;
   final VoidCallback onTap;
 
   const LevelCard({
@@ -208,7 +236,6 @@ class LevelCard extends StatelessWidget {
     required this.levelName,
     required this.coins,
     required this.isLocked,
-    required this.gradientColors,
     required this.onTap,
   });
 
@@ -217,17 +244,24 @@ class LevelCard extends StatelessWidget {
     return GestureDetector(
       onTap: isLocked ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: isLocked ? [Colors.grey, Colors.grey] : gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isLocked
+                ? [Colors.grey.shade400, Colors.grey.shade600]
+                : const [
+                    Color(0xFF8CE3D2), 
+                    Color(0xFF43656F), 
+                  ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(24), 
+          boxShadow: [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 6,
-              offset: Offset(0, 3),
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -238,21 +272,28 @@ class LevelCard extends StatelessWidget {
               levelName,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 32, 
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Row(
+            
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (isLocked)
-                  const Icon(Icons.lock, color: Colors.white)
+                  const Icon(Icons.lock, color: Colors.white, size: 36)
                 else ...[
-                  const Icon(Icons.monetization_on, color: Colors.yellow),
-                  const SizedBox(width: 5),
+                  const Icon(
+                    Icons.monetization_on, 
+                    color: Color(0xFFFFD700), 
+                    size: 38,
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     "$coins",
                     style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
