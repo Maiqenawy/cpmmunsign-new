@@ -25,6 +25,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("AvatarScreen initState");
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setOnConsoleMessage((message) {
