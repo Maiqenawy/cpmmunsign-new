@@ -65,6 +65,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Future<void> startAnimation() async {
+    debugPrint("START ANIMATION");
+
     debugPrint("START ANIMATION — isJsReady=$isJsReady signs=${widget.signs.length}");
     if (isAnimating || widget.signs.isEmpty || !isJsReady) return;
     isAnimating = true;
@@ -78,6 +80,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
             final left = _format(flat.sublist(0, 63));
             final right = _format(flat.sublist(63, 126));
             await controller.runJavaScript('''
+             console.log("ANIMATE FRAME TEST");
               if (window.animateFrame) {
                 window.animateFrame(${jsonEncode({
                   "leftHand": left,
