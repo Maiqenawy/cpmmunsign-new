@@ -47,6 +47,10 @@ class _LevelScreenState extends State<LevelScreen> {
       debugPrint("WORD = ${sign.word}");
       //debugPrint("FRAMES = ${sign.frames}");
       debugPrint("LANDMARKS = ${sign.landmarks.length}");
+      if (sign.landmarks.isNotEmpty) {
+  debugPrint(
+    "FIRST FRAME LENGTH = ${sign.landmarks.first.length}",
+  );
 
       setState(() {
         selectedSigns = [sign];
