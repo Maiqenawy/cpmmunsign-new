@@ -111,7 +111,12 @@ window.setIdleMode = function() {
     console.log("Avatar is in IDLE mode");
 };
 window.animateFrame = function(frame) {
-    if (!skeleton || !window.MODEL_LOADED) return;
+       console.log("animateFrame called");
+
+    if (!skeleton || !window.MODEL_LOADED) {
+        console.log("NO SKELETON");
+        return;
+    }
 
     const left = frame.leftHand;
     const right = frame.rightHand;
