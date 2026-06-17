@@ -55,6 +55,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
     if (oldWidget.signs != widget.signs && widget.signs.isNotEmpty) {
       currentSign = 0;
       currentFrame = 0;
+      debugPrint(
+  "AvatarScreen received ${widget.signs.length} signs",
+);
       startAnimation();
     }
   }
