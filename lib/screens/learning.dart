@@ -85,18 +85,26 @@ class _LearningState extends State<Learning> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. معرفة هل التطبيق في الـ Dark Mode حالياً أم لا
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // 2. تحديد لون الخطوط بناءً على الثيم
+    final dynamicTextColor = isDark ? Colors.white : const Color(0xFF1E3A5F);
+
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (errorMessage.isNotEmpty) {
       return Scaffold(
+        backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
         body: Center(
           child: Text(
             errorMessage,
-            style: const TextStyle(fontSize: 18),
+            style: TextStyle(fontSize: 18, color: dynamicTextColor),
           ),
         ),
       );
@@ -104,115 +112,142 @@ class _LearningState extends State<Learning> {
 
     return Theme(
       data: Theme.of(context).copyWith(
+        // إجبار الأيقونات والنصوص تتبع الثيم الحالي
+        iconTheme: IconThemeData(color: dynamicTextColor),
         textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: const Color(0xFF1E3A5F),
-              displayColor: const Color(0xFF1E3A5F),
+              bodyColor: dynamicTextColor,
+              displayColor: dynamicTextColor,
             ),
       ),
       child: Scaffold(
+        // 3. تغيير لون خلفية الـ Scaffold نفسه ليدعم الدارك مود بالكامل
+        backgroundColor: isDark ? const Color(0xFF0F1A24) : Colors.transparent,
         extendBodyBehindAppBar: true, 
-        // 🛠️ تم احتواء الشاشة كاملة داخل ويدجت الخلفية الثابتة الخاصة بكِ
+        // إذا كان دارك مود هنشيل الـ Gradient ونحط خلفية داكنة مريحة للعين، وفي اللايت مود يفضل الـ Gradient القديم
         body: GradientBackground(
           child: SafeArea(
-            child: Column(
-              children: [
-                // شريط علوي يحتوي على السهم والعنوان ليطابق الصورة
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E3A5F), size: 26),
-                        onPressed: () => Navigator.maybePop(context),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          "COMMUNISIGN",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E3A5F),
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 48), // لموازنة السهم والحفاظ على السنترة
-                    ],
-                  ),
-                ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenHeight = constraints.maxHeight;
+                final screenWidth = constraints.maxWidth;
 
-                // قائمة المحتوى القابل للتمرير
-                Expanded(
-                  child: levels.isEmpty
-                      ? const Center(
-                          child: Text(
-                            "No Levels Found",
-                            style: TextStyle(fontSize: 20),
+                final imageAssetHeight = (screenHeight * 0.32).clamp(160.0, 260.0);
+
+                return Column(
+                  children: [
+                    // شريط علوي متجاوب يحتوي على السهم والعنوان
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04, 
+                        vertical: screenHeight * 0.015,
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios_new, 
+                              color: dynamicTextColor,
+                              size: (screenHeight * 0.032).clamp(22.0, 28.0),
+                            ),
+                            onPressed: () => Navigator.maybePop(context),
                           ),
-                        )
-                      : ListView(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          children: [
-                            
-                            // 📍 هنا الصورة التي تظهر فوق الكروت
-                            Center(
-                              child: Image.asset(
-                                'images/download (7).png', 
-                                height: 260, 
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: 220,
-                                    margin: const EdgeInsets.symmetric(vertical: 20),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black12,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        "ضع ملف الصورة هنا في الكود\n(images/download (7).png)",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  );
-                                },
+                          Expanded(
+                            child: Text(
+                              "COMMUNISIGN",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: (screenHeight * 0.035).clamp(20.0, 26.0),
+                                fontWeight: FontWeight.bold,
+                                color: dynamicTextColor,
+                                letterSpacing: 1.2,
                               ),
                             ),
-                            
-                            const SizedBox(height: 20), // مسافة بين الصورة وأول كارت
+                          ),
+                          SizedBox(width: (screenHeight * 0.055).clamp(40.0, 52.0)), 
+                        ],
+                      ),
+                    ),
 
-                            // عرض كروت المستويات مجلوبة من الـ API
-                            ...levels.map((level) {
-                              final int levelId = level["levelId"] ?? 0;
-                              final bool locked = isLocked(levelId);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 20),
-                                child: LevelCard(
-                                  levelName: level["name"] ?? "Level",
-                                  coins: level["requiredCoins"] ?? 0,
-                                  isLocked: locked,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => LevelScreen(
-                                          levelId: levelId,
+                    // قائمة المحتوى القابل للتمرير المتجاوبة
+                    Expanded(
+                      child: levels.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No Levels Found",
+                                style: TextStyle(fontSize: 20, color: dynamicTextColor),
+                              ),
+                            )
+                          : ListView(
+                              physics: const BouncingScrollPhysics(),
+                              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                              children: [
+                                
+                                // 📍 الصورة العلوية
+                                Center(
+                                  child: Image.asset(
+                                    'images/download (7).png', 
+                                    height: imageAssetHeight, 
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: imageAssetHeight * 0.85,
+                                        margin: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? Colors.white10 : Colors.black12,
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
-                                      ),
-                                    ).then((_) => loadData());
-                                  },
+                                        child: Center(
+                                          child: Text(
+                                            "ضع ملف الصورة هنا في الكود\n(images/download (7).png)",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: isDark ? Colors.white60 : Colors.grey[600], 
+                                              fontWeight: FontWeight.bold
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
-                              );
-                            }),
+                                
+                                SizedBox(height: screenHeight * 0.025), 
 
-                            const SizedBox(height: 30),
-                          ],
-                        ),
-                ),
-              ],
+                                // عرض كروت المستويات
+                                ...levels.map((level) {
+                                  final int levelId = level["levelId"] ?? 0;
+                                  final bool locked = isLocked(levelId);
+
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: screenHeight * 0.025),
+                                    child: LevelCard(
+                                      levelName: level["name"] ?? "Level",
+                                      coins: level["requiredCoins"] ?? 0,
+                                      isLocked: locked,
+                                      screenHeight: screenHeight,
+                                      screenWidth: screenWidth,
+                                      isDark: isDark, // تمرير الـ Dark mode هنا للكارد
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => LevelScreen(
+                                              levelId: levelId,
+                                            ),
+                                          ),
+                                        ).then((_) => loadData());
+                                      },
+                                    ),
+                                  );
+                                }),
+
+                                SizedBox(height: screenHeight * 0.04),
+                              ],
+                            ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -229,6 +264,9 @@ class LevelCard extends StatelessWidget {
   final String levelName;
   final int coins;
   final bool isLocked;
+  final double screenHeight;
+  final double screenWidth;
+  final bool isDark; 
   final VoidCallback onTap;
 
   const LevelCard({
@@ -236,6 +274,9 @@ class LevelCard extends StatelessWidget {
     required this.levelName,
     required this.coins,
     required this.isLocked,
+    required this.screenHeight,
+    required this.screenWidth,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -244,22 +285,29 @@ class LevelCard extends StatelessWidget {
     return GestureDetector(
       onTap: isLocked ? null : onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.06, 
+          vertical: screenHeight * 0.028,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            // تعديل ألوان كروت الـ Unlocked والـ Locked لتناسب الـ Dark Mode
             colors: isLocked
-                ? [Colors.grey.shade400, Colors.grey.shade600]
-                : const [
-                    Color(0xFF8CE3D2), 
-                    Color(0xFF43656F), 
+                ? [
+                    isDark ? Colors.grey.shade800 : Colors.grey.shade400,
+                    isDark ? Colors.grey.shade900 : Colors.grey.shade600,
+                  ]
+                : [
+                    const Color(0xFF8CE3D2), 
+                    isDark ? const Color(0xFF2C3E50) : const Color(0xFF43656F), 
                   ],
           ),
           borderRadius: BorderRadius.circular(24), 
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.12),
+              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.12),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -268,32 +316,42 @@ class LevelCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              levelName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 32, 
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                levelName,
+                style: const TextStyle(
+                  color: Colors.white, 
+                  fontSize: 24, 
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             
+            SizedBox(width: screenWidth * 0.02),
+
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isLocked)
-                  const Icon(Icons.lock, color: Colors.white, size: 36)
+                  const Icon(
+                    Icons.lock, 
+                    color: Colors.white70, 
+                    size: 30,
+                  )
                 else ...[
                   const Icon(
                     Icons.monetization_on, 
                     color: Color(0xFFFFD700), 
-                    size: 38,
+                    size: 32,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "$coins",
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

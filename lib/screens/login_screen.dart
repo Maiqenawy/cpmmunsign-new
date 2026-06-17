@@ -27,7 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool isLoading = false;
   
-  // متغيرات للتحكم في رسالة التحذير الخاصة بالـ Guest
   bool _showWarning = false;
   bool _isAgreed = false;
 
@@ -45,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // يتم استدعاؤها بعد الموافقة والضغط على Next
   Future<void> _navigateToHomeAsGuest() async {
     UserSession.isGuest = true;
 
@@ -112,13 +110,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final width = MediaQuery.of(context).size.width;
     final isTablet = width > 700;
 
+    // ألوان النصوص الرئيسية والفرعية حسب الثيم
+    final primaryTextColor = isDark ? Colors.white : const Color(0xFF2C3E50);
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+
     return Scaffold(
-      // إضافة AppBar شفاف ليحتوي على زر الرجوع والـ Guest بشكل نظيف ومطابق للصورة
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87),
           onPressed: () {
             if (_showWarning) {
               setState(() => _showWarning = false);
@@ -133,13 +134,13 @@ class _LoginScreenState extends State<LoginScreen> {
             child: TextButton(
               onPressed: () {
                 setState(() {
-                  _showWarning = true; // إظهار الكارد عند الضغط على Guest
+                  _showWarning = true;
                 });
               },
               child: const Text(
                 'Guest',
                 style: TextStyle(
-                  color: Color(0xFF34A853), // لون أخضر مطابق للصورة
+                  color: Color(0xFF34A853),
                   fontWeight: FontWeight.bold,
                   fontSize: 28,
                 ),
@@ -167,32 +168,45 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // في حال الضغط على Guest يظهر كارد التحذير، وإلا يظهر العنوان العادي
-                      if (_showWarning) _buildWarningCard() else _buildTitle(),
+                      if (_showWarning) _buildWarningCard(isDark) else _buildTitle(primaryTextColor),
 
                       const SizedBox(height: 35),
 
                       // ================= EMAIL =================
-                      const Text(
+                      Text(
                         'Email',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2C3E50),
+                          color: primaryTextColor,
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : const Color(0xFF2C3E50), 
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'Email',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          hintText: 'Enter email',
+                          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[500], fontSize: 16),
                           filled: true,
-                          fillColor: const Color(0xFFFFF5F5), // لون خلفية مائل للوردي الخفيف جداً حسب الصورة
+                          fillColor: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFFF5F5),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: isDark ? const BorderSide(color: Colors.white12, width: 1) : BorderSide.none,
                           ),
                         ),
                         validator: (value) {
@@ -204,31 +218,45 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 20),
 
                       // ================= PASSWORD =================
-                      const Text(
+                      Text(
                         'Password',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2C3E50),
+                          color: primaryTextColor,
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : const Color(0xFF2C3E50), 
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'Password',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          hintText: '******',
+                          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[500], fontSize: 16),
                           filled: true,
-                          fillColor: const Color(0xFFFFF5F5),
+                          fillColor: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFFF5F5),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: isDark ? const BorderSide(color: Colors.white12, width: 1) : BorderSide.none,
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: Colors.black54,
+                              color: isDark ? Colors.white60 : Colors.black54,
                             ),
                             onPressed: () {
                               setState(() => _obscurePassword = !_obscurePassword);
@@ -253,16 +281,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               MaterialPageRoute(builder: (_) => const ForgetPass()),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             "Forgot Password ?",
-                            style: TextStyle(color: Colors.black54, fontSize: 15),
+                            style: TextStyle(color: secondaryTextColor, fontSize: 15),
                           ),
                         ),
                       ),
 
                       const SizedBox(height: 20),
 
-                      // ================= LOGIN BUTTON (أو زر مخفي لو التحذير ظاهر عشان يطابق الصورة) =================
+                      // ================= LOGIN BUTTON =================
                       if (!_showWarning)
                         SizedBox(
                           height: 55,
@@ -287,20 +315,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 25),
 
                       // ================= URL TEXT =================
-                      const Center(
+                      Center(
                         child: Text(
                           "https://www.communisign.com",
-                          style: TextStyle(color: Colors.black38, fontSize: 15),
+                          style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 15),
                         ),
                       ),
 
                       const SizedBox(height: 15),
 
                       // ================= SIGN UP SECTION =================
-                      const Center(
+                      Center(
                         child: Text(
                           "New to Communisign?",
-                          style: TextStyle(color: Color(0xFF2C3E50), fontSize: 18, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: primaryTextColor, fontSize: 18, fontWeight: FontWeight.w500),
                         ),
                       ),
                       Center(
@@ -328,48 +356,55 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // بناء العنوان العادي (COMMUNISIGN)
-  Widget _buildTitle() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 30.0),
+  Widget _buildTitle(Color textColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 30.0),
       child: Text(
         'COMMUNISIGN',
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF2C3E50),
+          color: textColor,
           letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  // بناء كارد التحذير المطابق تماماً للصورة الثانية
-  Widget _buildWarningCard() {
+  Widget _buildWarningCard(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF5F5), // لون خلفية الكارد الوردي الخفيف
+        color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFFFF5F5),
+        border: isDark ? Border.all(color: Colors.white12) : null,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Text(
                 'Warning Message',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 24, 
+                  fontWeight: FontWeight.bold, 
+                  color: isDark ? Colors.white : Colors.black87
+                ),
               ),
-              Spacer(),
-              Icon(Icons.info, color: Color(0xFF0D47A1), size: 28), // علامة التعجب الزرقاء
+              const Spacer(),
+              Icon(Icons.info, color: isDark ? Colors.blue[300] : const Color(0xFF0D47A1), size: 28),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             '"By continuing as a guest, you will only have access to the \'Communicate\' feature. The \'Learn\' module (which tracks your progress) and the \'Emergency SOS\' feature will be disabled."',
-            style: TextStyle(fontSize: 16, height: 1.3, color: Colors.black54),
+            style: TextStyle(
+              fontSize: 16, 
+              height: 1.3, 
+              color: isDark ? Colors.white70 : Colors.black54
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -377,18 +412,22 @@ class _LoginScreenState extends State<LoginScreen> {
               Checkbox(
                 value: _isAgreed,
                 activeColor: const Color(0xFF34A853),
+                checkColor: Colors.white,
+                side: BorderSide(color: isDark ? Colors.white54 : Colors.black54),
                 onChanged: (val) {
                   setState(() {
                     _isAgreed = val ?? false;
                   });
                 },
               ),
-              const Text(
+              Text(
                 'I agree on the above',
-                style: TextStyle(fontSize: 15, color: Colors.black54),
+                style: TextStyle(
+                  fontSize: 15, 
+                  color: isDark ? Colors.white70 : Colors.black54
+                ),
               ),
               const Spacer(),
-              // زر Next للمتابعة كـ Guest (لا يعمل إلا لو تم اختيار الـ Checkbox)
               ElevatedButton(
                 onPressed: _isAgreed ? _navigateToHomeAsGuest : null,
                 style: ElevatedButton.styleFrom(

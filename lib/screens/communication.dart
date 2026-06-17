@@ -8,10 +8,8 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:cominsign_new/screens/avatar_screen.dart';
 
-
 // تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
-
 import 'package:cominsign_new/widgets/sequence_player.dart';
 
 void main() {
@@ -28,9 +26,16 @@ class CommuniSignApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Roboto',
+        brightness: Brightness.light,
         scaffoldBackgroundColor: const Color(0xFFF0FAF7),
       ),
-      home: const Communication(), // تم توجيه البداية لشاشة الـ Communication
+      darkTheme: ThemeData(
+        fontFamily: 'Roboto',
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F1A24),
+      ),
+      themeMode: ThemeMode.system, // يتبع ثيم الجهاز تلقائياً
+      home: const Communication(), 
     );
   }
 }
@@ -65,11 +70,9 @@ class _CommunicationState extends State<Communication> {
       final result = await Service.textToSigns(textController.text);
       debugPrint("SIGNS COUNT = ${result.length}");
 
-for (var s in result) {
-  debugPrint(
-    "${s.word} -> ${s.landmarks.length} frames",
-  );
-}
+      for (var s in result) {
+        debugPrint("${s.word} -> ${s.landmarks.length} frames");
+      }
       setState(() {
         signs = result;
         loading = false;
@@ -109,23 +112,33 @@ for (var s in result) {
 
     setState(() {
       predictedText = result;
-      textController.text = result; // عرض النتيجة داخل حقل النص أيضاً لتظهر للمستخدم
+      textController.text = result; 
       loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 1. معرفة حالة الـ Dark Mode وتحديد الألوان ديناميكياً
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryTextColor = isDark ? Colors.white : const Color(0xFF1A3C6E);
+    final iconColor = isDark ? const Color(0xFF4DB6AC) : const Color(0xFF1B6B55);
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFEBF8F4), // light mint top
-              Color(0xFFB2E8DC), // teal bottom
-            ],
+            colors: isDark
+                ? [
+                    const Color(0xFF14222D), // خلفية داكنة علوية
+                    const Color(0xFF0F1A24), // خلفية داكنة سفلية
+                  ]
+                : [
+                    const Color(0xFFEBF8F4), // مِنت فاتح
+                    const Color(0xFFB2E8DC), // تيل فاتح
+                  ],
           ),
         ),
         child: SafeArea(
@@ -140,27 +153,25 @@ for (var s in result) {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1B6B55), size: 20),
+                        icon: Icon(Icons.arrow_back_ios, color: iconColor, size: 20),
                         onPressed: () {
-                          // إغلاق الشاشة أو تصفير الداتا عند العودة
                           Navigator.pop(context);
                         },
                       ),
                     ),
-                    const Text(
+                    Text(
                       'COMMUNISIGN',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A3C6E),
+                        color: primaryTextColor,
                         letterSpacing: 1.5,
                       ),
                     ),
-                    // زرار صغير لتنظيف الشاشة (Clear) في الـ App Bar من فوق كشكل أنظف للواجهة
                     Align(
                       alignment: Alignment.centerRight,
                       child: IconButton(
-                        icon: const Icon(Icons.refresh, color: Color(0xFF1B6B55)),
+                        icon: Icon(Icons.refresh, color: iconColor),
                         onPressed: () {
                           setState(() {
                             textController.clear();
@@ -180,20 +191,16 @@ for (var s in result) {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: loading
-                        ? const CircularProgressIndicator(color: Color(0xFF1B6B55))
-                      : (signs.isNotEmpty
-    ? Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        clipBehavior: Clip.antiAlias,
-
-        child:AvatarScreen(
-  signs: signs,
-
-        ),
-      )
-    : _AvatarWidget()),// يعرض الأفاتار إن لم تكن هناك فيديوهات إشارة شغالّلة
+                        ? CircularProgressIndicator(color: iconColor)
+                        : (signs.isNotEmpty
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: AvatarScreen(signs: signs),
+                              )
+                            : const _AvatarWidget()),
                   ),
                 ),
               ),
@@ -203,7 +210,7 @@ for (var s in result) {
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1B6B55),
+                    backgroundColor: isDark ? const Color(0xFF00796B) : const Color(0xFF1B6B55),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -231,11 +238,11 @@ for (var s in result) {
                 margin: const EdgeInsets.only(bottom: 12, left: 12, right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: isDark ? const Color(0xFF1E2E3D) : Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(40),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     )
@@ -247,19 +254,19 @@ for (var s in result) {
                     Expanded(
                       child: TextField(
                         controller: textController,
-                        style: const TextStyle(color: Color(0xFF1A3C6E), fontSize: 16),
+                        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1A3C6E), fontSize: 16),
                         decoration: InputDecoration(
                           hintText: 'Type to translate...',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
                           border: InputBorder.none,
                         ),
-                        onSubmitted: (_) => translateText(), // يترجم فوراً عند الضغط على Enter في الكيبورد
+                        onSubmitted: (_) => translateText(), 
                       ),
                     ),
                     
                     // زرار تحويل النص إلى إشارة (Text → Signs)
                     IconButton(
-                      icon: const Icon(Icons.send, color: Color(0xFF1B6B55)),
+                      icon: Icon(Icons.send, color: iconColor),
                       onPressed: translateText,
                     ),
                     const SizedBox(width: 4),
@@ -270,8 +277,11 @@ for (var s in result) {
                       child: Container(
                         width: 38,
                         height: 38,
-                        decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt_outlined, color: Color(0xFF555555), size: 20),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF2A3B4C) : Colors.grey[100], 
+                          shape: BoxShape.circle
+                        ),
+                        child: Icon(Icons.camera_alt_outlined, color: isDark ? Colors.white70 : const Color(0xFF555555), size: 20),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -307,8 +317,7 @@ for (var s in result) {
   }
 }
 
-// ── كود الـ Custom Painters (الأفاتار) يظل ثابت كما هو تماماً ──
-// 🟢 ضيف الكود ده في آخر الملف 🟢
+// ── كود الأفاتار الثري دي ──
 class _AvatarWidget extends StatelessWidget {
   const _AvatarWidget({super.key});
 
@@ -317,13 +326,12 @@ class _AvatarWidget extends StatelessWidget {
     return Container(
       width: 300,
       height: 420,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
       ),
       clipBehavior: Clip.antiAlias,
       child: const ModelViewer(
-        src: 'assets/avatar.glb', // تأكد إن ده مسار المجسم بتاعك
+        src: 'assets/avatar.glb', 
         alt: 'CommuniSign 3D Avatar',
         autoRotate: false, 
         cameraControls: false, 

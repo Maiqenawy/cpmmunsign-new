@@ -53,7 +53,12 @@ class _HelloScreenState extends State<HelloScreen>
 
   @override
   Widget build(BuildContext context) {
+    // 1. فحص هل النظام الحالي هو الـ Dark Mode أم لا
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      // 2. تعيين لون خلفية مناسب للـ Scaffold في حالة الـ Dark Mode
+      backgroundColor: isDark ? const Color(0xFF0F1A24) : Colors.transparent,
       body: GradientBackground(
         child: Center(
           child: SlideTransition(
@@ -64,15 +69,17 @@ class _HelloScreenState extends State<HelloScreen>
                 Image.asset(
                   'images/love.png',
                   height: 32,
+                  // يمكنك إضافة colorBlendMode أو تصفية الأيقونة إذا كانت بحاجة لتفتيح في الـ Dark Mode
                 ),
                 const SizedBox(width: 10),
-                const Text(
+                Text(
                   "Made with love and AI",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     fontStyle: FontStyle.italic,
-                    color: Color(0xff2A405D),
+                    // 3. تحويل لون النص ديناميكياً ليصبح أبيض في الدارك مود
+                    color: isDark ? Colors.white : const Color(0xff2A405D),
                   ),
                 ),
               ],

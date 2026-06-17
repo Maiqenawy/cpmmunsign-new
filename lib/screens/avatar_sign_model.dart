@@ -12,19 +12,13 @@ class AvatarSign {
   factory AvatarSign.fromJson(Map<String, dynamic> json) {
     return AvatarSign(
       word: json["word"],
-   factory AvatarSign.fromJson(Map<String, dynamic> json) {
-  return AvatarSign(
-    word: json["word"],
-
-    landmarks: (json["landmarks"] as List)
-        .map<List<double>>(
-          (frame) => (frame as List)
-              .map((x) => (x as num).toDouble())
-              .toList(),
-        )
-        .toList(),
-  );
-}
+      landmarks: (json["landmarks"] as List)
+          .map<List<double>>(
+            (frame) => (frame as List)
+                .map((x) => (x as num).toDouble())
+                .toList(),
+          )
+          .toList(),
     );
   }
 }
