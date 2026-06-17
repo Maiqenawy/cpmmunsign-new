@@ -61,12 +61,15 @@ const createScene = async () => {
         if (result.skeletons.length > 0) {
             skeleton = result.skeletons[0];
 
-            console.log(skeleton.bones.map(b => b.name));
+          skeleton.bones.forEach(b => {
+    console.log("BONE_NAME:" + b.name);
+});
 
             window.isJsReady = true;
             window.MODEL_LOADED = true;
 
             console.log("MODEL_LOADED");
+              rotateBone("LeftArm", 1, 0, 0);
         }
 
     } catch (e) {
