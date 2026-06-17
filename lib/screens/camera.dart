@@ -18,6 +18,7 @@ class _SignRealtimeState extends State<SignRealtime> {
 
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
+  List predictions = [];
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -175,12 +176,17 @@ Future<void> sendSequence(
 
   if (mounted) {
 
-    setState(() {
+   setState(() {
 
-      prediction =
-          data["predicted_word"]
-          ?? "Unknown";
-    });
+  predictions = data["predictions"] ?? [];
+
+  if (predictions.isNotEmpty) {
+    prediction = predictions[0]["word"];
+  } else {
+    prediction = "Unknown";
+  }
+
+});
   }
 }
   } catch (e) {
