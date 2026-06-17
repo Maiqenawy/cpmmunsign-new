@@ -63,12 +63,16 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Future<void> startAnimation() async {
+    debugPrint("START ANIMATION");
     if (isAnimating || widget.signs.isEmpty) return;
     isAnimating = true;
 
     try {
       while (mounted && currentSign < widget.signs.length) {
         final sign = widget.signs[currentSign];
+        debugPrint(
+  "Playing sign ${sign.word} with ${sign.landmarks.length} frames",
+);
 
         while (mounted && currentFrame < sign.landmarks.length) {
           final flat = List<double>.from(sign.landmarks[currentFrame]);
