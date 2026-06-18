@@ -15,6 +15,27 @@ class AvatarScreen extends StatefulWidget {
 }
 
 class _AvatarScreenState extends State<AvatarScreen> {
+ InAppWebViewController? webViewController;
+
+  @override
+  Widget build(BuildContext context) {
+    return InAppWebView(
+      initialFile: "assets/avatar_player.html",
+      initialSettings: InAppWebViewSettings(
+        isInspectable: true,
+        allowFileAccessFromFileURLs: true, // مهم جداً لتجاوز CORS
+        allowUniversalAccessFromFileURLs: true,
+        javaScriptEnabled: true,
+      ),
+      onWebViewCreated: (controller) {
+        webViewController = controller;
+      },
+      onConsoleMessage: (controller, consoleMessage) {
+        debugPrint("JS: ${consoleMessage.message}");
+      },
+    );
+  }
+}
   late final WebViewController controller;
   int currentSign = 0;
   int currentFrame = 0;
@@ -39,6 +60,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
           }
         }
       })
+    
+    
       ..loadFlutterAsset('assets/avatar_player.html');
   }
 
