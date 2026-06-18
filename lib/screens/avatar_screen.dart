@@ -48,6 +48,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
   }
 
   Future<void> startAnimation() async {
+    debugPrint("START ANIMATION");
     if (!isJsReady || webViewController == null || isAnimating) return;
     
     isAnimating = true;
@@ -60,7 +61,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
           final flat = List<double>.from(frame);
           final left = _format(flat.sublist(0, 63));
           final right = _format(flat.sublist(63, 126));
-
+debugPrint("FRAME SENT");
           await webViewController!.evaluateJavascript(source: '''
             if (window.animateFrame) {
               window.animateFrame(${jsonEncode({"leftHand": left, "rightHand": right})});
