@@ -35,7 +35,7 @@ class CommuniSignApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F1A24),
       ),
       themeMode: ThemeMode.system, // يتبع ثيم الجهاز تلقائياً
-      home: const Communication(), 
+      home: const Communication(),
     );
   }
 }
@@ -58,6 +58,7 @@ class _CommunicationState extends State<Communication> {
   String predictedText = "";
 
   // ================= TEXT TO SIGN =================
+  // ================= TEXT TO SIGN =================
   void translateText() async {
     if (textController.text.isEmpty) return;
 
@@ -68,16 +69,32 @@ class _CommunicationState extends State<Communication> {
 
     try {
       final result = await Service.textToSigns(textController.text);
+      debugPrint("====== TEST SERVER ======");
       debugPrint("SIGNS COUNT = ${result.length}");
 
-      for (var s in result) {
-        debugPrint("${s.word} -> ${s.landmarks.length} frames");
+      if (result.isEmpty) {
+        debugPrint(
+          "🚨 السيرفر رجع لستة فاضية! الكلمة مش موجودة عنده أو الـ API فيه مشكلة",
+        );
       }
+
+      for (var s in result) {
+        debugPrint("Word: ${s.word}");
+        debugPrint("Frames count: ${s.landmarks.length}");
+        if (s.landmarks.isNotEmpty) {
+          debugPrint("First Frame Landmarks: ${s.landmarks.first}");
+        } else {
+          debugPrint("🚨 الكلمة رجعت بس من غير فريمات حركة (فاضية)!");
+        }
+      }
+      debugPrint("=========================");
+
       setState(() {
         signs = result;
         loading = false;
       });
     } catch (e) {
+      debugPrint("🚨 ERROR IN API CALL: $e");
       setState(() => loading = false);
     }
   }
@@ -112,7 +129,7 @@ class _CommunicationState extends State<Communication> {
 
     setState(() {
       predictedText = result;
-      textController.text = result; 
+      textController.text = result;
       loading = false;
     });
   }
@@ -122,7 +139,9 @@ class _CommunicationState extends State<Communication> {
     // 1. معرفة حالة الـ Dark Mode وتحديد الألوان ديناميكياً
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF1A3C6E);
-    final iconColor = isDark ? const Color(0xFF4DB6AC) : const Color(0xFF1B6B55);
+    final iconColor = isDark
+        ? const Color(0xFF4DB6AC)
+        : const Color(0xFF1B6B55);
 
     return Scaffold(
       body: Container(
@@ -146,14 +165,21 @@ class _CommunicationState extends State<Communication> {
             children: [
               // ── App Bar ──
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        icon: Icon(Icons.arrow_back_ios, color: iconColor, size: 20),
+                        icon: Icon(
+                          Icons.arrow_back_ios,
+                          color: iconColor,
+                          size: 20,
+                        ),
                         onPressed: () {
                           Navigator.pop(context);
                         },
@@ -193,27 +219,34 @@ class _CommunicationState extends State<Communication> {
                     child: loading
                         ? CircularProgressIndicator(color: iconColor)
                         : (signs.isNotEmpty
-                            ? Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: AvatarScreen(signs: signs),
-                              )
-                            : const _AvatarWidget()),
+                              ? Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: AvatarScreen(signs: signs),
+                                )
+                              : const _AvatarWidget()),
                   ),
                 ),
               ),
-
+            
               // ── زرار الـ Real-Time الإضافي فوق الـ Bottom Bar مباشرة ──
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF00796B) : const Color(0xFF1B6B55),
+                    backgroundColor: isDark
+                        ? const Color(0xFF00796B)
+                        : const Color(0xFF1B6B55),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
                   icon: const Icon(Icons.videocam),
                   onPressed: () async {
@@ -229,23 +262,31 @@ class _CommunicationState extends State<Communication> {
                       });
                     }
                   },
-                  label: const Text("Start Real-Time Tracking", style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: const Text(
+                    "Start Real-Time Tracking",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
 
               // ── Bottom Bar الذكي والمطور ──
               Container(
                 margin: const EdgeInsets.only(bottom: 12, left: 12, right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E2E3D) : Colors.white.withOpacity(0.9),
+                  color: isDark
+                      ? const Color(0xFF1E2E3D)
+                      : Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(40),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: Row(
@@ -254,16 +295,23 @@ class _CommunicationState extends State<Communication> {
                     Expanded(
                       child: TextField(
                         controller: textController,
-                        style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1A3C6E), fontSize: 16),
+                        style: TextStyle(
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF1A3C6E),
+                          fontSize: 16,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Type to translate...',
-                          hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey[500] : Colors.grey[400],
+                          ),
                           border: InputBorder.none,
                         ),
-                        onSubmitted: (_) => translateText(), 
+                        onSubmitted: (_) => translateText(),
                       ),
                     ),
-                    
+
                     // زرار تحويل النص إلى إشارة (Text → Signs)
                     IconButton(
                       icon: Icon(Icons.send, color: iconColor),
@@ -278,10 +326,18 @@ class _CommunicationState extends State<Communication> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF2A3B4C) : Colors.grey[100], 
-                          shape: BoxShape.circle
+                          color: isDark
+                              ? const Color(0xFF2A3B4C)
+                              : Colors.grey[100],
+                          shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.camera_alt_outlined, color: isDark ? Colors.white70 : const Color(0xFF555555), size: 20),
+                        child: Icon(
+                          Icons.camera_alt_outlined,
+                          color: isDark
+                              ? Colors.white70
+                              : const Color(0xFF555555),
+                          size: 20,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -295,7 +351,9 @@ class _CommunicationState extends State<Communication> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: isListening ? const Color(0xFF4CAF50) : const Color(0xFFE8344A),
+                          color: isListening
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFE8344A),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -326,16 +384,14 @@ class _AvatarWidget extends StatelessWidget {
     return Container(
       width: 300,
       height: 420,
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       clipBehavior: Clip.antiAlias,
       child: const ModelViewer(
-        src: 'assets/avatar.glb', 
+        src: 'assets/avatar.glb',
         alt: 'CommuniSign 3D Avatar',
-        autoRotate: false, 
-        cameraControls: false, 
-        disableZoom: true, 
+        autoRotate: false,
+        cameraControls: false,
+        disableZoom: true,
         shadowIntensity: 1,
         backgroundColor: Colors.transparent,
       ),
