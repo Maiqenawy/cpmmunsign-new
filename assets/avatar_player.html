@@ -51,12 +51,12 @@ const createScene = async () => {
     if (window.GLB_BASE64_DATA) {
         try {
             // ✅ تمرير متغير الـ Base64 مباشرة بدلاً من المسارات المحلية لكسر الـ CORS
-            const result = await BABYLON.SceneLoader.ImportMeshAsync(
-                "",
-                "",
-                window.GLB_BASE64_DATA, 
-                scene
-            );
+        const result = await BABYLON.SceneLoader.ImportMeshAsync(
+    "",
+    "",
+    "avatar.glb",
+    scene
+);
 
             console.log("GLB Loaded from Base64!");
 
