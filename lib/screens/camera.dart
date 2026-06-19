@@ -344,9 +344,7 @@ ElevatedButton.icon(
       }
 
       lastAddedWord = prediction;
-    });
-  }
-},
+   
 
       });
 
