@@ -1,12 +1,11 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 👈 تم إضافة الاستيراد لحفظ الجلسة
 import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/home.dart';
 import 'package:cominsign_new/screens/login_screen.dart';
 import 'package:cominsign_new/widgets/app_text_field.dart';
-
 import '../widgets/gradient_background.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -57,7 +56,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           backgroundColor: Colors.red,
         ),
       );
-
       return;
     }
 
@@ -72,10 +70,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
         address: addressController.text.trim(),
       );
 
-      UserSession.isGuest = false;
+      // 1️⃣ فتح ملف التخزين المحلي للموبايل لضمان ثبات البيانات
+      final prefs = await SharedPreferences.getInstance();
 
+      // 2️⃣ تعيين حالة المستخدم بأنه ليس زائراً وحفظها محلياً وفي الـ Memory
+      UserSession.isGuest = false;
+      await prefs.setBool('isGuest', false);
+
+      // 3️⃣ التحقق من التوكن وحفظه في الـ Memory والـ SharedPreferences لتقرأه صفحة الـ Learning
       if (response is Map && response['token'] != null) {
-        UserSession.token = response['token'];
+        String token = response['token'];
+        UserSession.token = token;
+        await prefs.setString('auth_token', token);
+      } else {
+        log("WARNING: Register succeeded but no token was returned by the API.");
       }
 
       if (!mounted) return;
@@ -88,6 +96,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       );
 
+      // الانتقال المباشر للشاشة الرئيسية بعد التأكد من حفظ الحالة
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -137,7 +146,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // ================= TABLET =================
+  // ================= TABLET LAYOUT =================
 
   Widget _buildTabletLayout(Color textColor) {
     return Padding(
@@ -158,15 +167,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 color: Colors.green,
               ),
             ),
-
             const SizedBox(height: 24),
-
             Expanded(
               child: ListView(
                 children: [
                   Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: _fieldBlock(
@@ -175,8 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: nameController,
                             hint: "Name",
                             validator: (String? v) {
-                              if (v == null ||
-                                  v.trim().isEmpty) {
+                              if (v == null || v.trim().isEmpty) {
                                 return "Required";
                               }
                               return null;
@@ -185,9 +190,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           textColor,
                         ),
                       ),
-
                       const SizedBox(width: 20),
-
                       Expanded(
                         child: _fieldBlock(
                           "Email",
@@ -206,17 +209,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
-
                   _fieldBlock(
                     "Address",
                     AppTextField(
                       controller: addressController,
                       hint: "Address",
                       validator: (String? v) {
-                        if (v == null ||
-                            v.trim().isEmpty) {
+                        if (v == null || v.trim().isEmpty) {
                           return "Required";
                         }
                         return null;
@@ -224,12 +224,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     textColor,
                   ),
-
                   const SizedBox(height: 16),
-
                   Row(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: _fieldBlock(
@@ -239,8 +236,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             showPassword,
                             () {
                               setState(() {
-                                showPassword =
-                                    !showPassword;
+                                showPassword = !showPassword;
                               });
                             },
                             textColor,
@@ -248,9 +244,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           textColor,
                         ),
                       ),
-
                       const SizedBox(width: 20),
-
                       Expanded(
                         child: _fieldBlock(
                           "Confirm",
@@ -259,8 +253,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             showConfirmPassword,
                             () {
                               setState(() {
-                                showConfirmPassword =
-                                    !showConfirmPassword;
+                                showConfirmPassword = !showConfirmPassword;
                               });
                             },
                             textColor,
@@ -271,13 +264,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 40),
-
                   _registerButton(),
-
                   const SizedBox(height: 16),
-
                   _loginLink(textColor),
                 ],
               ),
@@ -288,12 +277,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  // ================= PHONE =================
+  // ================= PHONE LAYOUT =================
 
-  Widget _buildPhoneLayout(
-    Color textColor,
-    Size size,
-  ) {
+  Widget _buildPhoneLayout(Color textColor, Size size) {
     final gap = size.height < 700 ? 12.0 : 18.0;
 
     return Form(
@@ -311,9 +297,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 color: Colors.green,
               ),
             ),
-
             SizedBox(height: gap),
-
             _fieldBlock(
               "Name",
               AppTextField(
@@ -328,9 +312,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               textColor,
             ),
-
             SizedBox(height: gap),
-
             _fieldBlock(
               "Email",
               AppTextField(
@@ -345,9 +327,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               textColor,
             ),
-
             SizedBox(height: gap),
-
             _fieldBlock(
               "Address",
               AppTextField(
@@ -362,9 +342,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               textColor,
             ),
-
             SizedBox(height: gap),
-
             _fieldBlock(
               "Password",
               _passwordField(
@@ -379,9 +357,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               textColor,
             ),
-
             SizedBox(height: gap),
-
             _fieldBlock(
               "Confirm Password",
               _passwordField(
@@ -389,8 +365,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 showConfirmPassword,
                 () {
                   setState(() {
-                    showConfirmPassword =
-                        !showConfirmPassword;
+                    showConfirmPassword = !showConfirmPassword;
                   });
                 },
                 textColor,
@@ -398,13 +373,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
               textColor,
             ),
-
             SizedBox(height: gap * 2),
-
             _registerButton(),
-
             const SizedBox(height: 16),
-
             _loginLink(textColor),
           ],
         ),
@@ -414,11 +385,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   // ================= FIELD BLOCK =================
 
-  Widget _fieldBlock(
-    String label,
-    Widget field,
-    Color textColor,
-  ) {
+  Widget _fieldBlock(String label, Widget field, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -429,9 +396,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
         const SizedBox(height: 6),
-
         field,
       ],
     );
@@ -454,19 +419,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         if ((v?.length ?? 0) < 6) {
           return "Min 6 characters";
         }
-
-        if (isConfirm &&
-            v != passwordController.text.trim()) {
+        if (isConfirm && v != passwordController.text.trim()) {
           return "Passwords don't match";
         }
-
         return null;
       },
       suffixIcon: IconButton(
         icon: Icon(
-          obscure
-              ? Icons.visibility
-              : Icons.visibility_off,
+          obscure ? Icons.visibility : Icons.visibility_off,
           color: textColor,
         ),
         onPressed: toggle,
@@ -526,9 +486,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           text: TextSpan(
             style: TextStyle(color: textColor),
             children: const [
-              TextSpan(
-                text: "Already have an account? ",
-              ),
+              TextSpan(text: "Already have an account? "),
               TextSpan(
                 text: "Login",
                 style: TextStyle(

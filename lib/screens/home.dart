@@ -79,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen>
     final iconColor = isDark ? Colors.white : Colors.blueGrey;
 
     return Scaffold(
+      // 💡 حل مشكلة الـ Spacing عند فتح كيبورد أو تغير أبعاد الشاشة فجأة
+      resizeToAvoidBottomInset: false, 
       body: GradientBackground(
         child: SafeArea(
           child: Column(
@@ -91,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     const Spacer(),
                     Text(
-                      AppLang.t('COMMUNSIGN'),
+                      AppLang.t('COMMUNSIGN') ?? 'COMMUNSIGN',
                       style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w900,
@@ -136,17 +138,18 @@ class _HomeScreenState extends State<HomeScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            AppLang.t('welcome'),
+                            AppLang.t('welcome') ?? 'Welcome',
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Colors.white,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Image.asset(
                             'images/download (2).png',
                             height: welcomeHeight * 0.25,
+                            errorBuilder: (context, error, stackTrace) => const SizedBox(),
                           ),
                         ],
                       ),
@@ -166,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Image.asset(
                           'images/download (1).png',
                           height: welcomeHeight * 1.3,
+                          errorBuilder: (context, error, stackTrace) => const SizedBox(),
                         ),
                       ),
                     ),
@@ -187,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       MenuButton(
                         imagePath: 'images/download (3).png',
-                        text: AppLang.t('chat with us'),
+                        text: AppLang.t('chat with us') ?? 'Chat with us',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF2AA88F), Color(0xFF114238)],
                         ),
@@ -205,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                       MenuButton(
                         imagePath: 'images/download (4).png',
-                        text: AppLang.t('learning'),
+                        text: AppLang.t('learning') ?? 'Learning',
                         gradient: const LinearGradient(
                           colors: [Color(0xFF687B95), Color(0xFFAFD0FB)],
                         ),
@@ -227,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                       MenuButton(
                         imagePath: 'images/download (5).png',
-                        text: AppLang.t('communication'),
+                        text: AppLang.t('communication') ?? 'Communication',
                         gradient: const LinearGradient(
                           colors: [Color(0xFFC2EAE2), Color(0xFF6E8480)],
                         ),
@@ -236,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                             builder: (_) => const Communication(),
+                              builder: (_) => const Communication(),
                             ),
                           );
                         },
@@ -245,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                       MenuButton(
                         imagePath: 'images/download (6).png',
-                        text: AppLang.t('emergency'),
+                        text: AppLang.t('emergency') ?? 'Emergency',
                         gradient: const LinearGradient(
                           colors: [Color(0xFFFF0000), Color(0xFF990000)],
                         ),
@@ -306,7 +310,12 @@ class MenuButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Image.asset(imagePath, width: 36, height: 36),
+            Image.asset(
+              imagePath, 
+              width: 36, 
+              height: 36,
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
+            ),
             const SizedBox(width: 22),
             Expanded(
               child: Text(
@@ -326,7 +335,7 @@ class MenuButton extends StatelessWidget {
   }
 }
 
-// ================= TOP TOAST =================
+// ================= TOP TOAST (تم إصلاح تسريب الفوكس والـ Rebuild) =================
 class TopLoginToast {
   static OverlayEntry? _entry;
   static Timer? _timer;
@@ -338,13 +347,14 @@ class TopLoginToast {
   }) {
     _timer?.cancel();
     _entry?.remove();
+    _entry = null;
 
     final overlay = Overlay.of(context);
+    // جلب الـ padding الخارجي مسبقاً لمنع استدعاء MediaQuery عشوائي جوه الـ Builder
+    final topPadding = MediaQuery.paddingOf(context).top; 
 
     _entry = OverlayEntry(
       builder: (ctx) {
-        final topPadding = MediaQuery.of(ctx).padding.top;
-
         return Positioned(
           top: topPadding + 10,
           left: 10,
@@ -356,6 +366,9 @@ class TopLoginToast {
               decoration: BoxDecoration(
                 color: Colors.redAccent,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3))
+                ]
               ),
               child: Row(
                 children: [
@@ -364,14 +377,19 @@ class TopLoginToast {
                   Expanded(
                     child: Text(
                       message,
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                   ),
                   TextButton(
-                    onPressed: onLogin,
+                    onPressed: () {
+                      _entry?.remove();
+                      _entry = null;
+                      _timer?.cancel();
+                      onLogin();
+                    },
                     child: const Text(
                       "Login",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -385,8 +403,10 @@ class TopLoginToast {
     overlay.insert(_entry!);
 
     _timer = Timer(const Duration(seconds: 4), () {
-      _entry?.remove();
-      _entry = null;
+      if (_entry != null) {
+        _entry?.remove();
+        _entry = null;
+      }
     });
   }
 }
