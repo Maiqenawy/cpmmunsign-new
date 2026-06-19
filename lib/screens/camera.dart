@@ -21,6 +21,7 @@ class _SignRealtimeState extends State<SignRealtime> {
   String prediction = "Scanning...";
   List predictions = [];
   String sentence = "";
+  String lastAddedWord = "";
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -330,17 +331,22 @@ ElevatedButton.icon(
   icon: const Icon(Icons.add),
   label: const Text("Add Word"),
   onPressed: () {
+  if (prediction != "Unknown" &&
+      prediction != "Scanning..." &&
+      prediction != lastAddedWord) {
 
-    if (prediction != "Unknown" &&
-        prediction != "Scanning...") {
+    setState(() {
 
-      setState(() {
+      if (sentence.isEmpty) {
+        sentence = prediction;
+      } else {
+        sentence += " $prediction";
+      }
 
-        if (sentence.isEmpty) {
-          sentence = prediction;
-        } else {
-          sentence += " $prediction";
-        }
+      lastAddedWord = prediction;
+    });
+  }
+},
 
       });
 
@@ -361,11 +367,12 @@ ElevatedButton.icon(
         builder: (_) => SentenceScreen(
           sentence: sentence,
 
-          onClear: () {
-            setState(() {
-              sentence = "";
-            });
-          },
+         onClear: () {
+  setState(() {
+    sentence = "";
+    lastAddedWord = "";
+  });
+},
         ),
       ),
     );
