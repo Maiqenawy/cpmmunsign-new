@@ -18,6 +18,7 @@ class _SignRealtimeState extends State<SignRealtime> {
 
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
+  List predictions = [];
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -33,73 +34,46 @@ class _SignRealtimeState extends State<SignRealtime> {
     if (_initialized) return;
     _initialized = true;
 
-    // 🔐 Permission
+    // 🔐 إذن الكاميرا للهواتف الذكية
     if (!kIsWeb) {
       await Permission.camera.request();
     }
 
-    // 🌐 WebView setup
+    // 🌐 إعداد الـ WebView والـ JavaScript Channel
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
       ..addJavaScriptChannel(
         "SignChannel",
         onMessageReceived: (JavaScriptMessage message) async {
-          debugPrint("MESSAGE RECEIVED");
-          debugPrint(
-    "MESSAGE FROM JS = ${message.message}"
-  );
           if (isProcessing) return;
 
           try {
-            final List data = jsonDecode(message.message);
-            final frame =
-                data.map((e) => (e as num).toDouble()).toList();
-          
-debugPrint(
-  "FRAME SIZE = ${frame.length}"
-);
+            final dynamic decoded = jsonDecode(message.message);
+            if (decoded is! List) return;
 
-if (frame.length == 246) {
+            // تحويل آمن لمنع الكراش في حال وجود قيم null
+            final List<double> frame = decoded
+                .map((e) => e != null ? (e as num).toDouble() : 0.0)
+                .toList();
 
-  debugPrint(
-    "FRAME ACCEPTED"
-    
-  );
-final nonZero =
-    frame.where((e) => e != 0).length;
+            if (frame.length == 246) {
+              sequence.add(frame);
+              
+              if (sequence.length > 30) {
+                sequence.removeAt(0);
+              }
 
-debugPrint(
-  "NON ZERO VALUES = $nonZero"
-);
-  sequence.add(frame);
-  debugPrint(
-  "FRAME ADDED AT ${DateTime.now()}"
-);
-debugPrint(
-  "SEQUENCE SIZE = ${sequence.length}"
-);
-  if (sequence.length > 30) {
-    sequence.removeAt(0);
-  }
+              if (sequence.length == 30 && !isProcessing) {
+                isProcessing = true;
 
-  if (sequence.length == 30) {
+                // أخذ نسخة منفصلة تماماً من البيانات لمنع الـ Race Condition
+                final framesToSend = List<List<double>>.from(sequence);
+                sequence.clear();
 
-    debugPrint(
-      "30 FRAMES READY"
-    );
-     debugPrint("CALLING API...");
-
-    isProcessing = true;
-
-    final framesToSend =
-        List<List<double>>.from(sequence);
-
-    sequence.clear();
-
-    await sendSequence(framesToSend);
-  }
-}
+                await sendSequence(framesToSend);
+              }
+            }
           } catch (e) {
             debugPrint("Data Error: $e");
           }
@@ -108,11 +82,9 @@ debugPrint(
       ..loadRequest(Uri.parse(
           "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
 
-    // 🤖 Android specific
-    if (!kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android) {
+    // 🤖 إعدادات الأندرويد لطلب إذن الكاميرا داخل الويب بشكل تلقائي
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       final platform = _webViewController!.platform;
-
       if (platform is AndroidWebViewController) {
         await platform.setMediaPlaybackRequiresUserGesture(false);
         await platform.setOnPlatformPermissionRequest(
@@ -125,7 +97,7 @@ debugPrint(
       setState(() {});
     }
 
-    // ⏳ Splash delay
+    // ⏳ إخفاء شاشة الـ Splash بعد ثانيتين
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -134,66 +106,41 @@ debugPrint(
       }
     });
   }
-Future<void> sendSequence(
-  List<List<double>> frames,
-) async {
 
-  try {
+  // دالة إرسال الإطارات الـ 30 إلى الـ API
+  Future<void> sendSequence(List<List<double>> frames) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "https://sign-language-api-production-2148.up.railway.app/predict",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"sequence": frames}),
+          )
+          .timeout(const Duration(seconds: 15));
 
-    debugPrint(
-      "SENDING ${frames.length} FRAMES"
-    );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-    final response = await http
-        .post(
-          Uri.parse(
-            "https://sign-language-api-production-2148.up.railway.app/predict",
-          ),
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: jsonEncode({
-            "sequence": frames,
-          }),
-        )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+        if (mounted) {
+          setState(() {
+            predictions = data["predictions"] ?? [];
 
-    debugPrint(
-      "STATUS = ${response.statusCode}"
-    );
-
-    debugPrint(
-      "BODY = ${response.body}"
-    );
-
-    if (response.statusCode == 200) {
-
-  final data =
-      jsonDecode(response.body);
-
-  if (mounted) {
-
-    setState(() {
-
-      prediction =
-          data["predicted_word"]
-          ?? "Unknown";
-    });
+            if (predictions.isNotEmpty) {
+              prediction = predictions[0]["word"] ?? "Unknown";
+            } else {
+              prediction = "Unknown";
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("API ERROR = $e");
+    } finally {
+      isProcessing = false;
+    }
   }
-}
-  } catch (e) {
-
-    debugPrint(
-      "API ERROR = $e"
-    );
-
-  } finally {
-
-    isProcessing = false;
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -205,8 +152,7 @@ Future<void> sendSequence(
       ),
       body: Stack(
         children: [
-
-          // 🌐 WebView (stable)
+          // 🌐 شاشة الويب التي تعرض الكاميرا والـ MediaPipe
           Positioned.fill(
             child: (_webViewController != null)
                 ? WebViewWidget(
@@ -216,7 +162,7 @@ Future<void> sendSequence(
                 : const Center(child: CircularProgressIndicator()),
           ),
 
-          // 🔥 Splash overlay (does NOT destroy WebView)
+          // 🔥 شاشة الـ Splash المؤقتة (تختفي تلقائياً)
           if (_showSplash)
             Positioned.fill(
               child: Container(
@@ -249,7 +195,7 @@ Future<void> sendSequence(
               ),
             ),
 
-          // 📊 Prediction UI
+          // 📊 واجهة عرض الكلمة المكتشفة والاقتراحات
           Positioned(
             bottom: 40,
             left: 20,
@@ -260,14 +206,59 @@ Future<void> sendSequence(
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                prediction,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Current Word",
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    prediction,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (predictions.isNotEmpty)
+                    Column(
+                      children: [
+                        const Text(
+                          "Suggestions",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...predictions.map((item) {
+                          final String word = item["word"] ?? "Unknown";
+                          final String confidence = item["confidence"]?.toString() ?? "0";
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    prediction = word;
+                                  });
+                                },
+                                child: Text("$word ($confidence%)"),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                ],
               ),
             ),
           ),
