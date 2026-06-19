@@ -83,7 +83,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
           final flat = List<double>.from(sign.landmarks[currentFrame]);
 
           // التأكد من إن الفريم جواه الـ 126 نقطة بتوع الإيدين كاملين
-          if (flat.length >= 126) {
+      if (flat.length >= 258) {
             final left = _format(flat.sublist(132, 195));
 final right = _format(flat.sublist(195, 258));
 
