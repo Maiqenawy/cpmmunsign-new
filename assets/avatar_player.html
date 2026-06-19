@@ -19,7 +19,7 @@ html, body, #renderCanvas {
 <script>
     console.log("HTML STARTED");
 
-// 💡 هذا السطر سيتم استبداله تلقائياً من الفلاتر ببيانات الموديل كاملة
+// 💡 هذا السطر سيتم استبداله تلقائياً من الفلاتر ببيانات الموديل كاملة كـ Base64
 window.GLB_BASE64_DATA = null; 
 
 const canvas = document.getElementById("renderCanvas");
@@ -47,10 +47,10 @@ const createScene = async () => {
         scene
     );
 
-    // ننتظر حتى تصل بيانات الـ Base64 المحقونة من فلاتر
+    // ✅ تم إعادة التحقق من وجود الـ Base64 المحقون
     if (window.GLB_BASE64_DATA) {
         try {
-            // تحميل الموديل مباشرة من الـ Base64 String دون الحاجة لملفات ولا CORS Policy!
+            // ✅ تمرير متغير الـ Base64 مباشرة بدلاً من المسارات المحلية لكسر الـ CORS
             const result = await BABYLON.SceneLoader.ImportMeshAsync(
                 "",
                 "",

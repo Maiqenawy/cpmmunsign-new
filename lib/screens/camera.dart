@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'sentence_screen.dart';
 
 class SignRealtime extends StatefulWidget {
   const SignRealtime({super.key});
@@ -19,6 +20,8 @@ class _SignRealtimeState extends State<SignRealtime> {
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
   List predictions = [];
+  String sentence = "";
+  String lastAddedWord = "";
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -107,7 +110,7 @@ class _SignRealtimeState extends State<SignRealtime> {
     });
   }
 
-  // دالة إرسال الإطارات الـ 30 إلى الـ API
+  // ✅ تم إصلاح وهيكلة دالة إرسال الإطارات الـ 30 إلى الـ API وإغلاق الأقواس بشكل سليم
   Future<void> sendSequence(List<List<double>> frames) async {
     try {
       final response = await http
@@ -120,13 +123,15 @@ class _SignRealtimeState extends State<SignRealtime> {
           )
           .timeout(const Duration(seconds: 15));
 
+      debugPrint("STATUS = ${response.statusCode}");
+      debugPrint("BODY = ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         if (mounted) {
           setState(() {
             predictions = data["predictions"] ?? [];
-
             if (predictions.isNotEmpty) {
               prediction = predictions[0]["word"] ?? "Unknown";
             } else {
@@ -136,9 +141,14 @@ class _SignRealtimeState extends State<SignRealtime> {
         }
       }
     } catch (e) {
-      debugPrint("API ERROR = $e");
+      debugPrint("API Error: $e");
     } finally {
-      isProcessing = false;
+      // ✅ فتح القفل للسماح بإرسال السيكونس التالي بعد انتهاء المعالجة
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
     }
   }
 
@@ -226,38 +236,75 @@ class _SignRealtimeState extends State<SignRealtime> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (predictions.isNotEmpty)
-                    Column(
-                      children: [
-                        const Text(
-                          "Suggestions",
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
+                  if (predictions.isNotEmpty) ...[
+                    const Text(
+                      "Suggestions",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // تم تحويل الخريطة إلى عناصر Widgets مفرودة بشكل صحيح داخل الـ Column
+                    ...predictions.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                prediction = item["word"] ?? "Unknown";
+                              });
+                            },
+                            child: Text(
+                              "${item["word"]} (${item["confidence"]}%)",
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        ...predictions.map((item) {
-                          final String word = item["word"] ?? "Unknown";
-                          final String confidence = item["confidence"]?.toString() ?? "0";
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    prediction = word;
-                                  });
-                                },
-                                child: Text("$word ($confidence%)"),
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                      );
+                    }).toList(),
+                  ],
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Word"),
+                    onPressed: () {
+                      if (prediction != "Unknown" &&
+                          prediction != "Scanning..." &&
+                          prediction != lastAddedWord) {
+                        setState(() {
+                          if (sentence.isEmpty) {
+                            sentence = prediction;
+                          } else {
+                            sentence += " $prediction";
+                          }
+                          lastAddedWord = prediction;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.article),
+                    label: const Text("View Sentence"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SentenceScreen(
+                            sentence: sentence,
+                            onClear: () {
+                              setState(() {
+                                sentence = "";
+                                lastAddedWord = "";
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

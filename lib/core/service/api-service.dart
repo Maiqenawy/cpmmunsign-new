@@ -1,23 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // 💡 عشان نستخدم compute
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:cominsign_new/core/user_session.dart';
 import 'package:cominsign_new/screens/avatar_sign_model.dart';
-
-// ================= Background Parsing Functions =================
-// وظائف معزولة خارج الكلاس لفك تشفير البيانات الضخمة لمنع تهنيج الشاشة (UI Freeze)
-
-List<AvatarSign> _parseTextToSignsInBackground(String responseBody) {
-  final data = jsonDecode(responseBody);
-  return (data as List).map((e) => AvatarSign.fromJson(e)).toList();
-}
-
-AvatarSign _parseWordToSignInBackground(String responseBody) {
-  final data = jsonDecode(responseBody);
-  return AvatarSign.fromJson(data);
-}
 
 class Service {
   static const String baseUrl = "https://cominisign.runasp.net/api";
@@ -105,21 +91,21 @@ class Service {
 
   // ================= FORGOT PASSWORD =================
   static Future forgotPassword(String email) async {
-    var response = await http.post(
-      Uri.parse("$baseUrl/Account/forgot-password"),
-      headers: headers,
-      body: jsonEncode({"email": email}),
-    );
+  var response = await http.post(
+    Uri.parse("$baseUrl/Account/forgot-password"),
+    headers: headers,
+    body: jsonEncode({"email": email}),
+  );
 
-    print("Status Code: ${response.statusCode}");
-    print("Response Body: ${response.body}");
+  print("Status Code: ${response.statusCode}");
+  print("Response Body: ${response.body}");
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception(response.body);
-    }
+  if (response.statusCode == 200) {
+    return true;
+  } else {
+    throw Exception(response.body);
   }
+}
 
   // ================= RESET PASSWORD =================
   static Future resetPassword({
@@ -335,39 +321,39 @@ class Service {
     );
 
     if (response.statusCode == 200) {
-      // فك التشفير والمعالجة في Background Isolate
-      return await compute(_parseTextToSignsInBackground, response.body);
+      final data = jsonDecode(response.body);
+
+      // الباك بيرجع List مباشرة
+      return (data as List).map((e) => AvatarSign.fromJson(e)).toList();
     } else {
       throw Exception("Translation failed");
     }
   }
+static Future<AvatarSign> wordToSign(int wordId) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/word-to-sign"),
+    headers: headers,
+    body: jsonEncode({
+      "wordId": wordId,
+    }),
+  );
 
-  // ================= AI: WORD → SIGN (الـ 60 فريم بتوع الأفاتار) =================
+  debugPrint("========== WORD TO SIGN ==========");
+  debugPrint("WORD ID = $wordId");
+  debugPrint("STATUS = ${response.statusCode}");
+  debugPrint("BODY = ${response.body}");
+  debugPrint("==================================");
 
-  static Future<AvatarSign> wordToSign(int wordId) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/ai/word-to-sign"),
-      headers: headers,
-      body: jsonEncode({
-        "wordId": wordId,
-      }),
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return AvatarSign.fromJson(data);
+  } else {
+    throw Exception(
+      "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
     );
-
-    debugPrint("========== WORD TO SIGN ==========");
-    debugPrint("WORD ID = $wordId");
-    debugPrint("STATUS = ${response.statusCode}");
-    debugPrint("==================================");
-
-    if (response.statusCode == 200) {
-      // المعالجة الخلفية لضمان عدم حدوث مشاكل في مصفوفة مفاصل الأفاتار الضخمة
-      return await compute(_parseWordToSignInBackground, response.body);
-    } else {
-      throw Exception(
-        "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
-      );
-    }
   }
-
+}
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
@@ -407,3 +393,4 @@ class Service {
     }
   }
 }
+ 
