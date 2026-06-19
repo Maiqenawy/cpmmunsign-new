@@ -48,17 +48,16 @@ const createScene = async () => {
     );
 
     // ✅ تم إعادة التحقق من وجود الـ Base64 المحقون
-    if (window.GLB_BASE64_DATA) {
-        try {
+
             // ✅ تمرير متغير الـ Base64 مباشرة بدلاً من المسارات المحلية لكسر الـ CORS
-        const result = await BABYLON.SceneLoader.ImportMeshAsync(
+       const result = await BABYLON.SceneLoader.ImportMeshAsync(
     "",
-    "",
+    "flutter_assets/assets/",
     "avatar.glb",
     scene
 );
 
-            console.log("GLB Loaded from Base64!");
+           
 
             if (result.skeletons.length > 0) {
                 skeleton = result.skeletons[0];
@@ -116,7 +115,7 @@ window.animateFrame = function(frame) {
     rotateBone("RightArm", right[0][1]*0.8, right[0][0]*0.8, 0);
     rotateBone("RightForeArm", right[5][1]*0.7, right[5][0]*0.7, 0);
     rotateBone("RightHand", right[9][1]*0.5, right[9][0]*0.5, 0);
-};
+
         // ================= FINGERS =================
         rotateFinger("LeftHandThumb1", left[1][1]);
         rotateFinger("LeftHandThumb2", left[2][1]);
@@ -167,7 +166,7 @@ window.animateFrame = function(frame) {
         rotateFinger("RightHandPinky2", right[18][1]);
         rotateFinger("RightHandPinky3", right[19][1]);
         rotateFinger("RightHandPinky4", right[20][1]);
-    } catch (err) {
+    } };catch (err) {
         console.error("Animation Execution Error:", err);
     }
 };
