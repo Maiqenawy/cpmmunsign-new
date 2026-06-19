@@ -393,3 +393,4 @@ static Future<AvatarSign> wordToSign(int wordId) async {
     }
   }
 }
+
