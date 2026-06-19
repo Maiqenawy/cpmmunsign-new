@@ -21,7 +21,7 @@ class _SignRealtimeState extends State<SignRealtime> {
   String prediction = "Scanning...";
   List predictions = [];
   String sentence = "";
-  String lastAddedWord = "";
+ 
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -266,24 +266,30 @@ class _SignRealtimeState extends State<SignRealtime> {
                     }).toList(),
                   ],
                   const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text("Add Word"),
-                    onPressed: () {
-                      if (prediction != "Unknown" &&
-                          prediction != "Scanning..." &&
-                          prediction != lastAddedWord) {
-                        setState(() {
-                          if (sentence.isEmpty) {
-                            sentence = prediction;
-                          } else {
-                            sentence += " $prediction";
-                          }
-                          lastAddedWord = prediction;
-                        });
-                      }
-                    },
-                  ),
+              ElevatedButton.icon(
+  icon: const Icon(Icons.add),
+  label: const Text("Add Word"),
+  onPressed: () {
+    if (prediction != "Unknown" &&
+        prediction != "Scanning...") {
+
+      setState(() {
+        if (sentence.isEmpty) {
+          sentence = prediction;
+        } else {
+          sentence += " $prediction";
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("$prediction added"),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  },
+),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.article),
