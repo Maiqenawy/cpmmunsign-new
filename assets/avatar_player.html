@@ -54,13 +54,12 @@ const createScene = async () => {
 
     try {
 
-        const result = await BABYLON.SceneLoader.ImportMeshAsync(
-            "",
-            "",
-            "avatar.glb",
-            scene
-        );
-
+     const result = await BABYLON.SceneLoader.ImportMeshAsync(
+    "",
+    "file:///android_asset/flutter_assets/assets/",
+    "avatar.glb",
+    scene
+);
         console.log("GLB Loaded");
 
         if (result.skeletons.length > 0) {
