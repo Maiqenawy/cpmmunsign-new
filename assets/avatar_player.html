@@ -2,25 +2,28 @@
 <html>
 <head>
 <meta charset="utf-8">
+
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
 <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
 <style>
 html, body, #renderCanvas {
-    width:100%;
-    height:100%;
-    margin:0;
-    overflow:hidden;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
 }
 </style>
+
 </head>
+
 <body>
+
 <canvas id="renderCanvas"></canvas>
 
 <script>
-    console.log("HTML STARTED");
 
-// 💡 هذا السطر سيتم استبداله تلقائياً من الفلاتر ببيانات الموديل كاملة كـ Base64
-window.GLB_BASE64_DATA = null; 
+console.log("HTML STARTED");
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
@@ -29,6 +32,7 @@ let scene;
 let skeleton;
 
 const createScene = async () => {
+
     scene = new BABYLON.Scene(engine);
 
     const camera = new BABYLON.ArcRotateCamera(
@@ -39,6 +43,7 @@ const createScene = async () => {
         BABYLON.Vector3.Zero(),
         scene
     );
+
     camera.attachControl(canvas, true);
 
     new BABYLON.HemisphericLight(
@@ -47,129 +52,182 @@ const createScene = async () => {
         scene
     );
 
-    // ✅ تم إعادة التحقق من وجود الـ Base64 المحقون
+    try {
 
-            // ✅ تمرير متغير الـ Base64 مباشرة بدلاً من المسارات المحلية لكسر الـ CORS
-       const result = await BABYLON.SceneLoader.ImportMeshAsync(
-    "",
-    "flutter_assets/assets/",
-    "avatar.glb",
-    scene
-);
+        const result = await BABYLON.SceneLoader.ImportMeshAsync(
+            "",
+            "flutter_assets/assets/",
+            "avatar.glb",
+            scene
+        );
 
-           
+        console.log("GLB Loaded");
 
-            if (result.skeletons.length > 0) {
-                skeleton = result.skeletons[0];
-                window.isJsReady = true;
-                window.MODEL_LOADED = true;
-                console.log("MODEL_LOADED");
-            }
-        } catch (e) {
-            console.error("GLB BASE64 ERROR:", e);
+        if (result.skeletons.length > 0) {
+
+            skeleton = result.skeletons[0];
+
+            window.isJsReady = true;
+            window.MODEL_LOADED = true;
+
+            console.log("MODEL_LOADED");
+
+            skeleton.bones.forEach(b => {
+                console.log("BONE_NAME: " + b.name);
+            });
         }
-    } else {
-        console.error("No Base64 Data found!");
+
+    } catch (e) {
+
+        console.error("GLB ERROR:", e);
+
     }
 };
 
 createScene();
 
 engine.runRenderLoop(() => {
-    if (scene) scene.render();
+    if (scene) {
+        scene.render();
+    }
 });
 
 window.addEventListener("resize", () => {
     engine.resize();
 });
 
-function rotateFinger(name, value) {
+function rotateBone(name, x, y, z) {
+
     if (!skeleton) return;
+
     const bone = skeleton.bones.find(b => b.name === name);
+
     if (!bone) return;
-    bone.setRotation(new BABYLON.Vector3(0, 0, value * 2.0));
+
+    bone.setRotation(
+        new BABYLON.Vector3(x, y, z)
+    );
 }
 
-function rotateBone(name, x, y, z) {
+function rotateFinger(name, value) {
+
     if (!skeleton) return;
+
     const bone = skeleton.bones.find(b => b.name === name);
+
     if (!bone) return;
-    bone.setRotation(new BABYLON.Vector3(x, y, z));
+
+    bone.setRotation(
+        new BABYLON.Vector3(0, 0, value * 2.0)
+    );
 }
+
+window.setIdleMode = function () {
+
+    if (!skeleton) return;
+
+    skeleton.bones.forEach(bone => {
+        bone.setRotation(
+            new BABYLON.Vector3(0, 0, 0)
+        );
+    });
+
+    console.log("Avatar IDLE");
+};
 
 window.animateFrame = function(frame) {
 
-    if (!skeleton || !window.MODEL_LOADED) {
-        return;
-    }
+    try {
 
-    const left = frame.leftHand;
-    const right = frame.rightHand;
+        if (!skeleton || !window.MODEL_LOADED) {
+            return;
+        }
 
-    if (!left || !right) return;
+        const left = frame.leftHand;
+        const right = frame.rightHand;
 
-    rotateBone("LeftArm", left[0][1]*0.8, left[0][0]*0.8, 0);
-    rotateBone("LeftForeArm", left[5][1]*0.7, left[5][0]*0.7, 0);
-    rotateBone("LeftHand", left[9][1]*0.5, left[9][0]*0.5, 0);
+        if (!left || !right) {
+            return;
+        }
 
-    rotateBone("RightArm", right[0][1]*0.8, right[0][0]*0.8, 0);
-    rotateBone("RightForeArm", right[5][1]*0.7, right[5][0]*0.7, 0);
-    rotateBone("RightHand", right[9][1]*0.5, right[9][0]*0.5, 0);
+        // LEFT ARM
+        rotateBone("LeftArm", left[0][1] * 0.8, left[0][0] * 0.8, 0);
+        rotateBone("LeftForeArm", left[5][1] * 0.7, left[5][0] * 0.7, 0);
+        rotateBone("LeftHand", left[9][1] * 0.5, left[9][0] * 0.5, 0);
 
-        // ================= FINGERS =================
+        // RIGHT ARM
+        rotateBone("RightArm", right[0][1] * 0.8, right[0][0] * 0.8, 0);
+        rotateBone("RightForeArm", right[5][1] * 0.7, right[5][0] * 0.7, 0);
+        rotateBone("RightHand", right[9][1] * 0.5, right[9][0] * 0.5, 0);
+
+        // LEFT THUMB
         rotateFinger("LeftHandThumb1", left[1][1]);
         rotateFinger("LeftHandThumb2", left[2][1]);
         rotateFinger("LeftHandThumb3", left[3][1]);
         rotateFinger("LeftHandThumb4", left[4][1]);
 
+        // LEFT INDEX
         rotateFinger("LeftHandIndex1", left[5][1]);
         rotateFinger("LeftHandIndex2", left[6][1]);
         rotateFinger("LeftHandIndex3", left[7][1]);
         rotateFinger("LeftHandIndex4", left[8][1]);
 
+        // LEFT MIDDLE
         rotateFinger("LeftHandMiddle1", left[9][1]);
         rotateFinger("LeftHandMiddle2", left[10][1]);
         rotateFinger("LeftHandMiddle3", left[11][1]);
         rotateFinger("LeftHandMiddle4", left[12][1]);
 
+        // LEFT RING
         rotateFinger("LeftHandRing1", left[13][1]);
         rotateFinger("LeftHandRing2", left[14][1]);
         rotateFinger("LeftHandRing3", left[15][1]);
         rotateFinger("LeftHandRing4", left[16][1]);
 
+        // LEFT PINKY
         rotateFinger("LeftHandPinky1", left[17][1]);
         rotateFinger("LeftHandPinky2", left[18][1]);
         rotateFinger("LeftHandPinky3", left[19][1]);
         rotateFinger("LeftHandPinky4", left[20][1]);
 
+        // RIGHT THUMB
         rotateFinger("RightHandThumb1", right[1][1]);
         rotateFinger("RightHandThumb2", right[2][1]);
         rotateFinger("RightHandThumb3", right[3][1]);
         rotateFinger("RightHandThumb4", right[4][1]);
 
+        // RIGHT INDEX
         rotateFinger("RightHandIndex1", right[5][1]);
         rotateFinger("RightHandIndex2", right[6][1]);
         rotateFinger("RightHandIndex3", right[7][1]);
         rotateFinger("RightHandIndex4", right[8][1]);
 
+        // RIGHT MIDDLE
         rotateFinger("RightHandMiddle1", right[9][1]);
         rotateFinger("RightHandMiddle2", right[10][1]);
         rotateFinger("RightHandMiddle3", right[11][1]);
         rotateFinger("RightHandMiddle4", right[12][1]);
 
+        // RIGHT RING
         rotateFinger("RightHandRing1", right[13][1]);
         rotateFinger("RightHandRing2", right[14][1]);
         rotateFinger("RightHandRing3", right[15][1]);
         rotateFinger("RightHandRing4", right[16][1]);
 
+        // RIGHT PINKY
         rotateFinger("RightHandPinky1", right[17][1]);
         rotateFinger("RightHandPinky2", right[18][1]);
         rotateFinger("RightHandPinky3", right[19][1]);
         rotateFinger("RightHandPinky4", right[20][1]);
-    } };catch (err) {
-        console.error("Animation Execution Error:", err);
+
+    } catch (err) {
+
+        console.error("Animation Error:", err);
+
     }
 };
+
 </script>
+
 </body>
 </html>
