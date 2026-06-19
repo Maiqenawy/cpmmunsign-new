@@ -301,11 +301,10 @@ class _SignRealtimeState extends State<SignRealtime> {
                           builder: (_) => SentenceScreen(
                             sentence: sentence,
                             onClear: () {
-                              setState(() {
-                                sentence = "";
-                                lastAddedWord = "";
-                              });
-                            },
+  setState(() {
+    sentence = "";
+  });
+},
                           ),
                         ),
                       );
