@@ -84,8 +84,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
           // التأكد من إن الفريم جواه الـ 126 نقطة بتوع الإيدين كاملين
           if (flat.length >= 126) {
-            final left = _format(flat.sublist(0, 63));
-            final right = _format(flat.sublist(63, 126));
+            final left = _format(flat.sublist(132, 195));
+final right = _format(flat.sublist(195, 258));
 
             // تحويل البيانات لـ JSON وإرسالها للـ HTML
             final String jsonData = jsonEncode({
