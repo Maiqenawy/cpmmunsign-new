@@ -68,6 +68,8 @@ flutter:
    
     - assets/avatar.glb
     - assets/avatar_player.html
+    - assets/three.min.js
+    - assets/GLTFLoader.js
     - assets/mediapipe.html
     - assets/lang/en.json
     - assets/lang/ar.json

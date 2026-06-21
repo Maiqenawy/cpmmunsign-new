@@ -316,7 +316,7 @@ class Service {
   static Future<List<AvatarSign>> textToSigns(String text) async {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/text-to-signs"),
-      headers: headers,
+      headers: headersWithAuth(), // ✅ include Bearer token
       body: jsonEncode({"text": text}),
     );
 

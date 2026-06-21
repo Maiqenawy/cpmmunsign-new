@@ -4,7 +4,7 @@ import 'package:cominsign_new/screens/avatar_sign_model.dart';
 import 'package:cominsign_new/screens/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:model_viewer_plus/model_viewer_plus.dart';
+// model_viewer_plus removed — AvatarScreen (WebView) handles all states
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:cominsign_new/screens/avatar_screen.dart';
 
@@ -211,22 +211,55 @@ class _CommunicationState extends State<Communication> {
                 ),
               ),
 
-              // ── الأركان الحيوية (الأفاتار أو مشغل الفيديوهات والـ Loading) ──
+              // ── Avatar (always alive — plays idle / thinking / signs) ──
               Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: loading
-                        ? CircularProgressIndicator(color: iconColor)
-                        : (signs.isNotEmpty
-                              ? Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Stack(
+                    children: [
+                      // The WebView avatar — never removed from tree
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: AvatarScreen(
+                          signs: signs,
+                          isLoading: loading,
+                        ),
+                      ),
+
+                      // Semi-transparent overlay while waiting for API
+                      // Avatar keeps playing "thinking" animation underneath
+                      if (loading)
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              color: Colors.black.withOpacity(0.38),
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
                                   ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: AvatarScreen(signs: signs),
-                                )
-                              : const _AvatarWidget()),
+                                  SizedBox(height: 14),
+                                  Text(
+                                    'Translating to sign language...',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -375,26 +408,5 @@ class _CommunicationState extends State<Communication> {
   }
 }
 
-// ── كود الأفاتار الثري دي ──
-class _AvatarWidget extends StatelessWidget {
-  const _AvatarWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 300,
-      height: 420,
-      decoration: const BoxDecoration(color: Colors.transparent),
-      clipBehavior: Clip.antiAlias,
-      child: const ModelViewer(
-        src: 'assets/avatar.glb',
-        alt: 'CommuniSign 3D Avatar',
-        autoRotate: false,
-        cameraControls: false,
-        disableZoom: true,
-        shadowIntensity: 1,
-        backgroundColor: Colors.transparent,
-      ),
-    );
-  }
-}
+// _AvatarWidget removed — AvatarScreen now handles all visual states
+// (idle breathing, thinking pose while loading, and sign animation)

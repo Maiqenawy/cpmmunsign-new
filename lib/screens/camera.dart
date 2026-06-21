@@ -37,62 +37,62 @@ class _SignRealtimeState extends State<SignRealtime> {
     if (_initialized) return;
     _initialized = true;
 
-    // 🔐 إذن الكاميرا للهواتف الذكية
+    // 🔐 إذن الكاميرا للهواتف الذكية وتهيئة الـ WebView
     if (!kIsWeb) {
       await Permission.camera.request();
-    }
 
-    // 🌐 إعداد الـ WebView والـ JavaScript Channel
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..addJavaScriptChannel(
-        "SignChannel",
-        onMessageReceived: (JavaScriptMessage message) async {
-          if (isProcessing) return;
+      // 🌐 إعداد الـ WebView والـ JavaScript Channel
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000))
+        ..addJavaScriptChannel(
+          "SignChannel",
+          onMessageReceived: (JavaScriptMessage message) async {
+            if (isProcessing) return;
 
-          try {
-            final dynamic decoded = jsonDecode(message.message);
-            if (decoded is! List) return;
+            try {
+              final dynamic decoded = jsonDecode(message.message);
+              if (decoded is! List) return;
 
-            // تحويل آمن لمنع الكراش في حال وجود قيم null
-            final List<double> frame = decoded
-                .map((e) => e != null ? (e as num).toDouble() : 0.0)
-                .toList();
+              // تحويل آمن لمنع الكراش في حال وجود قيم null
+              final List<double> frame = decoded
+                  .map((e) => e != null ? (e as num).toDouble() : 0.0)
+                  .toList();
 
-            if (frame.length == 246) {
-              sequence.add(frame);
-              
-              if (sequence.length > 30) {
-                sequence.removeAt(0);
+              if (frame.length == 246) {
+                sequence.add(frame);
+                
+                if (sequence.length > 30) {
+                  sequence.removeAt(0);
+                }
+
+                if (sequence.length == 30 && !isProcessing) {
+                  isProcessing = true;
+
+                  // أخذ نسخة منفصلة تماماً من البيانات لمنع الـ Race Condition
+                  final framesToSend = List<List<double>>.from(sequence);
+                  sequence.clear();
+
+                  await sendSequence(framesToSend);
+                }
               }
-
-              if (sequence.length == 30 && !isProcessing) {
-                isProcessing = true;
-
-                // أخذ نسخة منفصلة تماماً من البيانات لمنع الـ Race Condition
-                final framesToSend = List<List<double>>.from(sequence);
-                sequence.clear();
-
-                await sendSequence(framesToSend);
-              }
+            } catch (e) {
+              debugPrint("Data Error: $e");
             }
-          } catch (e) {
-            debugPrint("Data Error: $e");
-          }
-        },
-      )
-      ..loadRequest(Uri.parse(
-          "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
+          },
+        )
+        ..loadRequest(Uri.parse(
+            "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
 
-    // 🤖 إعدادات الأندرويد لطلب إذن الكاميرا داخل الويب بشكل تلقائي
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      final platform = _webViewController!.platform;
-      if (platform is AndroidWebViewController) {
-        await platform.setMediaPlaybackRequiresUserGesture(false);
-        await platform.setOnPlatformPermissionRequest(
-          (request) => request.grant(),
-        );
+      // 🤖 إعدادات الأندرويد لطلب إذن الكاميرا داخل الويب بشكل تلقائي
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final platform = _webViewController!.platform;
+        if (platform is AndroidWebViewController) {
+          await platform.setMediaPlaybackRequiresUserGesture(false);
+          await platform.setOnPlatformPermissionRequest(
+            (request) => request.grant(),
+          );
+        }
       }
     }
 
@@ -164,12 +164,37 @@ class _SignRealtimeState extends State<SignRealtime> {
         children: [
           // 🌐 شاشة الويب التي تعرض الكاميرا والـ MediaPipe
           Positioned.fill(
-            child: (_webViewController != null)
-                ? WebViewWidget(
-                    key: const ValueKey("stable_webview"),
-                    controller: _webViewController!,
+            child: kIsWeb
+                ? Container(
+                    color: Colors.black87,
+                    alignment: Alignment.center,
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 64,
+                          color: Colors.deepPurple,
+                        ),
+                        SizedBox(height: 15),
+                        Text(
+                          "Real-Time Translation is optimized for mobile platforms.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   )
-                : const Center(child: CircularProgressIndicator()),
+                : (_webViewController != null)
+                    ? WebViewWidget(
+                        key: const ValueKey("stable_webview"),
+                        controller: _webViewController!,
+                      )
+                    : const Center(child: CircularProgressIndicator()),
           ),
 
           // 🔥 شاشة الـ Splash المؤقتة (تختفي تلقائياً)
