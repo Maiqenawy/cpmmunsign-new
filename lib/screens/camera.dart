@@ -17,8 +17,9 @@ class _SignRealtimeState extends State<SignRealtime> {
   WebViewController? _webViewController;
 
   final List<List<double>> sequence = [];
+
   String prediction = "Scanning...";
-  List predictions = [];
+  List<Map<String, dynamic>> predictions = [];
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -34,73 +35,41 @@ class _SignRealtimeState extends State<SignRealtime> {
     if (_initialized) return;
     _initialized = true;
 
-    // 🔐 Permission
     if (!kIsWeb) {
       await Permission.camera.request();
     }
 
-    // 🌐 WebView setup
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
       ..addJavaScriptChannel(
         "SignChannel",
         onMessageReceived: (JavaScriptMessage message) async {
-          debugPrint("MESSAGE RECEIVED");
-          debugPrint(
-    "MESSAGE FROM JS = ${message.message}"
-  );
           if (isProcessing) return;
 
           try {
             final List data = jsonDecode(message.message);
-            final frame =
-                data.map((e) => (e as num).toDouble()).toList();
-          
-debugPrint(
-  "FRAME SIZE = ${frame.length}"
-);
 
-if (frame.length == 246) {
+            final frame = data.map((e) => (e as num).toDouble()).toList();
 
-  debugPrint(
-    "FRAME ACCEPTED"
-    
-  );
-final nonZero =
-    frame.where((e) => e != 0).length;
+            if (frame.length != 246) return;
 
-debugPrint(
-  "NON ZERO VALUES = $nonZero"
-);
-  sequence.add(frame);
-  debugPrint(
-  "FRAME ADDED AT ${DateTime.now()}"
-);
-debugPrint(
-  "SEQUENCE SIZE = ${sequence.length}"
-);
-  if (sequence.length > 30) {
-    sequence.removeAt(0);
-  }
+            sequence.add(frame);
 
-  if (sequence.length == 30) {
+            if (sequence.length > 30) {
+              sequence.removeAt(0);
+            }
 
-    debugPrint(
-      "30 FRAMES READY"
-    );
-     debugPrint("CALLING API...");
+            if (sequence.length == 30) {
+              isProcessing = true;
 
-    isProcessing = true;
+              final framesToSend =
+                  List<List<double>>.from(sequence);
 
-    final framesToSend =
-        List<List<double>>.from(sequence);
+              sequence.clear();
 
-    sequence.clear();
-
-    await sendSequence(framesToSend);
-  }
-}
+              await sendSequence(framesToSend);
+            }
           } catch (e) {
             debugPrint("Data Error: $e");
           }
@@ -109,7 +78,6 @@ debugPrint(
       ..loadRequest(Uri.parse(
           "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
 
-    // 🤖 Android specific
     if (!kIsWeb &&
         defaultTargetPlatform == TargetPlatform.android) {
       final platform = _webViewController!.platform;
@@ -122,11 +90,8 @@ debugPrint(
       }
     }
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
 
-    // ⏳ Splash delay
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -135,71 +100,46 @@ debugPrint(
       }
     });
   }
-Future<void> sendSequence(
-  List<List<double>> frames,
-) async {
 
-  try {
+  Future<void> sendSequence(List<List<double>> frames) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "https://sign-language-api-production-2148.up.railway.app/predict",
+            ),
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: jsonEncode({
+              "sequence": frames,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
-    debugPrint(
-      "SENDING ${frames.length} FRAMES"
-    );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-    final response = await http
-        .post(
-          Uri.parse(
-            "https://sign-language-api-production-2148.up.railway.app/predict",
-          ),
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: jsonEncode({
-            "sequence": frames,
-          }),
-        )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+        if (mounted) {
+          setState(() {
+            predictions =
+                List<Map<String, dynamic>>.from(
+                    data["predictions"] ?? []);
 
-    debugPrint(
-      "STATUS = ${response.statusCode}"
-    );
-
-    debugPrint(
-      "BODY = ${response.body}"
-    );
-
-    if (response.statusCode == 200) {
-
-  final data =
-      jsonDecode(response.body);
-
-  if (mounted) {
-
-   setState(() {
-
-  predictions = data["predictions"] ?? [];
-
-  if (predictions.isNotEmpty) {
-   prediction = predictions[0]["label"];
-  } else {
-    prediction = "Unknown";
+            if (predictions.isNotEmpty) {
+              prediction = predictions[0]["label"];
+            } else {
+              prediction = "Unknown";
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("API ERROR = $e");
+    } finally {
+      isProcessing = false;
+    }
   }
-
-});
-  }
-}
-  } catch (e) {
-
-    debugPrint(
-      "API ERROR = $e"
-    );
-
-  } finally {
-
-    isProcessing = false;
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -211,8 +151,7 @@ Future<void> sendSequence(
       ),
       body: Stack(
         children: [
-
-          // 🌐 WebView (stable)
+          // 🌐 WebView
           Positioned.fill(
             child: (_webViewController != null)
                 ? WebViewWidget(
@@ -222,40 +161,18 @@ Future<void> sendSequence(
                 : const Center(child: CircularProgressIndicator()),
           ),
 
-          // 🔥 Splash overlay (does NOT destroy WebView)
+          // 🔥 Splash
           if (_showSplash)
             Positioned.fill(
               child: Container(
                 color: Colors.black,
                 child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.sign_language,
-                        color: Colors.deepPurple,
-                        size: 100,
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        "Loading AI Camera...",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 30),
-                      CircularProgressIndicator(
-                        color: Colors.deepPurple,
-                      ),
-                    ],
-                  ),
+                  child: CircularProgressIndicator(),
                 ),
               ),
             ),
 
-          // 📊 Prediction UI
+          // 📊 UI
           Positioned(
             bottom: 40,
             left: 20,
@@ -267,65 +184,56 @@ Future<void> sendSequence(
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-
-    Text(
-      "Current Word",
-      style: TextStyle(
-        color: Colors.grey,
-        fontSize: 16,
-      ),
-    ),
-
-    const SizedBox(height: 6),
-
-    Text(
-      prediction,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-
-    const SizedBox(height: 12),
-
-    if (predictions.isNotEmpty)
-      Column(
-        children: [
-          const Text(
-            "Suggestions",
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          ...predictions.map((item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      prediction = item["word"];
-                    });
-                  },
-                  child: Text(
-                    "${item["word"]} (${item["confidence"]}%)",
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Current Word",
+                    style: TextStyle(color: Colors.grey),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
-        ],
-      ),
-  ],
-)
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    prediction,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  if (predictions.isNotEmpty)
+                    Column(
+                      children: [
+                        const Text(
+                          "Suggestions",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        const SizedBox(height: 8),
+
+                        ...predictions.map((item) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    prediction = item["label"];
+                                  });
+                                },
+                                child: Text(
+                                  "${item["label"]} (${(item["confidence"] * 100).toStringAsFixed(1)}%)",
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                ],
               ),
             ),
           ),
