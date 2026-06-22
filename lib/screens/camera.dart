@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
-import 'sentence_screen.dart';
+
 
 class SignRealtime extends StatefulWidget {
   const SignRealtime({super.key});
@@ -20,8 +20,7 @@ class _SignRealtimeState extends State<SignRealtime> {
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
   List predictions = [];
-  String sentence = "";
- 
+  
 
   bool isProcessing = false;
   bool _initialized = false;
@@ -290,51 +289,8 @@ class _SignRealtimeState extends State<SignRealtime> {
                       );
                     }).toList(),
                   ],
-                  const SizedBox(height: 10),
-              ElevatedButton.icon(
-  icon: const Icon(Icons.add),
-  label: const Text("Add Word"),
-  onPressed: () {
-    if (prediction != "Unknown" &&
-        prediction != "Scanning...") {
-
-      setState(() {
-        if (sentence.isEmpty) {
-          sentence = prediction;
-        } else {
-          sentence += " $prediction";
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("$prediction added"),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
-  },
-),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.article),
-                    label: const Text("View Sentence"),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SentenceScreen(
-                            sentence: sentence,
-                            onClear: () {
-  setState(() {
-    sentence = "";
-  });
-},
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+               
+               
                 ],
               ),
             ),
