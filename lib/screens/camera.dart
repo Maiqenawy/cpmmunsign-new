@@ -115,46 +115,40 @@ class _SignRealtimeState extends State<SignRealtime> {
 
   // ✅ دالة إرسال الإطارات الـ 30 إلى الـ API
   Future<void> sendSequence(List<List<double>> frames) async {
-    try {
-      final response = await http
-          .post(
-            Uri.parse(
-              "https://sign-language-api-production-2148.up.railway.app/predict",
-            ),
-            headers: {"Content-Type": "application/json"},
-            body: jsonEncode({"sequence": frames}),
-          )
-          .timeout(const Duration(seconds: 15));
+  try {
+    final response = await http
+        .post(
+          Uri.parse("https://sign-language-api-production-2148.up.railway.app/predict"),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"sequence": frames}),
+        )
+        .timeout(const Duration(seconds: 15));
 
-      debugPrint("STATUS = ${response.statusCode}");
-      debugPrint("BODY = ${response.body}");
+    debugPrint("STATUS = ${response.statusCode}");
+    debugPrint("BODY = ${response.body}");
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-        if (mounted) {
-          setState(() {
-            predictions = data["predictions"] ?? [];
-            if (predictions.isNotEmpty) {
-              prediction = predictions[0]["word"] ?? "Unknown";
-            } else {
-              prediction = "Unknown";
-            }
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("API Error: $e");
-    }
-    finaly;
-    {
-      // ✅ فتح القفل للسماح بإرسال السيكونس التالي بعد انتهاء المعالجة
       if (mounted) {
         setState(() {
-          isProcessing = false;
+          predictions = data["predictions"] ?? [];
+          prediction = predictions.isNotEmpty
+              ? (predictions[0]["word"] ?? "Unknown")
+              : "Unknown";
         });
       }
     }
+  } catch (e) {
+    debugPrint("API Error: $e");
+  } finally {
+    if (mounted) {
+      setState(() {
+        isProcessing = false;
+      });
+    }
+  }
+
   }
 
   @override
