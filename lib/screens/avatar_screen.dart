@@ -9,8 +9,6 @@ import 'avatar_sign_model.dart';
 
 class AvatarScreen extends StatefulWidget {
   final List<AvatarSign> signs;
-
-  /// When true the avatar shows a "thinking" pose while the API responds.
   final bool isLoading;
 
   const AvatarScreen({
@@ -25,38 +23,28 @@ class AvatarScreen extends StatefulWidget {
 
 class _AvatarScreenState extends State<AvatarScreen> {
   InAppWebViewController? controller;
-  int  currentSign   = 0;
-  int  currentFrame  = 0;
-  bool isJsReady      = false;
-  bool isAnimating    = false;
-  bool _pendingAnim   = false;
+  bool isJsReady   = false;
+  bool isAnimating = false;
 
-  // ── In-process GLB HTTP server (shared across all widget instances) ──────────
-  //
-  // Why: Android WebView's Fetch API cannot load file:// URLs on Chromium-based
-  // WebViews (including Huawei), even with allowUniversalAccessFromFileURLs.
-  // Serving the GLB over http://127.0.0.1 is universally supported by Fetch.
+  // Completer signalled when JS sends 'ANIMATION_DONE'
+  Completer<void>? _animDone;
+
+  // ── In-process GLB HTTP server (shared across all instances) ─────────────────
   static HttpServer? _httpServer;
   static int         _httpPort = 0;
 
   static Future<void> _ensureGlbServer() async {
-    if (_httpServer != null) return; // already running
-
-    // Load the GLB asset once, keep it in memory for the server lifetime
+    if (_httpServer != null) return;
     final data  = await rootBundle.load('assets/avatar.glb');
     final bytes = data.buffer.asUint8List();
-
     _httpServer = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     _httpPort   = _httpServer!.port;
     debugPrint('▶ GLB server http://127.0.0.1:$_httpPort/avatar.glb');
-
     _httpServer!.listen((req) async {
-      // Blanket CORS so Fetch from any origin (file://, appassets://, etc.) works
       req.response.headers
         ..set('Access-Control-Allow-Origin',  '*')
         ..set('Access-Control-Allow-Methods', 'GET, OPTIONS')
         ..set('Access-Control-Allow-Headers', '*');
-
       if (req.method == 'OPTIONS') {
         req.response.statusCode = HttpStatus.ok;
       } else if (req.uri.path == '/avatar.glb') {
@@ -68,21 +56,19 @@ class _AvatarScreenState extends State<AvatarScreen> {
       } else {
         req.response.statusCode = HttpStatus.notFound;
       }
-
       await req.response.close();
     });
   }
 
-  // ── JS helper ──────────────────────────────────────────────────────────────
+  // ── JS helper ─────────────────────────────────────────────────────────────────
   void _js(String code) => controller?.evaluateJavascript(source: code);
 
-  // ── Widget update ───────────────────────────────────────────────────────────
+  // ── Widget update ─────────────────────────────────────────────────────────────
   @override
   void didUpdateWidget(covariant AvatarScreen old) {
     super.didUpdateWidget(old);
     if (!isJsReady) return;
 
-    // Loading flag changed
     if (widget.isLoading != old.isLoading) {
       if (widget.isLoading) {
         _js("if(window.setThinkingMode) window.setThinkingMode();");
@@ -93,71 +79,98 @@ class _AvatarScreenState extends State<AvatarScreen> {
       }
     }
 
-    // Signs cleared
     if (widget.signs.isEmpty) {
       if (!isAnimating) _js("if(window.setIdleMode) window.setIdleMode();");
       return;
     }
 
-    // New sign set received
     if (old.signs != widget.signs && widget.signs.isNotEmpty) {
-      currentSign  = 0;
-      currentFrame = 0;
       startAnimation();
     }
   }
 
-  // ── Sign animation playback ─────────────────────────────────────────────────
+  // ── Animation — ONE bridge call for all frames (smooth!) ─────────────────────
+  //
+  // Previously: 60 frames × 1 evaluateJavascript call = 60 round-trips
+  //             → actual frame time = bridge latency + 50ms = jerky
+  //
+  // Now: 1 evaluateJavascript call sends all frames,
+  //      JS steps through them with setInterval at 20fps,
+  //      RAF lerps at 60fps between keyframes → smooth.
+  //
   Future<void> startAnimation() async {
     if (isAnimating || widget.signs.isEmpty || !isJsReady) return;
     isAnimating = true;
+    _animDone   = Completer<void>();
 
     try {
-      while (mounted && currentSign < widget.signs.length) {
-        final sign = widget.signs[currentSign];
-        currentFrame = 0;
+      // ── Build all frames from all signs ─────────────────────────────────────
+      final allFrames = <Map<String, dynamic>>[];
 
-        while (mounted && currentFrame < sign.landmarks.length) {
-          final flat = List<double>.from(sign.landmarks[currentFrame]);
-
+      for (final sign in widget.signs) {
+        for (final rawFrame in sign.landmarks) {
+          final flat = List<double>.from(rawFrame);
           if (flat.length >= 258) {
-            final left  = _chunkBy3(flat.sublist(132, 195));
-            final right = _chunkBy3(flat.sublist(195, 258));
-            final data  = jsonEncode({'leftHand': left, 'rightHand': right});
-
-            await controller?.evaluateJavascript(
-              source:
-                'if(typeof window.animateFrame==="function")'
-                'window.animateFrame($data);',
-            );
+            allFrames.add({
+              // pose: 33 landmarks × 4-stride (x,y,z, skip visibility)
+              'p': _extractPose(flat.sublist(0, 132)),
+              // hands: 21 landmarks × 3-stride (x,y,z)
+              'l': _chunkBy3(flat.sublist(132, 195)),
+              'r': _chunkBy3(flat.sublist(195, 258)),
+            });
           }
-
-          await Future.delayed(const Duration(milliseconds: 50)); // 20 fps
-          currentFrame++;
         }
-        currentSign++;
       }
 
-      if (mounted) _js("if(window.setIdleMode) window.setIdleMode();");
+      if (allFrames.isEmpty) return;
+
+      // One serialisation, one bridge call
+      final json = jsonEncode({'frames': allFrames, 'fps': 20});
+
+      await controller?.evaluateJavascript(
+        source:
+          'if(typeof window.playAnimation==="function")'
+          'window.playAnimation($json);',
+      );
+
+      // Wait for JS to signal ANIMATION_DONE (generous timeout)
+      final timeoutMs = allFrames.length * 55 + 3000;
+      await _animDone!.future
+          .timeout(Duration(milliseconds: timeoutMs), onTimeout: () {});
+
     } catch (e) {
-      debugPrint('Animation loop error: $e');
+      debugPrint('Animation error: $e');
     } finally {
-      isAnimating  = false;
-      currentSign  = 0;
-      currentFrame = 0;
+      isAnimating = false;
+      _animDone   = null;
+      if (mounted) _js("if(window.setIdleMode) window.setIdleMode();");
     }
   }
 
-  /// Reshape [x,y,z,x,y,z,...] → [[x,y,z],[x,y,z],...].
-  List<List<double>> _chunkBy3(List<double> flat) {
+  // ── Landmark helpers ──────────────────────────────────────────────────────────
+
+  // Round to 4 dp → reduces JSON size by ~3× with no visible quality loss
+  static double _r(double v) => (v * 10000).round() / 10000.0;
+
+  /// Pose: stride-4 (x,y,z, skip visibility) → 33 landmarks
+  List<List<double>> _extractPose(List<double> flat) {
     final out = <List<double>>[];
-    for (int i = 0; i < flat.length; i += 3) {
-      out.add([flat[i], flat[i + 1], flat[i + 2]]);
+    for (int i = 0; i + 3 <= flat.length; i += 4) {
+      out.add([_r(flat[i]), _r(flat[i + 1]), _r(flat[i + 2])]);
     }
     return out;
   }
 
-  // ── Build ───────────────────────────────────────────────────────────────────
+  /// Hand: stride-3 (x,y,z) → 21 landmarks
+  List<List<double>> _chunkBy3(List<double> data) {
+    final out = <List<double>>[];
+    for (int i = 0; i < data.length; i += 3) {
+      out.add([_r(data[i]), _r(data[i + 1]), _r(data[i + 2])]);
+    }
+    return out;
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
@@ -181,7 +194,6 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
     return InAppWebView(
       initialFile: 'assets/avatar_player.html',
-
       initialSettings: InAppWebViewSettings(
         javaScriptEnabled: true,
         allowFileAccessFromFileURLs: true,
@@ -189,33 +201,31 @@ class _AvatarScreenState extends State<AvatarScreen> {
         mediaPlaybackRequiresUserGesture: false,
       ),
 
-      // Called once when WebView is created — register the JS↔Flutter channel
       onWebViewCreated: (ctrl) {
         controller = ctrl;
-
         ctrl.addJavaScriptHandler(
           handlerName: 'FlutterBridge',
           callback: (args) {
             if (args.isEmpty) return;
-            if (args[0] == 'MODEL_LOADED') {
-              isJsReady = true;
-              debugPrint(
-                'JS READY — pending=$_pendingAnim '
-                'signs=${widget.signs.length} loading=${widget.isLoading}',
-              );
-              if (_pendingAnim && widget.signs.isNotEmpty) {
-                _pendingAnim = false;
-                startAnimation();
-              } else if (widget.isLoading) {
-                _js("if(window.setThinkingMode) window.setThinkingMode();");
-              }
+            switch (args[0] as String) {
+              case 'MODEL_LOADED':
+                isJsReady = true;
+                debugPrint('JS READY — signs=${widget.signs.length} loading=${widget.isLoading}');
+                if (widget.isLoading) {
+                  _js("if(window.setThinkingMode) window.setThinkingMode();");
+                } else if (widget.signs.isNotEmpty) {
+                  startAnimation();
+                }
+                break;
+              case 'ANIMATION_DONE':
+                // JS finished stepping through all frames
+                _animDone?.complete();
+                break;
             }
           },
         );
       },
 
-      // Called when the HTML + scripts finish loading.
-      // Start (or reuse) the GLB HTTP server, then hand the URL to the page.
       onLoadStop: (ctrl, url) async {
         await _ensureGlbServer();
         await ctrl.evaluateJavascript(
