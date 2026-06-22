@@ -376,7 +376,7 @@ static Future<AvatarSign> wordToSign(int wordId) async {
 
   // ================= AI: REALTIME FRAMES =================
 
-  static Future<String> sendFrames(List<List<double>> frames) async {
+ static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
         "https://sign-language-api-production-2148.up.railway.app/predict",
