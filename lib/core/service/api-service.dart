@@ -376,21 +376,57 @@ static Future<AvatarSign> wordToSign(int wordId) async {
 
   // ================= AI: REALTIME FRAMES =================
 
-  static Future<String> sendFrames(List<List<double>> frames) async {
-    final response = await http.post(
-      Uri.parse(
-        "https://sign-language-api-production-2148.up.railway.app/predict",
-      ),
-      headers: headers,
-      body: jsonEncode({"sequence": frames}),
-    );
+Future<void> sendSequence(List<List<double>> frames) async {
+  try {
+
+    if (mounted) {
+      setState(() {
+        prediction = "Scanning...";
+        predictions = [];
+      });
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            "https://sign-language-api-production-2148.up.railway.app/predict",
+          ),
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"sequence": frames}),
+        )
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
+
       final data = jsonDecode(response.body);
-      return data.toString();
+
+      if (mounted) {
+        setState(() {
+
+          predictions = data["predictions"] ?? [];
+
+          if (predictions.isNotEmpty) {
+            prediction = predictions[0]["word"];
+          } else {
+            prediction = "Unknown";
+          }
+
+        });
+      }
+
     } else {
-      throw Exception("Real-time prediction failed: ${response.body}");
+      debugPrint("API Error: ${response.body}");
     }
+
+  } catch (e) {
+    debugPrint("API Error: $e");
+  } finally {
+
+    if (mounted) {
+      setState(() {
+        isProcessing = false;
+      });
+    }
+
   }
 }
- 
