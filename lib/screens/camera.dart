@@ -19,10 +19,13 @@ class _SignRealtimeState extends State<SignRealtime> {
   final List<List<double>> sequence = [];
   String prediction = "Scanning...";
   List predictions = [];
+  String sentence = "";
 
   bool isProcessing = false;
   bool _initialized = false;
   bool _showSplash = true;
+
+  get finaly => null;
 
   @override
   void initState() {
@@ -34,91 +37,65 @@ class _SignRealtimeState extends State<SignRealtime> {
     if (_initialized) return;
     _initialized = true;
 
-    // 🔐 Permission
+    // 🔐 إذن الكاميرا للهواتف الذكية وتهيئة الـ WebView
     if (!kIsWeb) {
       await Permission.camera.request();
-    }
 
-    // 🌐 WebView setup
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..addJavaScriptChannel(
-        "SignChannel",
-        onMessageReceived: (JavaScriptMessage message) async {
-          debugPrint("MESSAGE RECEIVED");
-          debugPrint(
-    "MESSAGE FROM JS = ${message.message}"
-  );
-          if (isProcessing) return;
+      // 🌐 إعداد الـ WebView والـ JavaScript Channel
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000))
+        ..addJavaScriptChannel(
+          "SignChannel",
+          onMessageReceived: (JavaScriptMessage message) async {
+            if (isProcessing) return;
 
-          try {
-            final List data = jsonDecode(message.message);
-            final frame =
-                data.map((e) => (e as num).toDouble()).toList();
-          
-debugPrint(
-  "FRAME SIZE = ${frame.length}"
-);
+            try {
+              final dynamic decoded = jsonDecode(message.message);
+              if (decoded is! List) return;
 
-if (frame.length == 246) {
+              // تحويل آمن لمنع الكراش في حال وجود قيم null
+              final List<double> frame = decoded
+                  .map((e) => e != null ? (e as num).toDouble() : 0.0)
+                  .toList();
 
-  debugPrint(
-    "FRAME ACCEPTED"
-    
-  );
-final nonZero =
-    frame.where((e) => e != 0).length;
+              if (frame.length == 246) {
+                sequence.add(frame);
 
-debugPrint(
-  "NON ZERO VALUES = $nonZero"
-);
-  sequence.add(frame);
-  debugPrint(
-  "FRAME ADDED AT ${DateTime.now()}"
-);
-debugPrint(
-  "SEQUENCE SIZE = ${sequence.length}"
-);
-  if (sequence.length > 30) {
-    sequence.removeAt(0);
-  }
+                if (sequence.length > 30) {
+                  sequence.removeAt(0);
+                }
 
-  if (sequence.length == 30) {
+                if (sequence.length == 30 && !isProcessing) {
+                  isProcessing = true;
 
-    debugPrint(
-      "30 FRAMES READY"
-    );
-     debugPrint("CALLING API...");
+                  // أخذ نسخة منفصلة تماماً من البيانات لمنع الـ Race Condition
+                  final framesToSend = List<List<double>>.from(sequence);
+                  sequence.clear();
 
-    isProcessing = true;
-
-    final framesToSend =
-        List<List<double>>.from(sequence);
-
-    sequence.clear();
-
-    await sendSequence(framesToSend);
-  }
-}
-          } catch (e) {
-            debugPrint("Data Error: $e");
-          }
-        },
-      )
-      ..loadRequest(Uri.parse(
-          "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
-
-    // 🤖 Android specific
-    if (!kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android) {
-      final platform = _webViewController!.platform;
-
-      if (platform is AndroidWebViewController) {
-        await platform.setMediaPlaybackRequiresUserGesture(false);
-        await platform.setOnPlatformPermissionRequest(
-          (request) => request.grant(),
+                  await sendSequence(framesToSend);
+                }
+              }
+            } catch (e) {
+              debugPrint("Data Error: $e");
+            }
+          },
+        )
+        ..loadRequest(
+          Uri.parse(
+            "https://maiqenawy.github.io/sign-language-web/mediapipe.html",
+          ),
         );
+
+      // 🤖 إعدادات الأندرويد لطلب إذن الكاميرا داخل الويب بشكل تلقائي
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        final platform = _webViewController!.platform;
+        if (platform is AndroidWebViewController) {
+          await platform.setMediaPlaybackRequiresUserGesture(false);
+          await platform.setOnPlatformPermissionRequest(
+            (request) => request.grant(),
+          );
+        }
       }
     }
 
@@ -126,7 +103,7 @@ debugPrint(
       setState(() {});
     }
 
-    // ⏳ Splash delay
+    // ⏳ إخفاء شاشة الـ Splash بعد ثانيتين
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -135,71 +112,50 @@ debugPrint(
       }
     });
   }
-Future<void> sendSequence(
-  List<List<double>> frames,
-) async {
 
-  try {
+  // ✅ دالة إرسال الإطارات الـ 30 إلى الـ API
+  Future<void> sendSequence(List<List<double>> frames) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "https://sign-language-api-production-2148.up.railway.app/predict",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({"sequence": frames}),
+          )
+          .timeout(const Duration(seconds: 15));
 
-    debugPrint(
-      "SENDING ${frames.length} FRAMES"
-    );
+      debugPrint("STATUS = ${response.statusCode}");
+      debugPrint("BODY = ${response.body}");
 
-    final response = await http
-        .post(
-          Uri.parse(
-            "https://sign-language-api-production-2148.up.railway.app/predict",
-          ),
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: jsonEncode({
-            "sequence": frames,
-          }),
-        )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-    debugPrint(
-      "STATUS = ${response.statusCode}"
-    );
-
-    debugPrint(
-      "BODY = ${response.body}"
-    );
-
-    if (response.statusCode == 200) {
-
-  final data =
-      jsonDecode(response.body);
-
-  if (mounted) {
-
-   setState(() {
-
-  predictions = data["predictions"] ?? [];
-
-  if (predictions.isNotEmpty) {
-    prediction = predictions[0]["word"];
-  } else {
-    prediction = "Unknown";
+        if (mounted) {
+          setState(() {
+            predictions = data["predictions"] ?? [];
+            if (predictions.isNotEmpty) {
+              prediction = predictions[0]["word"] ?? "Unknown";
+            } else {
+              prediction = "Unknown";
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("API Error: $e");
+    }
+    finaly;
+    {
+      // ✅ فتح القفل للسماح بإرسال السيكونس التالي بعد انتهاء المعالجة
+      if (mounted) {
+        setState(() {
+          isProcessing = false;
+        });
+      }
+    }
   }
-
-});
-  }
-}
-  } catch (e) {
-
-    debugPrint(
-      "API ERROR = $e"
-    );
-
-  } finally {
-
-    isProcessing = false;
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -211,10 +167,34 @@ Future<void> sendSequence(
       ),
       body: Stack(
         children: [
-
-          // 🌐 WebView (stable)
+          // 🌐 شاشة الويب التي تعرض الكاميرا والـ MediaPipe
           Positioned.fill(
-            child: (_webViewController != null)
+            child: kIsWeb
+                ? Container(
+                    color: Colors.black87,
+                    alignment: Alignment.center,
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.camera_alt_outlined,
+                          size: 64,
+                          color: Colors.deepPurple,
+                        ),
+                        SizedBox(height: 15),
+                        Text(
+                          "Real-Time Translation is optimized for mobile platforms.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : (_webViewController != null)
                 ? WebViewWidget(
                     key: const ValueKey("stable_webview"),
                     controller: _webViewController!,
@@ -222,7 +202,7 @@ Future<void> sendSequence(
                 : const Center(child: CircularProgressIndicator()),
           ),
 
-          // 🔥 Splash overlay (does NOT destroy WebView)
+          // 🔥 شاشة الـ Splash المؤقتة (تختفي تلقائياً)
           if (_showSplash)
             Positioned.fill(
               child: Container(
@@ -246,16 +226,14 @@ Future<void> sendSequence(
                         ),
                       ),
                       SizedBox(height: 30),
-                      CircularProgressIndicator(
-                        color: Colors.deepPurple,
-                      ),
+                      CircularProgressIndicator(color: Colors.deepPurple),
                     ],
                   ),
                 ),
               ),
             ),
 
-          // 📊 Prediction UI
+          // 📊 واجهة عرض الكلمة المكتشفة والاقتراحات
           Positioned(
             bottom: 40,
             left: 20,
@@ -267,65 +245,89 @@ Future<void> sendSequence(
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-
-    Text(
-      "Current Word",
-      style: TextStyle(
-        color: Colors.grey,
-        fontSize: 16,
-      ),
-    ),
-
-    const SizedBox(height: 6),
-
-    Text(
-      prediction,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-
-    const SizedBox(height: 12),
-
-    if (predictions.isNotEmpty)
-      Column(
-        children: [
-          const Text(
-            "Suggestions",
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          ...predictions.map((item) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      prediction = item["word"];
-                    });
-                  },
-                  child: Text(
-                    "${item["word"]} (${item["confidence"]}%)",
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Current Word",
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
-                ),
-              ),
-            );
-          }).toList(),
-        ],
-      ),
-  ],
-)
+                  const SizedBox(height: 6),
+                  Text(
+                    prediction,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // عرض الاقتراحات إن وجدت
+                  if (predictions.isNotEmpty) ...[
+                    const Text(
+                      "Suggestions",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    ...predictions.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                prediction = item["word"] ?? "Unknown";
+                              });
+                            },
+                            child: Text(
+                              "${item["word"]} (${item["confidence"]}%)",
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                  const SizedBox(height: 10),
+
+                  // زر إضافة الكلمة الحالية للجملة
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add to Sentence"),
+                    onPressed: () {
+                      if (prediction != "Unknown" &&
+                          prediction != "Scanning...") {
+                        setState(() {
+                          if (sentence.isEmpty) {
+                            sentence = prediction;
+                          } else {
+                            sentence += " $prediction";
+                          }
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("$prediction added"),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // عرض الجملة الكاملة المتكونة في الأسفل
+                  if (sentence.isNotEmpty)
+                    Text(
+                      "Full Sentence: $sentence",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.greenAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
