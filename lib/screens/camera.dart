@@ -181,7 +181,7 @@ Future<void> sendSequence(
   predictions = data["predictions"] ?? [];
 
   if (predictions.isNotEmpty) {
-    prediction = predictions[0]["word"];
+   prediction = predictions[0]["label"];
   } else {
     prediction = "Unknown";
   }
