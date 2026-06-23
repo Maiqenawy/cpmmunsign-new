@@ -46,7 +46,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
       child: currentAnimation == null || currentAnimation == "idle"
           ? const IdleAvatar()
           : ModelViewer(
-            src: "assets/$currentAnimation.glb",
+            src: "assets/$currentAnimation",
               autoPlay: true,
               cameraControls: false,
               disableZoom: true,
