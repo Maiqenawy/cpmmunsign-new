@@ -1,12 +1,10 @@
 import 'dart:io';
-
+import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:cominsign_new/screens/camera.dart';
 import 'package:cominsign_new/widgets/avatar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
-import 'package:cominsign_new/core/service/api-service.dart';
 import 'package:cominsign_new/core/avatar/avatar_controller.dart';
 
 void main() {

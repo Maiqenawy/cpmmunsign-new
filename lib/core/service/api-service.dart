@@ -319,20 +319,37 @@ class Service {
     }
   }
 
-  static Future<String?> getAnimation(String word) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/ai/word-to-sign"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"word": word}),
-    );
+  debugPrint("========== WORD TO SIGN ==========");
+  debugPrint("WORD ID = $wordId");
+  debugPrint("STATUS = ${response.statusCode}");
+  debugPrint("BODY = ${response.body}");
+  debugPrint("==================================");
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data["animation"];
-    }
-    return null;
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return AvatarSign.fromJson(data);
+  } else {
+    throw Exception(
+      "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
+    );
+  }
+}static Future<String?> wordToSign(int learningWordId) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/word-to-sign"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "learningWordId": learningWordId
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    return data["animation"];
   }
 
+  return null;
+}
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
@@ -372,4 +389,4 @@ class Service {
       throw Exception("Real-time prediction failed");
     }
   }
-} // قوس إغلاق الكلاس أصبح في نهاية الملف بشكل صحيح
+ // قوس إغلاق الكلاس أصبح في نهاية الملف بشكل صحيح
