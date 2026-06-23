@@ -265,7 +265,7 @@ class IdleAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ModelViewer(
-      src: "assets/idle.glb", 
+      src: "assets/Idle.glb", 
       autoPlay: true,
       cameraControls: false,
       disableZoom: true,
