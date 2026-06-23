@@ -50,7 +50,7 @@ class _CommunicationState extends State<Communication> {
 
   bool isListening = false;
   bool loading = false;
-
+String currentAnimation = "Idle.glb";
   String predictedText = "";
 
   // ================= TEXT TO SIGN (تم إصلاحها هنا) =================
@@ -75,7 +75,20 @@ class _CommunicationState extends State<Communication> {
       });
 
       // 🔥 تشغيل الأفاتار مباشرة باستخدام القائمة القادمة
-      await avatarController.playSequence(animations);
+    for (final animation in animations) {
+
+  setState(() {
+    currentAnimation = animation;
+  });
+
+  await Future.delayed(
+    const Duration(seconds: 4),
+  );
+}
+
+setState(() {
+  currentAnimation = "Idle.glb";
+});
     } catch (e) {
       debugPrint("ERROR: $e");
       setState(() {
@@ -222,9 +235,9 @@ class _CommunicationState extends State<Communication> {
                       children: [
 
                         // 🔥 WebView Avatar
-                        AvatarWebView(
-                          controller: avatarController,
-                        ),
+                      AvatarScreen(
+  animation: currentAnimation,
+)
 
                         // Loading overlay
                         if (loading)
