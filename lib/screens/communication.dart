@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:cominsign_new/core/avatar/avatar_controller.dart';
+import 'avatar_screen.dart';
 
 void main() {
   runApp(const CommuniSignApp());
@@ -237,7 +238,7 @@ setState(() {
                         // 🔥 WebView Avatar
                       AvatarScreen(
   animation: currentAnimation,
-)
+),
 
                         // Loading overlay
                         if (loading)
