@@ -53,7 +53,7 @@ class _CommunicationState extends State<Communication> {
 
   String predictedText = "";
 
-  // ================= TEXT TO SIGN =================
+  // ================= TEXT TO SIGN (تم إصلاحها هنا) =================
   Future<void> translateText() async {
     if (textController.text.isEmpty) return;
 
@@ -62,23 +62,19 @@ class _CommunicationState extends State<Communication> {
     });
 
     try {
-      final result = await Service.textToSigns(textController.text);
+      // الـ API يعيد الآن List<String> مباشرة بأسماء الـ animations
+      final List<String> animations = await Service.textToSigns(textController.text);
 
-      debugPrint("SIGNS COUNT = ${result.length}");
-
-      for (var s in result) {
-        debugPrint("Word: ${s.word}");
-        debugPrint("Frames: ${s.landmarks.length}");
+      debugPrint("SIGNS COUNT = ${animations.length}");
+      for (var animationName in animations) {
+        debugPrint("Animation Name: $animationName");
       }
-
-      // 🔥 تحويل النتائج إلى animations
-      final animations = result.map((e) => e.word).toList();
 
       setState(() {
         loading = false;
       });
 
-      // 🔥 تشغيل الأفاتار
+      // 🔥 تشغيل الأفاتار مباشرة باستخدام القائمة القادمة
       await avatarController.playSequence(animations);
     } catch (e) {
       debugPrint("ERROR: $e");

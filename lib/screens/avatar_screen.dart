@@ -1,13 +1,11 @@
+import 'package:cominsign_new/screens/Level_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 class AvatarScreen extends StatefulWidget {
   final String animation; // اسم الملف اللي جاي من API
 
-  const AvatarScreen({
-    super.key,
-    required this.animation,
-  });
+  const AvatarScreen({super.key, required this.animation});
 
   @override
   State<AvatarScreen> createState() => _AvatarScreenState();
@@ -39,13 +37,12 @@ class _AvatarScreenState extends State<AvatarScreen> {
     return Container(
       width: double.infinity,
       height: 250,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
       child: currentAnimation == null || currentAnimation == "idle"
           ? const IdleAvatar()
           : ModelViewer(
+              key: ValueKey(currentAnimation),
               src: "assets/$currentAnimation",
               autoPlay: true,
               cameraControls: false,

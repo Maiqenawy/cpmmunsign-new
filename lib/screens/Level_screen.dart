@@ -22,13 +22,12 @@ class _LevelScreenState extends State<LevelScreen> {
   List words = [];
   bool loading = true;
   int coins = 0;
-  List<AvatarSign> selectedSigns = [];
+  // 🔥 تم حذف سطر selectedSigns الزائد الذي كان يسبب الخطأ
   String currentAnimation = "idle";
 
   @override
   void initState() {
     super.initState();
-    selectedSigns = [];
     loadData();
   }
 
@@ -40,48 +39,48 @@ class _LevelScreenState extends State<LevelScreen> {
     });
   }
 
- Future onWordTap(Map word) async {
-  try {
-    final animation =
-        await Service.wordToSign(word["learningWordId"]);
+  Future onWordTap(Map word) async {
+    try {
+      final animation =
+          await Service.wordToSign(word["learningWordId"]);
 
-    if (animation != null) {
-      setState(() {
-        currentAnimation = animation;
-      });
+      if (animation != null) {
+        setState(() {
+          currentAnimation = animation;
+        });
+      }
+    } catch (e) {
+      debugPrint("Avatar Error = $e");
     }
-  } catch (e) {
-    debugPrint("Avatar Error = $e");
-  }
 
-  if (word["isLearned"] == true) return;
+    if (word["isLearned"] == true) return;
 
-  final res =
-      await Service.updateProgress(word["learningWordId"]);
+    final res =
+        await Service.updateProgress(word["learningWordId"]);
 
-  setState(() {
-    word["isLearned"] = true;
-    coins = res["coins"];
-  });
+    setState(() {
+      word["isLearned"] = true;
+      coins = res["coins"];
+    });
 
-  final check =
-      await Service.checkLevelCompletion(widget.levelId);
+    final check =
+        await Service.checkLevelCompletion(widget.levelId);
 
-  if (check["completed"]) {
-    await Service.unlockNextLevel(widget.levelId);
+    if (check["completed"]) {
+      await Service.unlockNextLevel(widget.levelId);
 
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LevelCompleteScreen(
-          level: widget.levelId,
-          coinsEarned: coins,
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LevelCompleteScreen(
+            level: widget.levelId,
+            coinsEarned: coins,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +107,7 @@ class _LevelScreenState extends State<LevelScreen> {
         title: const Text(
           'COMMUNISIGN',
           style: TextStyle(
-            color: Colors.white, // أبيض ثابت دائماً ومميز
+            color: Colors.white, 
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
           ),
@@ -151,9 +150,9 @@ class _LevelScreenState extends State<LevelScreen> {
                 // الأفاتار ثري دي
                 SizedBox(
                   height: 250,
-                  child: selectedSigns.isNotEmpty
-                      ? AvatarScreen(signs: selectedSigns)
-                      : const _AvatarWidget(),
+                  child: currentAnimation != "idle"
+                      ? AvatarScreen(animation: currentAnimation)
+                      : const IdleAvatar(),
                 ),
                 const SizedBox(height: 15),
                 // شريط التقدم بالأرقام
@@ -167,7 +166,7 @@ class _LevelScreenState extends State<LevelScreen> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                // شبكة الكلمات المعدلة لخط أوضح تماماً
+                // شبكة الكلمات
                 Expanded(
                   child: GridView.builder(
                     itemCount: words.length,
@@ -176,7 +175,7 @@ class _LevelScreenState extends State<LevelScreen> {
                       crossAxisCount: 3,
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: 2.2, // زيادة النسبة قليلاً لإعطاء الكلمة مساحة مريحة للعين
+                      childAspectRatio: 2.2, 
                     ),
                     itemBuilder: (context, index) {
                       final w = words[index];
@@ -214,15 +213,13 @@ class PhraseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // تحديد لون الكرت بناءً على حالة الكلمة والثيم الحالي
     Color cardColor;
     if (isLearned) {
-      cardColor = isDark ? const Color(0xFF1B5E20) : Colors.green; // أخضر داكن في الدارك مود لراحة العين
+      cardColor = isDark ? const Color(0xFF1B5E20) : Colors.green; 
     } else {
-      cardColor = isDark ? const Color(0xFF263238) : Colors.white; // رمادي غامق للكلمة غير المكتملة في الدارك مود
+      cardColor = isDark ? const Color(0xFF263238) : Colors.white; 
     }
 
-    // تحديد لون الخط ليكون بأعلى تباين ممكن ليكون واضحاً جداً
     Color textColor;
     if (isLearned) {
       textColor = Colors.white; 
@@ -250,8 +247,8 @@ class PhraseCard extends StatelessWidget {
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16, // تكبير حجم الخط ليكون مقروءاً بوضوح
-              fontWeight: FontWeight.bold, // جعل الخط سميكاً وبارزاً
+              fontSize: 16, 
+              fontWeight: FontWeight.bold, 
               color: textColor,
             ),
           ),
@@ -262,28 +259,17 @@ class PhraseCard extends StatelessWidget {
 }
 
 // ── كود الأفاتار ثري دي ──
-class _AvatarWidget extends StatelessWidget {
-  const _AvatarWidget({super.key});
+class IdleAvatar extends StatelessWidget {
+  const IdleAvatar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 300,
-      height: 250,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: const ModelViewer(
-        src: 'assets/avatar.glb',
-        alt: 'CommuniSign 3D Avatar',
-        autoRotate: false,
-        cameraControls: false,
-        disableZoom: true,
-        shadowIntensity: 1,
-        backgroundColor: Colors.transparent,
-      ),
+    return const ModelViewer(
+      src: "assets/idle.glb", 
+      autoPlay: true,
+      cameraControls: false,
+      disableZoom: true,
+      backgroundColor: Colors.transparent,
     );
-  }
-}
+  } 
+}  

@@ -319,37 +319,31 @@ class Service {
     }
   }
 
-  debugPrint("========== WORD TO SIGN ==========");
-  debugPrint("WORD ID = $wordId");
-  debugPrint("STATUS = ${response.statusCode}");
-  debugPrint("BODY = ${response.body}");
-  debugPrint("==================================");
-
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-
-    return AvatarSign.fromJson(data);
-  } else {
-    throw Exception(
-      "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
+  // ================= AI: WORD → SIGN (تم دمجها وإصلاح تداخلها) =================
+  static Future<String?> wordToSign(int learningWordId) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/word-to-sign"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"learningWordId": learningWordId}),
     );
-  }
-}static Future<String?> wordToSign(int learningWordId) async {
-  final response = await http.post(
-    Uri.parse("$baseUrl/ai/word-to-sign"),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode({
-      "learningWordId": learningWordId
-    }),
-  );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-    return data["animation"];
+    // طباعة الـ Debugging الآن تقع بشكل سليم داخل الدالة
+    debugPrint("========== WORD TO SIGN ==========");
+    debugPrint("WORD ID = $learningWordId");
+    debugPrint("STATUS = ${response.statusCode}");
+    debugPrint("BODY = ${response.body}");
+    debugPrint("==================================");
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["animation"]; // مثل Bored.glb
+    } else {
+      throw Exception(
+        "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
+      );
+    }
   }
 
-  return null;
-}
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
@@ -389,4 +383,5 @@ class Service {
       throw Exception("Real-time prediction failed");
     }
   }
+}
  // قوس إغلاق الكلاس أصبح في نهاية الملف بشكل صحيح

@@ -65,7 +65,15 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/Angry.glb
+    
+    - assets/Thinking.glb
+    - assets/Thankful.glb
+    - assets/Talking.glb
+    - assets/Standing Greeting.glb
+    - assets/Sitting Talking.glb
+    - assets/Happy Idle.glb
+    - assets/Idle.glb
+    - assets/Bored.glb
     - assets/Agreeing.glb
     - assets/Waving.glb
     - assets/Pointing.glb
