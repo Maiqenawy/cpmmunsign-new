@@ -322,6 +322,20 @@ static Future<List<String>> textToSigns(String text) async {
   } else {
     throw Exception("Translation failed");
   }
+}static Future<String?> getAnimation(String word) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/word-to-sign"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"word": word}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["animation"];
+    }
+
+    return null;
+  }
 }
 
  
