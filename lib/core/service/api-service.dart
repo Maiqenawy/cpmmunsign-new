@@ -353,6 +353,20 @@ static Future<AvatarSign> wordToSign(int wordId) async {
       "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
     );
   }
+}static Future<String?> getAnimation(String word) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/word-to-sign"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"word": word}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data["animation"];
+    }
+
+    return null;
+  }
 }
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
