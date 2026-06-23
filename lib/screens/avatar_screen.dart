@@ -34,6 +34,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String assetPath = "assets/$currentAnimation";
+  debugPrint("Attempting to load model from: $assetPath");
     return Container(
       width: double.infinity,
       height: 250,
@@ -43,7 +45,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
           ? const IdleAvatar()
           : ModelViewer(
               key: ValueKey(currentAnimation),
-              src: "assets/$currentAnimation",
+              src: assetPath,
               autoPlay: true,
               cameraControls: false,
               disableZoom: true,
