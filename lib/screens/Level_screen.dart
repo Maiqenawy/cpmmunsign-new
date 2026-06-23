@@ -151,9 +151,9 @@ class _LevelScreenState extends State<LevelScreen> {
                 // الأفاتار ثري دي
                 SizedBox(
                   height: 250,
-                  child: selectedSigns.isNotEmpty
-                      ? AvatarScreen(signs: selectedSigns)
-                      : const _AvatarWidget(),
+                  child: currentAnimation != "idle"
+    ? AvatarScreen(animation: currentAnimation)
+    : const IdleAvatar(),
                 ),
                 const SizedBox(height: 15),
                 // شريط التقدم بالأرقام
