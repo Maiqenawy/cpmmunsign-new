@@ -413,20 +413,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
+onPressed: () async {
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Logout"),
+      content: const Text(
+        "Are you sure you want to log out?",
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context, false);
+          },
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context, true);
+          },
+          child: const Text("Logout"),
+        ),
+      ],
+    ),
+  );
 
-        onPressed: () async {
-          await UserSession.logout();
+  if (confirm != true) return;
 
-          if (!mounted) return;
+  await UserSession.logout();
 
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-            ),
-            (route) => false,
-          );
-        },
+  if (!mounted) return;
+
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const LoginScreen(),
+    ),
+    (route) => false,
+  );
+},
+       
       ),
     );
   }

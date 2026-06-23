@@ -2,15 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import 'package:cominsign_new/core/user_session.dart';
-import 'package:cominsign_new/screens/avatar_sign_model.dart';
+
 
 class Service {
   static const String baseUrl = "https://cominisign.runasp.net/api";
 
   static String token = "";
 
-  static Map<String, String> headers = {"Content-Type": "application/json"};
+  static Map<String, String> headers = {
+    "Content-Type": "application/json",
+  };
 
   static Map<String, String> headersWithAuth() {
     return {
@@ -20,7 +23,6 @@ class Service {
   }
 
   // ================= REGISTER =================
-
   static Future register({
     required String name,
     required String email,
@@ -28,84 +30,72 @@ class Service {
     required String confirmPassword,
     required String address,
   }) async {
-    try {
-      var response = await http.post(
-        Uri.parse("$baseUrl/Account/register"),
-        headers: headers,
-        body: jsonEncode({
-          "name": name,
-          "email": email,
-          "password": password,
-          "confirmPassword": confirmPassword,
-          "address": address,
-        }),
-      );
+    var response = await http.post(
+      Uri.parse("$baseUrl/Account/register"),
+      headers: headers,
+      body: jsonEncode({
+        "name": name,
+        "email": email,
+        "password": password,
+        "confirmPassword": confirmPassword,
+        "address": address,
+      }),
+    );
 
-      // ✅ الحل: تحويل البودي لنص صريح قبل الفحص
-      String resBody = response.body;
+    String resBody = response.body;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (resBody.isEmpty) return {};
-        var data = jsonDecode(resBody);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (resBody.isEmpty) return {};
+      var data = jsonDecode(resBody);
 
-        if (data is Map && data["token"] != null) {
-          token = data["token"];
-          UserSession.token = data["token"];
-        }
-        return data;
-      } else {
-        // التعامل مع أخطاء السيرفر
-        String errorMsg = "Registration failed";
-        if (resBody.isNotEmpty) {
-          try {
-            var errorData = jsonDecode(resBody);
-            errorMsg = errorData['message'] ?? errorMsg;
-          } catch (_) {}
-        }
-        throw errorMsg;
+      if (data is Map && data["token"] != null) {
+        token = data["token"];
+        UserSession.token = data["token"];
       }
-    } catch (e) {
-      rethrow;
+      return data;
+    } else {
+      throw Exception("Registration failed: $resBody");
     }
   }
 
   // ================= LOGIN =================
-  static Future login({required String email, required String password}) async {
+  static Future login({
+    required String email,
+    required String password,
+  }) async {
     var response = await http.post(
       Uri.parse("$baseUrl/Account/login"),
       headers: headers,
-      body: jsonEncode({"email": email, "password": password}),
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
     );
 
-    String responseBody = response.body;
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      var data = jsonDecode(responseBody);
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
       token = data["token"] ?? "";
-      UserSession.token = token; // مزامنة التوكن مع الجلسة
+      UserSession.token = token;
       return data;
     } else {
-      throw Exception("Login failed: $responseBody");
+      throw Exception("Login failed: ${response.body}");
     }
   }
 
   // ================= FORGOT PASSWORD =================
   static Future forgotPassword(String email) async {
-  var response = await http.post(
-    Uri.parse("$baseUrl/Account/forgot-password"),
-    headers: headers,
-    body: jsonEncode({"email": email}),
-  );
+    var response = await http.post(
+      Uri.parse("$baseUrl/Account/forgot-password"),
+      headers: headers,
+      body: jsonEncode({"email": email}),
+    );
 
-  print("Status Code: ${response.statusCode}");
-  print("Response Body: ${response.body}");
-
-  if (response.statusCode == 200) {
-    return true;
-  } else {
-    throw Exception(response.body);
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception(response.body);
+    }
   }
-}
 
   // ================= RESET PASSWORD =================
   static Future resetPassword({
@@ -137,9 +127,8 @@ class Service {
       headers: headersWithAuth(),
     );
 
-    String responseBody = res.body;
-    if (responseBody.isEmpty) return [];
-    return jsonDecode(responseBody);
+    if (res.body.isEmpty) return [];
+    return jsonDecode(res.body);
   }
 
   static Future addContact({
@@ -150,7 +139,11 @@ class Service {
     var res = await http.post(
       Uri.parse("$baseUrl/contact"),
       headers: headersWithAuth(),
-      body: jsonEncode({"name": name, "email": email, "relation": relation}),
+      body: jsonEncode({
+        "name": name,
+        "email": email,
+        "relation": relation,
+      }),
     );
 
     if (res.statusCode != 200 && res.statusCode != 201) {
@@ -167,7 +160,11 @@ class Service {
     var res = await http.put(
       Uri.parse("$baseUrl/contact/$contactId"),
       headers: headersWithAuth(),
-      body: jsonEncode({"name": name, "email": email, "relation": relation}),
+      body: jsonEncode({
+        "name": name,
+        "email": email,
+        "relation": relation,
+      }),
     );
 
     if (res.statusCode != 200) {
@@ -237,20 +234,16 @@ class Service {
   static Future<String> chat(String message) async {
     var response = await http.post(
       Uri.parse("$baseUrl/Chat"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${UserSession.token}",
-      },
+      headers: headersWithAuth(),
       body: jsonEncode({"message": message}),
     );
 
-    String responseBody = response.body;
-    if (responseBody.isEmpty) {
+    if (response.body.isEmpty) {
       throw Exception("Empty response");
     }
 
     if (response.statusCode == 200) {
-      var data = jsonDecode(responseBody);
+      var data = jsonDecode(response.body);
       return data["reply"];
     } else {
       throw Exception("Chat failed");
@@ -312,48 +305,28 @@ class Service {
   }
 
   // ================= AI: TEXT → SIGNS =================
-
-  static Future<List<AvatarSign>> textToSigns(String text) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/ai/text-to-signs"),
-      headers: headersWithAuth(), // ✅ include Bearer token
-      body: jsonEncode({"text": text}),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      // الباك بيرجع List مباشرة
-      return (data as List).map((e) => AvatarSign.fromJson(e)).toList();
-    } else {
-      throw Exception("Translation failed");
-    }
-  }
-static Future<AvatarSign> wordToSign(int wordId) async {
+static Future<List<String>> textToSigns(String text) async {
   final response = await http.post(
-    Uri.parse("$baseUrl/ai/word-to-sign"),
-    headers: headers,
-    body: jsonEncode({
-      "wordId": wordId,
-    }),
+    Uri.parse("$baseUrl/ai/text-to-signs"),
+    headers: headersWithAuth(),
+    body: jsonEncode({"text": text}),
   );
-
-  debugPrint("========== WORD TO SIGN ==========");
-  debugPrint("WORD ID = $wordId");
-  debugPrint("STATUS = ${response.statusCode}");
-  debugPrint("BODY = ${response.body}");
-  debugPrint("==================================");
 
   if (response.statusCode == 200) {
     final data = jsonDecode(response.body);
 
-    return AvatarSign.fromJson(data);
+    // 🔥 نحول أي response إلى أسماء animations مباشرة
+    return (data as List)
+        .map((e) => e["word"].toString())
+        .toList();
   } else {
-    throw Exception(
-      "Word to sign failed | Status: ${response.statusCode} | Body: ${response.body}",
-    );
+    throw Exception("Translation failed");
   }
 }
+
+ 
+  }
+
   // ================= AI: SIGN → TEXT =================
   static Future<String> signToText(File image) async {
     var request = http.MultipartRequest(
@@ -361,7 +334,9 @@ static Future<AvatarSign> wordToSign(int wordId) async {
       Uri.parse("$baseUrl/ai/sign-to-text"),
     );
 
-    request.files.add(await http.MultipartFile.fromPath("Frame", image.path));
+    request.files.add(
+      await http.MultipartFile.fromPath("Frame", image.path),
+    );
 
     var response = await request.send();
     var res = await http.Response.fromStream(response);
@@ -374,9 +349,8 @@ static Future<AvatarSign> wordToSign(int wordId) async {
     }
   }
 
-  // ================= AI: REALTIME FRAMES =================
-
- static Future<String> sendFrames(List<List<double>> frames) async {
+  // ================= REALTIME FRAMES =================
+  static Future<String> sendFrames(List<List<double>> frames) async {
     final response = await http.post(
       Uri.parse(
         "https://sign-language-api-production-2148.up.railway.app/predict",
@@ -389,8 +363,8 @@ static Future<AvatarSign> wordToSign(int wordId) async {
       final data = jsonDecode(response.body);
       return data.toString();
     } else {
-      throw Exception("Real-time prediction failed: ${response.body}");
+      throw Exception("Real-time prediction failed");
     }
   }
-}
+
  

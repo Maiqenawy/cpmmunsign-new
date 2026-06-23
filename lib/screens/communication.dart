@@ -1,16 +1,13 @@
 import 'dart:io';
-import 'package:cominsign_new/screens/avatar_landmark_player.dart';
-import 'package:cominsign_new/screens/avatar_sign_model.dart';
+
 import 'package:cominsign_new/screens/camera.dart';
+import 'package:cominsign_new/widgets/avatar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-// model_viewer_plus removed — AvatarScreen (WebView) handles all states
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:cominsign_new/screens/avatar_screen.dart';
 
-// تأكدي من صحة المسارات ومطابقتها لمشروعك
 import 'package:cominsign_new/core/service/api-service.dart';
-import 'package:cominsign_new/widgets/sequence_player.dart';
+import 'package:cominsign_new/core/avatar/avatar_controller.dart';
 
 void main() {
   runApp(const CommuniSignApp());
@@ -34,7 +31,7 @@ class CommuniSignApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0F1A24),
       ),
-      themeMode: ThemeMode.system, // يتبع ثيم الجهاز تلقائياً
+      themeMode: ThemeMode.system,
       home: const Communication(),
     );
   }
@@ -48,54 +45,48 @@ class Communication extends StatefulWidget {
 }
 
 class _CommunicationState extends State<Communication> {
+  final AvatarController avatarController = AvatarController();
   final TextEditingController textController = TextEditingController();
   final SpeechToText speech = SpeechToText();
   final ImagePicker picker = ImagePicker();
 
   bool isListening = false;
   bool loading = false;
-  List<AvatarSign> signs = [];
+
   String predictedText = "";
 
   // ================= TEXT TO SIGN =================
-  // ================= TEXT TO SIGN =================
-  void translateText() async {
+  Future<void> translateText() async {
     if (textController.text.isEmpty) return;
 
     setState(() {
       loading = true;
-      signs = [];
     });
 
     try {
       final result = await Service.textToSigns(textController.text);
-      debugPrint("====== TEST SERVER ======");
-      debugPrint("SIGNS COUNT = ${result.length}");
 
-      if (result.isEmpty) {
-        debugPrint(
-          "🚨 السيرفر رجع لستة فاضية! الكلمة مش موجودة عنده أو الـ API فيه مشكلة",
-        );
-      }
+      debugPrint("SIGNS COUNT = ${result.length}");
 
       for (var s in result) {
         debugPrint("Word: ${s.word}");
-        debugPrint("Frames count: ${s.landmarks.length}");
-        if (s.landmarks.isNotEmpty) {
-          debugPrint("First Frame Landmarks: ${s.landmarks.first}");
-        } else {
-          debugPrint("🚨 الكلمة رجعت بس من غير فريمات حركة (فاضية)!");
-        }
+        debugPrint("Frames: ${s.landmarks.length}");
       }
-      debugPrint("=========================");
+
+      // 🔥 تحويل النتائج إلى animations
+      final animations = result.map((e) => e.word).toList();
 
       setState(() {
-        signs = result;
         loading = false;
       });
+
+      // 🔥 تشغيل الأفاتار
+      await avatarController.playSequence(animations);
     } catch (e) {
-      debugPrint("🚨 ERROR IN API CALL: $e");
-      setState(() => loading = false);
+      debugPrint("ERROR: $e");
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -104,6 +95,7 @@ class _CommunicationState extends State<Communication> {
     bool available = await speech.initialize();
     if (available) {
       setState(() => isListening = true);
+
       speech.listen(
         onResult: (result) {
           setState(() {
@@ -120,28 +112,38 @@ class _CommunicationState extends State<Communication> {
   }
 
   // ================= IMAGE SIGN =================
-  Future captureSign() async {
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+  Future<void> captureSign() async {
+    final XFile? image =
+        await picker.pickImage(source: ImageSource.camera);
+
     if (image == null) return;
 
     setState(() => loading = true);
-    final result = await Service.signToText(File(image.path));
 
-    setState(() {
-      predictedText = result;
-      textController.text = result;
-      loading = false;
-    });
+    try {
+      final result = await Service.signToText(File(image.path));
+
+      setState(() {
+        predictedText = result;
+        textController.text = result;
+        loading = false;
+      });
+    } catch (e) {
+      debugPrint("ERROR: $e");
+      setState(() => loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. معرفة حالة الـ Dark Mode وتحديد الألوان ديناميكياً
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryTextColor = isDark ? Colors.white : const Color(0xFF1A3C6E);
-    final iconColor = isDark
-        ? const Color(0xFF4DB6AC)
-        : const Color(0xFF1B6B55);
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
+
+    final primaryTextColor =
+        isDark ? Colors.white : const Color(0xFF1A3C6E);
+
+    final iconColor =
+        isDark ? const Color(0xFF4DB6AC) : const Color(0xFF1B6B55);
 
     return Scaffold(
       body: Container(
@@ -151,40 +153,37 @@ class _CommunicationState extends State<Communication> {
             end: Alignment.bottomCenter,
             colors: isDark
                 ? [
-                    const Color(0xFF14222D), // خلفية داكنة علوية
-                    const Color(0xFF0F1A24), // خلفية داكنة سفلية
+                    const Color(0xFF14222D),
+                    const Color(0xFF0F1A24)
                   ]
                 : [
-                    const Color(0xFFEBF8F4), // مِنت فاتح
-                    const Color(0xFFB2E8DC), // تيل فاتح
+                    const Color(0xFFEBF8F4),
+                    const Color(0xFFB2E8DC)
                   ],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
+
               // ── App Bar ──
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                    horizontal: 16, vertical: 12),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
+
                     Align(
                       alignment: Alignment.centerLeft,
                       child: IconButton(
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          color: iconColor,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        icon: Icon(Icons.arrow_back_ios,
+                            color: iconColor, size: 20),
+                        onPressed: () =>
+                            Navigator.pop(context),
                       ),
                     ),
+
                     Text(
                       'COMMUNISIGN',
                       style: TextStyle(
@@ -194,14 +193,15 @@ class _CommunicationState extends State<Communication> {
                         letterSpacing: 1.5,
                       ),
                     ),
+
                     Align(
                       alignment: Alignment.centerRight,
                       child: IconButton(
-                        icon: Icon(Icons.refresh, color: iconColor),
+                        icon: Icon(Icons.refresh,
+                            color: iconColor),
                         onPressed: () {
                           setState(() {
                             textController.clear();
-                            signs = [];
                             predictedText = "";
                           });
                         },
@@ -211,195 +211,153 @@ class _CommunicationState extends State<Communication> {
                 ),
               ),
 
-              // ── Avatar (always alive — plays idle / thinking / signs) ──
+              // ── Avatar Area ──
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Stack(
-                    children: [
-                      // The WebView avatar — never removed from tree
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: AvatarScreen(
-                          signs: signs,
-                          isLoading: loading,
-                        ),
-                      ),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E2E3D)
+                          : Colors.white.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      children: [
 
-                      // Semi-transparent overlay while waiting for API
-                      // Avatar keeps playing "thinking" animation underneath
-                      if (loading)
-                        Positioned.fill(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
+                        // 🔥 WebView Avatar
+                        AvatarWebView(
+                          controller: avatarController,
+                        ),
+
+                        // Loading overlay
+                        if (loading)
+                          Positioned.fill(
                             child: Container(
-                              color: Colors.black.withOpacity(0.38),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2.5,
-                                  ),
-                                  SizedBox(height: 14),
-                                  Text(
-                                    'Translating to sign language...',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
+                              color:
+                                  Colors.black.withOpacity(0.4),
+                              child: const Center(
+                                child:
+                                    CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            
-              // ── زرار الـ Real-Time الإضافي فوق الـ Bottom Bar مباشرة ──
+
+              const SizedBox(height: 10),
+
+              // ── Real-time Button ──
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
+                    horizontal: 20, vertical: 8),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isDark
                         ? const Color(0xFF00796B)
                         : const Color(0xFF1B6B55),
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
+                    minimumSize:
+                        const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius:
+                          BorderRadius.circular(30),
                     ),
                   ),
                   icon: const Icon(Icons.videocam),
                   onPressed: () async {
                     final result = await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SignRealtime()),
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const SignRealtime(),
+                      ),
                     );
 
                     if (result != null) {
                       setState(() {
-                        predictedText = result.toString();
-                        textController.text = predictedText;
+                        predictedText =
+                            result.toString();
+                        textController.text =
+                            predictedText;
                       });
                     }
                   },
                   label: const Text(
                     "Start Real-Time Tracking",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
 
-              // ── Bottom Bar الذكي والمطور ──
+              // ── Bottom Bar ──
               Container(
-                margin: const EdgeInsets.only(bottom: 12, left: 12, right: 12),
+                margin: const EdgeInsets.only(
+                    bottom: 12, left: 12, right: 12),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 5,
-                ),
+                    horizontal: 16, vertical: 5),
                 decoration: BoxDecoration(
                   color: isDark
                       ? const Color(0xFF1E2E3D)
                       : Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(40),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Row(
                   children: [
-                    // حقل إدخال النص المدمج في الـ Bar
+
                     Expanded(
                       child: TextField(
                         controller: textController,
-                        style: TextStyle(
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF1A3C6E),
-                          fontSize: 16,
-                        ),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Type to translate...',
-                          hintStyle: TextStyle(
-                            color: isDark ? Colors.grey[500] : Colors.grey[400],
-                          ),
                           border: InputBorder.none,
                         ),
-                        onSubmitted: (_) => translateText(),
+                        onSubmitted: (_) =>
+                            translateText(),
                       ),
                     ),
 
-                    // زرار تحويل النص إلى إشارة (Text → Signs)
                     IconButton(
-                      icon: Icon(Icons.send, color: iconColor),
+                      icon: Icon(Icons.send,
+                          color: iconColor),
                       onPressed: translateText,
                     ),
-                    const SizedBox(width: 4),
 
-                    // زرار التقاط صورة ثابتة للإشارة (Sign → Text Camera)
                     GestureDetector(
                       onTap: captureSign,
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF2A3B4C)
-                              : Colors.grey[100],
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.camera_alt_outlined,
-                          color: isDark
-                              ? Colors.white70
-                              : const Color(0xFF555555),
-                          size: 20,
-                        ),
+                      child: const Icon(
+                        Icons.camera_alt_outlined,
                       ),
                     ),
+
                     const SizedBox(width: 8),
 
-                    // زرار المايك الصوتي (Speech to Text)
                     GestureDetector(
                       onTap: () {
-                        isListening ? stopListening() : startListening();
+                        isListening
+                            ? stopListening()
+                            : startListening();
                       },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isListening
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFE8344A),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isListening ? Icons.mic : Icons.mic_none,
-                          color: Colors.white,
-                          size: 22,
-                        ),
+                      child: Icon(
+                        isListening
+                            ? Icons.mic
+                            : Icons.mic_none,
+                        color: isListening
+                            ? Colors.green
+                            : Colors.red,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -407,6 +365,3 @@ class _CommunicationState extends State<Communication> {
     );
   }
 }
-
-// _AvatarWidget removed — AvatarScreen now handles all visual states
-// (idle breathing, thinking pose while loading, and sign animation)

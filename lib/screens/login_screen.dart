@@ -9,10 +9,7 @@ import 'package:cominsign_new/widgets/gradient_background.dart';
 class LoginScreen extends StatefulWidget {
   final bool isDarkMode;
 
-  const LoginScreen({
-    super.key,
-    this.isDarkMode = false,
-  });
+  const LoginScreen({super.key, this.isDarkMode = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -26,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscurePassword = true;
   bool isLoading = false;
-  
+
   bool _showWarning = false;
   bool _isAgreed = false;
 
@@ -39,9 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showSnack(String msg) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _navigateToHomeAsGuest() async {
@@ -49,11 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!context.mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
   }
 
   Future<void> _login() async {
@@ -81,20 +74,15 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      await UserSession.saveSession(
-        tokenValue: token,
-        emailValue: email,
-      );
+      await UserSession.saveSession(tokenValue: token, emailValue: email);
 
       UserSession.isGuest = false;
 
       if (!context.mounted) return;
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (e) {
       _showSnack("Login failed: $e");
     } finally {
@@ -119,7 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87),
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
           onPressed: () {
             if (_showWarning) {
               setState(() => _showWarning = false);
@@ -168,7 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_showWarning) _buildWarningCard(isDark) else _buildTitle(primaryTextColor),
+                      if (_showWarning)
+                        _buildWarningCard(isDark)
+                      else
+                        _buildTitle(primaryTextColor),
 
                       const SizedBox(height: 35),
 
@@ -186,16 +180,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         style: TextStyle(
-                          color: isDark ? Colors.white : const Color(0xFF2C3E50), 
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF2C3E50),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Enter email',
-                          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[500], fontSize: 16),
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.grey[500],
+                            fontSize: 16,
+                          ),
                           filled: true,
-                          fillColor: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFFF5F5),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                          fillColor: isDark
+                              ? Colors.white.withOpacity(0.06)
+                              : const Color(0xFFFFF5F5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -206,11 +210,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: isDark ? const BorderSide(color: Colors.white12, width: 1) : BorderSide.none,
+                            borderSide: isDark
+                                ? const BorderSide(
+                                    color: Colors.white12,
+                                    width: 1,
+                                  )
+                                : BorderSide.none,
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return "Email is required";
+                          if (value == null || value.trim().isEmpty)
+                            return "Email is required";
                           return null;
                         },
                       ),
@@ -231,16 +241,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         style: TextStyle(
-                          color: isDark ? Colors.white : const Color(0xFF2C3E50), 
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xFF2C3E50),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                         decoration: InputDecoration(
                           hintText: '******',
-                          hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.grey[500], fontSize: 16),
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.grey[500],
+                            fontSize: 16,
+                          ),
                           filled: true,
-                          fillColor: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFFFF5F5),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                          fillColor: isDark
+                              ? Colors.white.withOpacity(0.06)
+                              : const Color(0xFFFFF5F5),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -251,20 +271,30 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: isDark ? const BorderSide(color: Colors.white12, width: 1) : BorderSide.none,
+                            borderSide: isDark
+                                ? const BorderSide(
+                                    color: Colors.white12,
+                                    width: 1,
+                                  )
+                                : BorderSide.none,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: isDark ? Colors.white60 : Colors.black54,
                             ),
                             onPressed: () {
-                              setState(() => _obscurePassword = !_obscurePassword);
+                              setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              );
                             },
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "Password is required";
+                          if (value == null || value.isEmpty)
+                            return "Password is required";
                           return null;
                         },
                       ),
@@ -278,12 +308,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const ForgetPass()),
+                              MaterialPageRoute(
+                                builder: (_) => const ForgetPass(),
+                              ),
                             );
                           },
                           child: Text(
                             "Forgot Password ?",
-                            style: TextStyle(color: secondaryTextColor, fontSize: 15),
+                            style: TextStyle(
+                              color: secondaryTextColor,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
@@ -306,9 +341,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : const Text("Login", style: TextStyle(fontSize: 18, color: Colors.white)),
+                                : const Text(
+                                    "Login",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -318,7 +362,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       Center(
                         child: Text(
                           "https://www.communisign.com",
-                          style: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 15),
+                          style: TextStyle(
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
 
@@ -328,7 +375,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       Center(
                         child: Text(
                           "New to Communisign?",
-                          style: TextStyle(color: primaryTextColor, fontSize: 18, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            color: primaryTextColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       Center(
@@ -336,12 +387,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const SignUpScreen(),
+                              ),
                             );
                           },
                           child: const Text(
                             "Sign up",
-                            style: TextStyle(color: Color(0xFF34A853), fontWeight: FontWeight.bold, fontSize: 24),
+                            style: TextStyle(
+                              color: Color(0xFF34A853),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                            ),
                           ),
                         ),
                       ),
@@ -376,7 +433,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.08) : const Color(0xFFFFF5F5),
+        color: isDark
+            ? Colors.white.withOpacity(0.08)
+            : const Color(0xFFFFF5F5),
         border: isDark ? Border.all(color: Colors.white12) : null,
         borderRadius: BorderRadius.circular(16),
       ),
@@ -388,22 +447,26 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'Warning Message',
                 style: TextStyle(
-                  fontSize: 24, 
-                  fontWeight: FontWeight.bold, 
-                  color: isDark ? Colors.white : Colors.black87
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
               const Spacer(),
-              Icon(Icons.info, color: isDark ? Colors.blue[300] : const Color(0xFF0D47A1), size: 28),
+              Icon(
+                Icons.info,
+                color: isDark ? Colors.blue[300] : const Color(0xFF0D47A1),
+                size: 28,
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             '"By continuing as a guest, you will only have access to the \'Communicate\' feature. The \'Learn\' module (which tracks your progress) and the \'Emergency SOS\' feature will be disabled."',
             style: TextStyle(
-              fontSize: 16, 
-              height: 1.3, 
-              color: isDark ? Colors.white70 : Colors.black54
+              fontSize: 16,
+              height: 1.3,
+              color: isDark ? Colors.white70 : Colors.black54,
             ),
           ),
           const SizedBox(height: 16),
@@ -413,7 +476,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 value: _isAgreed,
                 activeColor: const Color(0xFF34A853),
                 checkColor: Colors.white,
-                side: BorderSide(color: isDark ? Colors.white54 : Colors.black54),
+                side: BorderSide(
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
                 onChanged: (val) {
                   setState(() {
                     _isAgreed = val ?? false;
@@ -423,8 +488,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 'I agree on the above',
                 style: TextStyle(
-                  fontSize: 15, 
-                  color: isDark ? Colors.white70 : Colors.black54
+                  fontSize: 15,
+                  color: isDark ? Colors.white70 : Colors.black54,
                 ),
               ),
               const Spacer(),
@@ -432,10 +497,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: _isAgreed ? _navigateToHomeAsGuest : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF34A853),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                 ),
-                child: const Text('Next', style: TextStyle(fontSize: 18, color: Colors.white)),
+                child: const Text(
+                  'Next',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ],
           ),
