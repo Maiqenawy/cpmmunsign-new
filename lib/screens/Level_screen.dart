@@ -40,56 +40,48 @@ class _LevelScreenState extends State<LevelScreen> {
     });
   }
 
-  Future onWordTap(Map word) async {
-    try {
-      final sign = await Service.wordToSign(word["learningWordId"]);
+ Future onWordTap(Map word) async {
+  try {
+    final animation =
+        await Service.wordToSign(word["learningWordId"]);
 
-      debugPrint("WORD = ${sign.word}");
-      debugPrint("LANDMARKS = ${sign.landmarks.length}");
-      
-      if (sign.landmarks.isNotEmpty) {
-        debugPrint("FIRST FRAME LENGTH = ${sign.landmarks.first.length}");
-      }
-
+    if (animation != null) {
       setState(() {
-        selectedSigns = [sign];
+        currentAnimation = animation;
       });
-    } catch (e) {
-      debugPrint("Avatar Error = $e");
     }
-
-    String wordText = word["text"].toString().toLowerCase().trim();
-
-    setState(() {
-      currentAnimation = wordText;
-    });
-
-    if (word["isLearned"] == true) return;
-
-    final res = await Service.updateProgress(word["learningWordId"]);
-
-    setState(() {
-      word["isLearned"] = true;
-      coins = res["coins"];
-    });
-
-    final check = await Service.checkLevelCompletion(widget.levelId);
-
-    if (check["completed"]) {
-      await Service.unlockNextLevel(widget.levelId);
-
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LevelCompleteScreen(
-            level: widget.levelId,
-            coinsEarned: coins,
-          ),
-        ),
-      );
-    }
+  } catch (e) {
+    debugPrint("Avatar Error = $e");
   }
+
+  if (word["isLearned"] == true) return;
+
+  final res =
+      await Service.updateProgress(word["learningWordId"]);
+
+  setState(() {
+    word["isLearned"] = true;
+    coins = res["coins"];
+  });
+
+  final check =
+      await Service.checkLevelCompletion(widget.levelId);
+
+  if (check["completed"]) {
+    await Service.unlockNextLevel(widget.levelId);
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LevelCompleteScreen(
+          level: widget.levelId,
+          coinsEarned: coins,
+        ),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
