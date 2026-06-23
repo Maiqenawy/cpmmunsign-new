@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 
 import 'package:cominsign_new/core/user_session.dart';
 
-
 class Service {
   static const String baseUrl = "https://cominisign.runasp.net/api";
 
@@ -305,24 +304,22 @@ class Service {
   }
 
   // ================= AI: TEXT → SIGNS =================
-static Future<List<String>> textToSigns(String text) async {
-  final response = await http.post(
-    Uri.parse("$baseUrl/ai/text-to-signs"),
-    headers: headersWithAuth(),
-    body: jsonEncode({"text": text}),
-  );
+  static Future<List<String>> textToSigns(String text) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/ai/text-to-signs"),
+      headers: headersWithAuth(),
+      body: jsonEncode({"text": text}),
+    );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
-
-    // 🔥 نحول أي response إلى أسماء animations مباشرة
-    return (data as List)
-        .map((e) => e["word"].toString())
-        .toList();
-  } else {
-    throw Exception("Translation failed");
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return (data as List).map((e) => e["word"].toString()).toList();
+    } else {
+      throw Exception("Translation failed");
+    }
   }
-}static Future<String?> getAnimation(String word) async {
+
+  static Future<String?> getAnimation(String word) async {
     final response = await http.post(
       Uri.parse("$baseUrl/ai/word-to-sign"),
       headers: {"Content-Type": "application/json"},
@@ -333,12 +330,7 @@ static Future<List<String>> textToSigns(String text) async {
       final data = jsonDecode(response.body);
       return data["animation"];
     }
-
     return null;
-  }
-}
-
- 
   }
 
   // ================= AI: SIGN → TEXT =================
@@ -380,5 +372,4 @@ static Future<List<String>> textToSigns(String text) async {
       throw Exception("Real-time prediction failed");
     }
   }
-
- 
+} // قوس إغلاق الكلاس أصبح في نهاية الملف بشكل صحيح

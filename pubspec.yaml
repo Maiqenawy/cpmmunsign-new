@@ -65,20 +65,16 @@ flutter:
   uses-material-design: true
 
   assets:
-   - assets/Bored.glb
+    - assets/Angry.glb
     - assets/Agreeing.glb
     - assets/Waving.glb
     - assets/Pointing.glb
-    - assets/ShakingHands.glb
+    - assets/Shaking Hands 2.glb
     - assets/Thankful.glb
     - assets/Drinking.glb
-    - assets/Angry.glb
-    - assets/Sad.glb
-    - assets/Crazy.glb
+    - assets/Sad Idle.glb
+    - assets/Crazy Gesture.glb
     - assets/avatar.glb
-    - assets/avatar_player.html
-    - assets/three.min.js
-    - assets/GLTFLoader.js
     - assets/mediapipe.html
     - assets/lang/en.json
     - assets/lang/ar.json
