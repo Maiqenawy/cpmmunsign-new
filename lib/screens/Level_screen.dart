@@ -262,28 +262,17 @@ class PhraseCard extends StatelessWidget {
 }
 
 // ── كود الأفاتار ثري دي ──
-class _AvatarWidget extends StatelessWidget {
-  const _AvatarWidget({super.key});
+class IdleAvatar extends StatelessWidget {
+  const IdleAvatar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 300,
-      height: 250,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: const ModelViewer(
-        src: 'assets/avatar.glb',
-        alt: 'CommuniSign 3D Avatar',
-        autoRotate: false,
-        cameraControls: false,
-        disableZoom: true,
-        shadowIntensity: 1,
-        backgroundColor: Colors.transparent,
-      ),
+    return const ModelViewer(
+      src: "assets/avatar.glb", // أو idle.glb لو عندك
+      autoPlay: true,
+      cameraControls: false,
+      disableZoom: true,
+      backgroundColor: Colors.transparent,
     );
   }
 }
