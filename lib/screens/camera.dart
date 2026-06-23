@@ -17,15 +17,13 @@ class _SignRealtimeState extends State<SignRealtime> {
   WebViewController? _webViewController;
 
   final List<List<double>> sequence = [];
+
   String prediction = "Scanning...";
-  List predictions = [];
-  String sentence = "";
+  List<Map<String, dynamic>> predictions = [];
 
   bool isProcessing = false;
   bool _initialized = false;
   bool _showSplash = true;
-
-  get finaly => null;
 
   @override
   void initState() {
@@ -37,73 +35,59 @@ class _SignRealtimeState extends State<SignRealtime> {
     if (_initialized) return;
     _initialized = true;
 
-    // 🔐 إذن الكاميرا للهواتف الذكية وتهيئة الـ WebView
     if (!kIsWeb) {
       await Permission.camera.request();
+    }
 
-      // 🌐 إعداد الـ WebView والـ JavaScript Channel
-      _webViewController = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0x00000000))
-        ..addJavaScriptChannel(
-          "SignChannel",
-          onMessageReceived: (JavaScriptMessage message) async {
-            if (isProcessing) return;
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..addJavaScriptChannel(
+        "SignChannel",
+        onMessageReceived: (JavaScriptMessage message) async {
+          if (isProcessing) return;
 
-            try {
-              final dynamic decoded = jsonDecode(message.message);
-              if (decoded is! List) return;
+          try {
+            final List data = jsonDecode(message.message);
+            final frame = data.map((e) => (e as num).toDouble()).toList();
 
-              // تحويل آمن لمنع الكراش في حال وجود قيم null
-              final List<double> frame = decoded
-                  .map((e) => e != null ? (e as num).toDouble() : 0.0)
-                  .toList();
+            if (frame.length != 246) return;
 
-              if (frame.length == 246) {
-                sequence.add(frame);
+            sequence.add(frame);
 
-                if (sequence.length > 30) {
-                  sequence.removeAt(0);
-                }
-
-                if (sequence.length == 30 && !isProcessing) {
-                  isProcessing = true;
-
-                  // أخذ نسخة منفصلة تماماً من البيانات لمنع الـ Race Condition
-                  final framesToSend = List<List<double>>.from(sequence);
-                  sequence.clear();
-
-                  await sendSequence(framesToSend);
-                }
-              }
-            } catch (e) {
-              debugPrint("Data Error: $e");
+            if (sequence.length > 30) {
+              sequence.removeAt(0);
             }
-          },
-        )
-        ..loadRequest(
-          Uri.parse(
-            "https://maiqenawy.github.io/sign-language-web/mediapipe.html",
-          ),
-        );
 
-      // 🤖 إعدادات الأندرويد لطلب إذن الكاميرا داخل الويب بشكل تلقائي
-      if (defaultTargetPlatform == TargetPlatform.android) {
-        final platform = _webViewController!.platform;
-        if (platform is AndroidWebViewController) {
-          await platform.setMediaPlaybackRequiresUserGesture(false);
-          await platform.setOnPlatformPermissionRequest(
-            (request) => request.grant(),
-          );
-        }
+            if (sequence.length == 30) {
+              isProcessing = true;
+
+              final framesToSend = List<List<double>>.from(sequence);
+              sequence.clear();
+
+              await sendSequence(framesToSend);
+            }
+          } catch (e) {
+            debugPrint("Data Error: $e");
+          }
+        },
+      )
+      ..loadRequest(Uri.parse(
+          "https://maiqenawy.github.io/sign-language-web/mediapipe.html"));
+
+    // 🤖 Android configuration for auto-granting permissions inside the WebView
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      final platform = _webViewController!.platform;
+      if (platform is AndroidWebViewController) {
+        await platform.setMediaPlaybackRequiresUserGesture(false);
+        await platform.setOnPlatformPermissionRequest(
+          (request) => request.grant(),
+        );
       }
     }
 
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
 
-    // ⏳ إخفاء شاشة الـ Splash بعد ثانيتين
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -113,42 +97,41 @@ class _SignRealtimeState extends State<SignRealtime> {
     });
   }
 
-  // ✅ دالة إرسال الإطارات الـ 30 إلى الـ API
   Future<void> sendSequence(List<List<double>> frames) async {
-  try {
-    final response = await http
-        .post(
-          Uri.parse("https://sign-language-api-production-2148.up.railway.app/predict"),
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode({"sequence": frames}),
-        )
-        .timeout(const Duration(seconds: 15));
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              "https://sign-language-api-production-2148.up.railway.app/predict",
+            ),
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode({
+              "sequence": frames,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
-    debugPrint("STATUS = ${response.statusCode}");
-    debugPrint("BODY = ${response.body}");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            predictions = List<Map<String, dynamic>>.from(
+                data["predictions"] ?? []);
 
-      if (mounted) {
-        setState(() {
-          predictions = data["predictions"] ?? [];
-          prediction = predictions.isNotEmpty
-              ? (predictions[0]["word"] ?? "Unknown")
-              : "Unknown";
-        });
+            if (predictions.isNotEmpty) {
+              prediction = predictions[0]["label"];
+            } else {
+              prediction = "Unknown";
+            }
+          });
+        }
       }
+    } catch (e) {
+      debugPrint("API ERROR = $e");
+    } finally {
+      isProcessing = false;
     }
-  } catch (e) {
-    debugPrint("API Error: $e");
-  } finally {
-    if (mounted) {
-      setState(() {
-        isProcessing = false;
-      });
-    }
-  }
-
   }
 
   @override
@@ -161,7 +144,7 @@ class _SignRealtimeState extends State<SignRealtime> {
       ),
       body: Stack(
         children: [
-          // 🌐 شاشة الويب التي تعرض الكاميرا والـ MediaPipe
+          // 🌐 WebView Container
           Positioned.fill(
             child: kIsWeb
                 ? Container(
@@ -189,45 +172,25 @@ class _SignRealtimeState extends State<SignRealtime> {
                     ),
                   )
                 : (_webViewController != null)
-                ? WebViewWidget(
-                    key: const ValueKey("stable_webview"),
-                    controller: _webViewController!,
-                  )
-                : const Center(child: CircularProgressIndicator()),
+                    ? WebViewWidget(
+                        key: const ValueKey("stable_webview"),
+                        controller: _webViewController!,
+                      )
+                    : const Center(child: CircularProgressIndicator()),
           ),
 
-          // 🔥 شاشة الـ Splash المؤقتة (تختفي تلقائياً)
+          // 🔥 Splash Overlay
           if (_showSplash)
             Positioned.fill(
               child: Container(
                 color: Colors.black,
                 child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.sign_language,
-                        color: Colors.deepPurple,
-                        size: 100,
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        "Loading AI Camera...",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 30),
-                      CircularProgressIndicator(color: Colors.deepPurple),
-                    ],
-                  ),
+                  child: CircularProgressIndicator(),
                 ),
               ),
             ),
 
-          // 📊 واجهة عرض الكلمة المكتشفة والاقتراحات
+          // 📊 UI Overlay for results
           Positioned(
             bottom: 40,
             left: 20,
@@ -243,7 +206,7 @@ class _SignRealtimeState extends State<SignRealtime> {
                 children: [
                   const Text(
                     "Current Word",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -255,71 +218,33 @@ class _SignRealtimeState extends State<SignRealtime> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // عرض الاقتراحات إن وجدت
-                  if (predictions.isNotEmpty) ...[
-                    const Text(
-                      "Suggestions",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 8),
-                    ...predictions.map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                prediction = item["word"] ?? "Unknown";
-                              });
-                            },
-                            child: Text(
-                              "${item["word"]} (${item["confidence"]}%)",
-                            ),
-                          ),
+                  if (predictions.isNotEmpty)
+                    Column(
+                      children: [
+                        const Text(
+                          "Suggestions",
+                          style: TextStyle(color: Colors.white70),
                         ),
-                      );
-                    }).toList(),
-                  ],
-                  const SizedBox(height: 10),
-
-                  // زر إضافة الكلمة الحالية للجملة
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text("Add to Sentence"),
-                    onPressed: () {
-                      if (prediction != "Unknown" &&
-                          prediction != "Scanning...") {
-                        setState(() {
-                          if (sentence.isEmpty) {
-                            sentence = prediction;
-                          } else {
-                            sentence += " $prediction";
-                          }
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("$prediction added"),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-
-                  // عرض الجملة الكاملة المتكونة في الأسفل
-                  if (sentence.isNotEmpty)
-                    Text(
-                      "Full Sentence: $sentence",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.greenAccent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                        const SizedBox(height: 8),
+                        ...predictions.map((item) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    prediction = item["label"];
+                                  });
+                                },
+                                child: Text(
+                                  "${item["label"]} (${(item["confidence"] * 100).toStringAsFixed(1)}%)",
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
                     ),
                 ],
               ),

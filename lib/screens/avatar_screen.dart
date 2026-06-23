@@ -110,6 +110,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
       for (final sign in widget.signs) {
         for (final rawFrame in sign.landmarks) {
           final flat = List<double>.from(rawFrame);
+          
           if (flat.length >= 258) {
             allFrames.add({
               // pose: 33 landmarks × 4-stride (x,y,z, skip visibility)
