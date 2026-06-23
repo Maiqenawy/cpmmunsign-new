@@ -364,7 +364,7 @@ static Future<AvatarSign> wordToSign(int wordId) async {
 
   if (response.statusCode == 200) {
     final data = jsonDecode(response.body);
-    return data["animation"];
+    return data["animation"]; // Bored.glb
   }
 
   return null;
