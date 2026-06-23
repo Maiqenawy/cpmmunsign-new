@@ -41,7 +41,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
       height: 250,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
       clipBehavior: Clip.antiAlias,
-      child: currentAnimation == null || currentAnimation == "Idle"
+      child: currentAnimation == null || currentAnimation == "Idle.glb"
           ? const IdleAvatar()
           : ModelViewer(
               key: ValueKey(currentAnimation),
