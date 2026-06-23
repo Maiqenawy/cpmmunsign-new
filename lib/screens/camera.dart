@@ -118,22 +118,27 @@ class _SignRealtimeState extends State<SignRealtime> {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
 
-        if (mounted) {
-          setState(() {
-            predictions =
-                List<Map<String, dynamic>>.from(
-                    data["predictions"] ?? []);
+  final utf8Body =
+      utf8.decode(response.bodyBytes);
 
-            if (predictions.isNotEmpty) {
-              prediction = predictions[0]["label"];
-            } else {
-              prediction = "Unknown";
-            }
-          });
-        }
+  final data =
+      jsonDecode(utf8Body);
+
+  if (mounted) {
+    setState(() {
+      predictions =
+          List<Map<String, dynamic>>.from(
+              data["predictions"] ?? []);
+
+      if (predictions.isNotEmpty) {
+        prediction = predictions[0]["label"];
+      } else {
+        prediction = "Unknown";
       }
+    });
+  }
+}
     } catch (e) {
       debugPrint("API ERROR = $e");
     } finally {
