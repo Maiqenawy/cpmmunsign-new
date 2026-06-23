@@ -304,20 +304,23 @@ class Service {
   }
 
   // ================= AI: TEXT → SIGNS =================
-  static Future<List<String>> textToSigns(String text) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/ai/text-to-signs"),
-      headers: headersWithAuth(),
-      body: jsonEncode({"text": text}),
-    );
+static Future<List<String>> textToSigns(String text) async {
+  final response = await http.post(
+    Uri.parse("$baseUrl/ai/text-to-signs"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "text": text,
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return (data as List).map((e) => e["word"].toString()).toList();
-    } else {
-      throw Exception("Translation failed");
-    }
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+
+    return List<String>.from(data);
   }
+
+  return [];
+}
 
   // ================= AI: WORD → SIGN (تم دمجها وإصلاح تداخلها) =================
   static Future<String?> wordToSign(int learningWordId) async {
